@@ -1,1 +1,0 @@
-# script to gether all early stopping variants

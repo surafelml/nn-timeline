@@ -1,0 +1,33 @@
+project:
+  type: book
+  output-dir: ../_site
+
+book:
+  title: "nn_timeline"
+  subtitle: "Neural network architectures through time"
+  author: "Surafel M. Lakew"
+  repo-url: https://github.com/surafelml/nn-timeline
+  chapters:
+    - part: "Foundations"
+      chapters:
+        - 00_foundations/01_backprop.qmd
+        - 00_foundations/02_gradient_flow.qmd
+    - part: "RNN Era"
+      chapters:
+        - 01_rnn/01_rnn_bptt.qmd
+        - 01_rnn/02_lstm_gru.qmd
+        - 01_rnn/03_seq2seq.qmd
+        - 01_rnn/04_attention_bahdanau.qmd
+        - 01_rnn/05_attention_luong.qmd
+    - part: "Transformer Era"
+      chapters:
+        - 02_transformer/01_self_attention.qmd
+        - 02_transformer/02_transformer.qmd
+        - 02_transformer/03_bert_gpt.qmd
+        - 02_transformer/04_positional_encoding.qmd
+
+format:
+  html:
+    theme: cosmo
+    code-fold: false
+    toc: true

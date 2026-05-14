@@ -1,7 +1,6 @@
-"""
-Preprocessing
-"""
+"""CLI for preprocessing."""
 
-from src.preprocessor.preprocess import cli_main
+from nn_timeline.data import cli_main
+
 if __name__ == "__main__":
-    cli_main
+    cli_main()

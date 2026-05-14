@@ -1,176 +1,135 @@
-Progress on structuring project [reclaiming 2016]:
+# nn_timeline
 
-Best comeback that also claims the name sit_sml: 
-  - 1 text (mt, lm), 1 vision (tracking), and 1 speech (st/asr) implementation and sample experiments and recipes.
-  - aligns with multimodal MT 2022-23 tasks.
+A minimal package tracing neural network architectures and models through time.
 
-  - `Archs`: contains main skeletons of the specific arch (can be for diff tasks) being defined in Archs/ABC*. 
-Other re-usable modules go under layers, etc. Here lets define `tnn` as arch and its components as a `template`.
+```
+pip install nn-timeline
+```
 
-  - Encoder 
-    - add: layers/shared/dropout_layer, PositionalEmbedding, 
-  - Decoder
-    - add: 
+## Motivation
 
-Data
-- Dictionary: called models/encoder_decoder_multi
+The field moves fast, but understanding *why* each architecture superseded the last
+requires slowing down. `nn_timeline` is built around that premise: each milestone
+is a versioned, self-contained snapshot — RNN, Attention, Transformer — with
+notes that trace the scientific reasoning, not just the implementation. The moat
+is science depth and timeline; everything else is secondary.
 
-Config
-- TransformerConfig: and associated methods/classes 
-- TODO: read about py dataclasses
+For architectures beyond the Transformer era (MoE, alignment, etc.),
+dedicated `nn_timeline_xyz` packages inherit this core and explore those
+directions independently.
 
-Quant:
-- see [quant diff](https://github.com/pytorch/fairseq/commit/1c8ab79ca59b466120e3df448673cab840f571ea#diff-f0eb88613a42eb9195c95be7d629fcabaeb7d451f8fe16587de03c433eb300d9)
-to remove its introduction.
+## What it is
 
-## Current step /generic setup/:
-* Goal is to have the smallest code footprint possible - make it working in comparable way - focus on 
-what matters (internal model details & adding new features & writing and teaching it.).
+- **Architecture timeline**: RNN → Attention → Transformer (versioned milestones, not a moving target)
+- **Importable package**: `from nn_timeline.layers import RoPE, MultiHeadAttention`
+- **Notes-first**: Quarto `.qmd`, math and derivations before every line of code
+- **Runnable on Mac M\* or a single GPU** — no cluster required
 
-- I. FIRST ROUND SETUP
-- rename internal sitMT -- src - keep sitMT as in python library layout - find proper name ?
-- generator - done
-- preprocess - done
-- config (using dataclass, yaml, cli - smart decision - BLOG) - wip using https://github.com/omry/omegaconf
-  - out of control with so much nonsense - just have 1 config.py file.
-  - TODO: opting for OpenNMT-tf/Sockeye YAML based load_config in configy.py
-  - from argparse import Namespace  # FairSeq depreciated Namespace and auto converting to OmegaConf - which is wise to follow ?
-- search - done
-- trainer - done
-  - distributed training (using torch.distributed https://fairseq.readthedocs.io/en/latest/getting_started.html#distributed-training )  - removed.
-    - 
-  - once fit/skilled - try the implementation along with sharding large data.
-  - optim - removing fp16 (as it requires its own large code)
-- train - done
-- translate - done
-- done - `fixing errors in each file before final review for exp. decision: no half-precision, yes omega conf, not sure using DDP?`
-- Reading before adding RNN network https://explained.ai/rnn/index.html 
+## How it works
 
+### Development loop
 
-- HERE: remember why going the hard way (top-to-details) - it's a lasting solution.
--- `fixing (structure, strong/week warnings) and cleaning before git and first BRANCH`. - DONE
--- `keep commenting out & adding clean note - don't remove`.
--- TODO: standardized import with comment
--- TODO: start experiment with initial version once the config is setup - then start cleaning up and simplification
--- sample for conversion args to omegaconf https://github.com/facebookresearch/fairseq/commit/a6a63279422f846a3c2f6c45b9c96d6951cc4b82 
---* after setting up v1.0 [branch out and build v0.1] the smallest/simplified possible implementation. 
---* by end of this proj. main question is why not implement it from bottom up, why top down and waste time?
+Every component starts with a science note — no code before the note exists.
 
-- II. START FINAL CLEANUP & ORG BEFORE TEST EXP: TODO: 
-  - i. arguments - [training approaches]() - dataclass - config - using python library structure than module or package
-  - ii. module - loading
+```
+write science note (.qmd)        ← always start here
+  math, derivations, diagrams
+         │
+         ▼
+write test (red)
+         │
+         ▼
+implement until green
+         │
+         ▼
+revise note with findings
+         │
+         ▼
+tag versioned milestone
+```
 
-- III. START EXP AND FINAL COMMENTING ON EACH LINE TODO: 
-  - i. model 
-  - ii. ?
-- IV. ADD NEW FEATURES/MONTHLY - WRITE ML BLOG
-  - POSITION EMBEDS
+### Ecosystem: where new ideas go
 
+`nn_timeline` is the stable baseline floor, not a prototyping surface.
+When a new paper drops, the workflow is:
 
----
-# sit_ML
-   - Make it succinct 
-   - Human info/communication channels: speech-visual/image-text.
-   - Reference tool for tutorials, self-experiments, study, etc. 
-   - __Note__:
-        - Approach to review fairseq/opennmt with K's code base is quite expensive, however, once the NMT model is done the rest is easy to navigate.
-        - Priority is baseline NMT and ASR.
-        - Build backward (from task > model > data > etc)
-   - __TODO__
-     - Impl. Blog: along with detail comments and unittest - write blog on specific modules (e.g. how pos-emb works ?)
-       - write similar to `Annotated Transformer` as note book - describing each part.
-       - can this reach for workshop/s or use sockeye (run both google/aws cloud) - to create surafelml/workshops/??
-     - What really change/contribution? except changing the code base and simplification ? new design for other tasks?
+```
+new paper (arxiv)
+       │
+       ├── need a baseline? ──► nn_timeline has it — import directly
+       │
+       ▼
+create nn-timeline-{topic}
+(separate repo, inherits nn_timeline)
+       │
+       ▼
+write science note first (.qmd)
+       │
+       ▼
+implement & benchmark vs nn_timeline baseline
+       │
+       ▼
+foundational to the timeline? ──yes──► candidate for nn_timeline v{next}
+                               ──no───► stays in nn-timeline-{topic}
+```
 
+This keeps `nn_timeline` stable and deep; extensions stay isolated until proven.
 
-### Why and What
-- Concise: as a late comer to fairseq based seq2seq which by far has a large code base, 
-I find myself lost or spending alot of time to achieve a minor task. 
-This is why the need to replicate (for now the most used part - transformer seq2seq MT), while studying each code block.
-, in this repo. As much as possible I have added in-line comments, it might help others too. 
-For any license and borrowed script see the original FairSeq implementation.   
+## Quick start
 
+```python
+from nn_timeline.archs.tnn import Transformer
+from nn_timeline.archs.rnn import Seq2SeqRNN
+from nn_timeline.layers.attention import BahdanauAttention, MultiHeadAttention
+from nn_timeline.layers.embeddings import SinusoidalPE, RoPE
+from nn_timeline.train import Trainer
+from nn_timeline.metrics import BLEU
+```
 
-- In the past I have been lost in several seq2seq libraries, took me several weeks to figure out even the basics. 
-These past years, I have worked with Nematus, OpenNMT-py/tf, and recently with FairSeq. One thing I understood (which
-acutally from the begining), is the need to reconstruct everything from scratch. In this way, I have the chance to 
-understanding the underlying working principles. 
-- child project done on extra time and boaring time from work
-- focused on skeleton text, speech, and vision tasks.
-- inspires from opennmt, and fairseq.
-- allows to easily and incrementally add features that belongs to one of the above tasks
-- Providing Line by Line comments
-  - comp science (dsa), maths (prob, stat, calculus), and ML (model, archs, optim, learning, etc)
+## Repository layout
 
-### Description and Flow of the implementation
+```
+nn_timeline/        # installable package
+  archs/rnn/        # LSTM, GRU, Seq2SeqRNN
+  archs/tnn/        # Transformer, GPT
+  layers/attention/ # BahdanauAttention, MultiHeadAttention
+  layers/embeddings/# SinusoidalPE, RoPE
+  layers/ffn/       # FFN, SwiGLU
+  layers/norm/      # LayerNorm, RMSNorm
+  layers/recurrent/ # LSTMCell, GRUCell
+  train/            # Trainer, optimizer, scheduler, checkpoint
+  generate/         # beam search, sampling, kv_cache
+  metrics/          # BLEU, chrF, Perplexity
+  data/             # dictionary, BPE tokenizer, datasets
+cli/                # preprocess / train / generate / evaluate
+notes/              # Quarto .qmd — science notes, math-first, one concept per file
+tests/              # pytest suite, TDD red→green
+```
 
-Create table and describe it as key-value/description pair:
-- task - builds the xyz task, including loading dict, data, model, criterion
-- model - ...
+## Notes
 
-Insert a figure that shows the overall structure and map
-- are there tools or manually mapping ?
+Notes live at [surafelml.github.io/nn-timeline](https://surafelml.github.io/nn-timeline) (Quarto → GitHub Pages).
+Each notebook imports from `nn_timeline` directly — code is always the SSOT.
 
+## Pre-trained models
 
-### Features
-- Vision see https://github.com/zhiqwang/sightseq
-- Speech see FairSeq itself and how to best simplify it.
-- Text see ?
-- Multimodal see ?/ene
+Checkpoints are hosted on [HuggingFace Hub](https://huggingface.co/surafelml).
 
-### Tasks and Timeline
- 
- - A __comparison__ of RNN, CNN, TNN on NMT, ASR, S2S, I2T, etc
-    - includes Overleaf/Arxiv/Notebook tutorial for technical details
-    - Quite interesting (short, figures) way of [presenting](https://jessicastringham.net/2018/12/30/conv-max-pool/) the core concept of a model. I will only add the maths.
-    - Timeline: ~ __1 month__ for one task/ a model. 
-    - Reference [see](https://arxiv.org/abs/1806.06957) and others. 
+```python
+from nn_timeline.train.checkpoint import load_from_hub
+model = load_from_hub("surafelml/transformer-mt-en-de-small")
+```
 
-- Features to Add and to PR
-    - [Issue to customize dict/embs, adapters](https://github.com/pytorch/fairseq/issues/1241)
-    - [Coverage penalty - penalities in general](https://github.com/pytorch/fairseq/issues/3024)
-    - [zst paper 1 and 2](ADD)
+## Ecosystem
 
-- Language modeling with exported model for demo app.
+All repos live under [`github.com/surafelml`](https://github.com/surafelml) with a shared `nn-timeline` prefix.
 
-* *Notes goes to Notebook/MD and Overleaf*
+| Repo | Purpose |
+|---|---|
+| [`nn-timeline`](https://github.com/surafelml/nn-timeline) (this) | Core architectures, RNN → Transformer era |
+| [`nn-timeline-ui`](https://github.com/surafelml/nn-timeline-ui) | Gradio demos, interactive timeline, experiment dashboard |
+| `nn-timeline-{moe,alignment,…}` | Architecture-specific extensions |
 
-### Future tasks
-- Re-implement vanilla Transformer with TF in `archs/tnn_tf` while keep the rest scripts.
-- A simple tiny TNN, FNN with specific tasks.
-- S2S - [see](https://arxiv.org/abs/1904.06037)
-- [RNNSearch]((Bahdanau et al., 2014))
-- Moses phrase based visualized with neural model?
-- Discriminator networks for purpose XYZ
-- TUTORIAL/S
-    - Explains the figure of the model (each box, arrow, abstraction) in relation with the code portion
-which is easier for beginners to quickly start building
-    - Separates other modules (dat processing, optimization, search, etc) in detail 
-- TBA
-- Transition yemiketelwe bota be addis re-implement
+## License
 
-### Examples
-- Tiny Architecture for NMT, ?: `tiny_architecture`
-- BirdLang-Am, Geeze - writing tutorial as getting started.
-- Speech conversion from standard to BirdAmh
-- Continuous improvement on Amh<>En (hand picked as hobby) 
-- Speechesh (https://github.com/qute012/Wav2Keyword)
-- Etc ... 
-
-
-### References
-
-- Initial [Transformer NMT impl.](https://colab.research.google.com/drive/1XXveSO76axz6hdZUGnr8wZqRsIUOdXSU#scrollTo=5S2BcIoOUgRg) 
-- ?
-
----
-### License 
-Code is mostly ported from FairSeq implmentation, head over to ... for license. 
-For the scripts that's not change at all you should see the original license at the header.
-
-This repo is license under open source 
-
-
-### Errors and Lessons
-- changing namings at the begining instead of the end task after disecting out the transformer only part
-- 
+MIT
