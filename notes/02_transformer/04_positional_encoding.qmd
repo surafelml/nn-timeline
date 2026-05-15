@@ -1,0 +1,25 @@
+---
+title: "Positional Encoding"
+format: [html, revealjs]
+---
+
+<!-- Code: nn_timeline.layers.embeddings.SinusoidalPE, RoPE -->
+<!-- Next: 05_kv_cache.qmd -->
+
+## Why this matters
+
+*Draft — write science note before implementation.*
+
+## The mechanism
+
+## Implementation
+
+```python
+# imports from nn_timeline once implemented
+```
+
+## What to observe
+
+## Key takeaway
+
+→ Next: 05_kv_cache.qmd

@@ -1,0 +1,25 @@
+---
+title: "Vanilla RNN & BPTT"
+format: [html, revealjs]
+---
+
+<!-- Code: nn_timeline.layers.recurrent.RNNCell -->
+<!-- Next: 02_lstm_gru.qmd -->
+
+## Why this matters
+
+*Draft — write science note before implementation.*
+
+## The mechanism
+
+## Implementation
+
+```python
+# imports from nn_timeline once implemented
+```
+
+## What to observe
+
+## Key takeaway
+
+→ Next: 02_lstm_gru.qmd

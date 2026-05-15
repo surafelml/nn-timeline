@@ -1,0 +1,25 @@
+---
+title: "Luong Attention"
+format: [html, revealjs]
+---
+
+<!-- Code: nn_timeline.layers.attention.LuongAttention -->
+<!-- Next: 02_transformer/01_self_attention.qmd -->
+
+## Why this matters
+
+*Draft — write science note before implementation.*
+
+## The mechanism
+
+## Implementation
+
+```python
+# imports from nn_timeline once implemented
+```
+
+## What to observe
+
+## Key takeaway
+
+→ Next: 02_transformer/01_self_attention.qmd

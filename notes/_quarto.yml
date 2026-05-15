@@ -10,8 +10,9 @@ book:
   chapters:
     - part: "Foundations"
       chapters:
-        - 00_foundations/01_backprop.qmd
-        - 00_foundations/02_gradient_flow.qmd
+        - 00_foundations/01_perceptron.qmd
+        - 00_foundations/02_mlp_backprop.qmd
+        - 00_foundations/03_gradient_flow.qmd
     - part: "RNN Era"
       chapters:
         - 01_rnn/01_rnn_bptt.qmd
@@ -25,9 +26,14 @@ book:
         - 02_transformer/02_transformer.qmd
         - 02_transformer/03_bert_gpt.qmd
         - 02_transformer/04_positional_encoding.qmd
+        - 02_transformer/05_kv_cache.qmd
 
 format:
   html:
     theme: cosmo
     code-fold: false
     toc: true
+  revealjs:
+    theme: simple
+    slide-number: true
+    code-fold: false

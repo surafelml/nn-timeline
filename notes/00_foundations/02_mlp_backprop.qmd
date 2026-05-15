@@ -1,0 +1,25 @@
+---
+title: "MLP & Backpropagation"
+format: [html, revealjs]
+---
+
+<!-- Code: notes-only -->
+<!-- Next: 03_gradient_flow.qmd -->
+
+## Why this matters
+
+*Draft — write science note before implementation.*
+
+## The mechanism
+
+## Implementation
+
+```python
+# imports from nn_timeline once implemented
+```
+
+## What to observe
+
+## Key takeaway
+
+→ Next: 03_gradient_flow.qmd

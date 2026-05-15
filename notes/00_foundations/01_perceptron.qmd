@@ -1,0 +1,25 @@
+---
+title: "Perceptron & Linear Classifiers"
+format: [html, revealjs]
+---
+
+<!-- Code: notes-only -->
+<!-- Next: 02_mlp_backprop.qmd -->
+
+## Why this matters
+
+*Draft — write science note before implementation.*
+
+## The mechanism
+
+## Implementation
+
+```python
+# imports from nn_timeline once implemented
+```
+
+## What to observe
+
+## Key takeaway
+
+→ Next: 02_mlp_backprop.qmd

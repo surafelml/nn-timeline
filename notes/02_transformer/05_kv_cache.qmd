@@ -1,0 +1,25 @@
+---
+title: "KV-Cache"
+format: [html, revealjs]
+---
+
+<!-- Code: nn_timeline.generate.kv_cache -->
+<!-- Next: — -->
+
+## Why this matters
+
+*Draft — write science note before implementation.*
+
+## The mechanism
+
+## Implementation
+
+```python
+# imports from nn_timeline once implemented
+```
+
+## What to observe
+
+## Key takeaway
+
+→ Next: —

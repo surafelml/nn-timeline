@@ -1,0 +1,25 @@
+---
+title: "BERT & GPT"
+format: [html, revealjs]
+---
+
+<!-- Code: nn_timeline.archs.tnn.BERT, GPT -->
+<!-- Next: 04_positional_encoding.qmd -->
+
+## Why this matters
+
+*Draft — write science note before implementation.*
+
+## The mechanism
+
+## Implementation
+
+```python
+# imports from nn_timeline once implemented
+```
+
+## What to observe
+
+## Key takeaway
+
+→ Next: 04_positional_encoding.qmd

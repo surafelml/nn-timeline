@@ -1,0 +1,25 @@
+---
+title: "Gradient Flow & Vanishing Gradients"
+format: [html, revealjs]
+---
+
+<!-- Code: notes-only -->
+<!-- Next: 01_rnn/01_rnn_bptt.qmd -->
+
+## Why this matters
+
+*Draft — write science note before implementation.*
+
+## The mechanism
+
+## Implementation
+
+```python
+# imports from nn_timeline once implemented
+```
+
+## What to observe
+
+## Key takeaway
+
+→ Next: 01_rnn/01_rnn_bptt.qmd

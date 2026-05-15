@@ -1,0 +1,25 @@
+---
+title: "Seq2Seq RNN Encoder-Decoder"
+format: [html, revealjs]
+---
+
+<!-- Code: nn_timeline.archs.rnn.Seq2SeqRNN -->
+<!-- Next: 04_attention_bahdanau.qmd -->
+
+## Why this matters
+
+*Draft — write science note before implementation.*
+
+## The mechanism
+
+## Implementation
+
+```python
+# imports from nn_timeline once implemented
+```
+
+## What to observe
+
+## Key takeaway
+
+→ Next: 04_attention_bahdanau.qmd
