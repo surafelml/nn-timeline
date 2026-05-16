@@ -8,9 +8,11 @@ book:
   author: "Surafel M. Lakew"
   repo-url: https://github.com/surafelml/nn-timeline
   chapters:
+    - index.qmd
     - part: "Foundations"
       chapters:
-        - 00_foundations/01_perceptron.qmd
+        - 00_foundations/00_historical.qmd
+        - 00_foundations/01_artificial_neuron.qmd
         - 00_foundations/02_mlp_backprop.qmd
         - 00_foundations/03_gradient_flow.qmd
     - part: "RNN Era"
@@ -27,13 +29,15 @@ book:
         - 02_transformer/03_bert_gpt.qmd
         - 02_transformer/04_positional_encoding.qmd
         - 02_transformer/05_kv_cache.qmd
+    - references.qmd
+
+bibliography: references.bib
+csl: https://www.zotero.org/styles/apa
+link-citations: true
+citations-hover: true
 
 format:
   html:
     theme: cosmo
     code-fold: false
     toc: true
-  revealjs:
-    theme: simple
-    slide-number: true
-    code-fold: false

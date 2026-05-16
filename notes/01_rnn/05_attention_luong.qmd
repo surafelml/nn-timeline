@@ -1,6 +1,6 @@
 ---
 title: "Luong Attention"
-format: [html, revealjs]
+format: html
 ---
 
 <!-- Code: nn_timeline.layers.attention.LuongAttention -->

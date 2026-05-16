@@ -1,0 +1,181 @@
+---
+title: "Before the Perceptron — A Short Prehistory"
+format: html
+---
+
+<!-- Code: notes-only -->
+<!-- Next: 01_artificial_neuron.qmd -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Neural networks did not start with Rosenblatt. Two streams of work —
+**theoretical** (what *is* a neuron?) and **computational** (can we *run*
+one?) — converged in the late 1950s into the perceptron. The prehistory
+matters because every later innovation in this timeline traces back to one
+of these threads.
+:::
+
+**Depends on:** nothing — start here.
+
+## Why this matters
+
+Knowing what came *before* the perceptron tells you what was being inherited
+and what was genuinely new. The "neural" idea was an old one by 1958:
+McCulloch & Pitts had a formal neuron in **1943**; Hebb had a learning
+hypothesis in **1949**; Minsky had analog hardware in **1951**. Rosenblatt's
+contribution was the *synthesis* — a single system combining a real-valued
+neuron, a learning rule, a convergence proof, and working hardware — not the
+invention of the neuron itself.
+
+## The mechanism
+
+Two parallel tracks of work, each contributing a piece that the perceptron
+would later unify.
+
+```{=html}
+<style>
+  .twotrack { width: 100%; max-width: 760px; margin: 1.5rem auto; font-family: inherit; }
+  .twotrack text { font-size: 12px; fill: #1a202c; }
+  .twotrack .hdr  { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; fill: #4a5568; }
+  .twotrack .yr   { font-weight: 700; }
+  .twotrack rect.box   { fill: #f7fafc; stroke: #4a5568; stroke-width: 1.5; rx: 6; }
+  .twotrack rect.synth { fill: #fef3c7; stroke: #d97706; stroke-width: 2; rx: 6; }
+  .twotrack line.flow  { stroke: #718096; stroke-width: 1.5; }
+</style>
+<svg class="twotrack" viewBox="0 0 760 460" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrowEnd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#718096" />
+    </marker>
+  </defs>
+
+  <text class="hdr" x="160" y="25" text-anchor="middle">Manual / Theoretical</text>
+  <text class="hdr" x="600" y="25" text-anchor="middle">Automatic / Computational</text>
+
+  <!-- LEFT column -->
+  <rect class="box" x="40"  y="50"  width="240" height="48" />
+  <text x="160" y="71"  text-anchor="middle"><tspan class="yr">1943</tspan>  McCulloch &amp; Pitts</text>
+  <text x="160" y="88"  text-anchor="middle">formal neuron as logic gate</text>
+
+  <rect class="box" x="40"  y="120" width="240" height="48" />
+  <text x="160" y="141" text-anchor="middle"><tspan class="yr">1948</tspan>  Turing</text>
+  <text x="160" y="158" text-anchor="middle">unorganized machines</text>
+
+  <rect class="box" x="40"  y="190" width="240" height="48" />
+  <text x="160" y="211" text-anchor="middle"><tspan class="yr">1949</tspan>  Hebb</text>
+  <text x="160" y="228" text-anchor="middle">cells that fire together, wire together</text>
+
+  <!-- RIGHT column -->
+  <rect class="box" x="480" y="50"  width="240" height="48" />
+  <text x="600" y="71"  text-anchor="middle"><tspan class="yr">1951</tspan>  Minsky &amp; Edmonds (SNARC)</text>
+  <text x="600" y="88"  text-anchor="middle">40 analog neurons in hardware</text>
+
+  <rect class="box" x="480" y="120" width="240" height="48" />
+  <text x="600" y="141" text-anchor="middle"><tspan class="yr">1954</tspan>  Farley &amp; Clark</text>
+  <text x="600" y="158" text-anchor="middle">first digital-computer NN simulation</text>
+
+  <rect class="box" x="480" y="190" width="240" height="48" />
+  <text x="600" y="211" text-anchor="middle"><tspan class="yr">1956</tspan>  Rochester et al.</text>
+  <text x="600" y="228" text-anchor="middle">Hebbian learning on IBM 704</text>
+
+  <!-- vertical flow within columns -->
+  <line class="flow" x1="160" y1="98"  x2="160" y2="120" marker-end="url(#arrowEnd)" />
+  <line class="flow" x1="160" y1="168" x2="160" y2="190" marker-end="url(#arrowEnd)" />
+  <line class="flow" x1="600" y1="98"  x2="600" y2="120" marker-end="url(#arrowEnd)" />
+  <line class="flow" x1="600" y1="168" x2="600" y2="190" marker-end="url(#arrowEnd)" />
+
+  <!-- diagonals to synthesis -->
+  <line class="flow" x1="160" y1="238" x2="320" y2="360" marker-end="url(#arrowEnd)" />
+  <line class="flow" x1="600" y1="238" x2="440" y2="360" marker-end="url(#arrowEnd)" />
+
+  <!-- synthesis node -->
+  <rect class="synth" x="260" y="360" width="240" height="60" />
+  <text x="380" y="384" text-anchor="middle" style="font-size:13px;font-weight:700;"><tspan class="yr">1958</tspan>  Rosenblatt — Perceptron</text>
+  <text x="380" y="402" text-anchor="middle">first learning algorithm with a guarantee</text>
+</svg>
+```
+
+### Manual / Theoretical (1943 – 1949)
+
+These works are *manual* in the sense that no machine ran them — they are
+mathematical and conceptual proposals about what a neuron, or a network of
+neurons, *could be*.
+
+**McCulloch & Pitts (1943)** [@mcculloch1943] proposed the first formal
+neuron: an all-or-none threshold unit. They proved that networks of such
+units can implement any propositional logic function. This is the abstraction
+every later artificial neuron inherits — the perceptron's
+$\mathrm{sign}(\mathbf{w}^\top\mathbf{x}+b)$ is a direct descendant.
+
+**Turing (1948)** [@turing1948], in an unpublished National Physical
+Laboratory report, sketched *"unorganized machines"* — randomly connected
+NAND-like networks that could be "organized" by external reinforcement. The
+report sat in obscurity until the 1960s but anticipated connectionism by a
+decade.
+
+**Hebb (1949)** [@hebb1949] proposed the first biologically grounded learning
+hypothesis: synapses strengthen when pre- and post-synaptic neurons fire
+together. "Hebbian learning" is the conceptual ancestor of every weight-update
+rule we use today.
+
+### Automatic / Computational (1951 – 1956)
+
+The next step was turning these theories into something a machine could
+actually run.
+
+**Minsky & Edmonds (1951)** built **SNARC** [@minsky1951] at Harvard — a
+40-neuron analog network wired from surplus B-24 bomber parts, simulating
+Hebbian learning in hardware. First physical artificial neural network.
+
+**Farley & Clark (1954)** [@farley1954] ran the first **digital simulation**
+of a self-organizing neural network on the MIT Lincoln Lab MTC computer.
+Their network could classify simple patterns after training — software
+neural nets were now possible.
+
+**Rochester, Holland, Habit & Duda (1956)** [@rochester1956] implemented
+Hebb's cell-assembly theory on an IBM 704 at IBM Research — the first
+systematic computational *test* of a neural learning hypothesis. The gap
+between Hebb's prediction and what the simulation produced was itself a
+scientific result.
+
+::: {.callout-warning title="Pitfall — don't conflate the two tracks" icon="false"}
+The theoretical track gave us the *abstraction* (neuron, learning rule).
+The computational track proved it could *run*. Neither alone is a
+learning system — the perceptron is what you get when both arrive on the
+same desk.
+:::
+
+## Application & impact
+
+The prehistory's "application" is the perceptron itself. Rosenblatt's
+[@rosenblatt1958] system unified the two tracks into one machine that
+*learned*.
+
+### Inheritance map
+
+| What Rosenblatt inherited | From |
+|---|---|
+| Threshold neuron | McCulloch & Pitts |
+| Weight-update learning idea | Hebb |
+| Digital implementation | Farley & Clark, Rochester et al. |
+| Custom physical hardware | descendant of SNARC's spirit |
+
+### What was genuinely new in 1958
+
+1. **A learning rule with a convergence guarantee** — later formalized by Novikoff [@novikoff1962].
+2. **Hardware that classified real images** — the Mark I Perceptron, with a $20\times20$ photocell input array.
+3. **A public demonstration** that triggered the field's first hype cycle —
+   and, when its limits were exposed by Minsky & Papert [@minsky1969], the
+   first AI winter.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+Rosenblatt did not invent the artificial neuron; he was the first to make
+one *learn*. Every later chapter in this timeline either extends, replaces,
+or reacts against pieces inherited from the 1943–1956 prehistory.
+:::
+
+→ Next: [The Artificial Neuron](01_artificial_neuron.qmd)
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

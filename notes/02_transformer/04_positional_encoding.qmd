@@ -1,6 +1,6 @@
 ---
 title: "Positional Encoding"
-format: [html, revealjs]
+format: html
 ---
 
 <!-- Code: nn_timeline.layers.embeddings.SinusoidalPE, RoPE -->

@@ -1,6 +1,6 @@
 ---
 title: "MLP & Backpropagation"
-format: [html, revealjs]
+format: html
 ---
 
 <!-- Code: notes-only -->

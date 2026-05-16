@@ -1,6 +1,6 @@
 ---
 title: "Gradient Flow & Vanishing Gradients"
-format: [html, revealjs]
+format: html
 ---
 
 <!-- Code: notes-only -->

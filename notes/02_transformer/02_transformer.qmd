@@ -1,6 +1,6 @@
 ---
 title: "The Transformer"
-format: [html, revealjs]
+format: html
 ---
 
 <!-- Code: nn_timeline.archs.tnn.Transformer -->

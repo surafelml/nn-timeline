@@ -1,6 +1,6 @@
 ---
 title: "KV-Cache"
-format: [html, revealjs]
+format: html
 ---
 
 <!-- Code: nn_timeline.generate.kv_cache -->

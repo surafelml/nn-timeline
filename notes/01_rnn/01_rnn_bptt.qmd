@@ -1,6 +1,6 @@
 ---
 title: "Vanilla RNN & BPTT"
-format: [html, revealjs]
+format: html
 ---
 
 <!-- Code: nn_timeline.layers.recurrent.RNNCell -->

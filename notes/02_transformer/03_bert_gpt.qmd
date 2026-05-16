@@ -1,6 +1,6 @@
 ---
 title: "BERT & GPT"
-format: [html, revealjs]
+format: html
 ---
 
 <!-- Code: nn_timeline.archs.tnn.BERT, GPT -->

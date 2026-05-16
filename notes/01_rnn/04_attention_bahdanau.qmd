@@ -1,6 +1,6 @@
 ---
 title: "Bahdanau Attention"
-format: [html, revealjs]
+format: html
 ---
 
 <!-- Code: nn_timeline.layers.attention.BahdanauAttention -->

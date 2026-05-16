@@ -1,6 +1,6 @@
 ---
 title: "Seq2Seq RNN Encoder-Decoder"
-format: [html, revealjs]
+format: html
 ---
 
 <!-- Code: nn_timeline.archs.rnn.Seq2SeqRNN -->

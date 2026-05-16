@@ -1,6 +1,6 @@
 ---
 title: "LSTM & GRU"
-format: [html, revealjs]
+format: html
 ---
 
 <!-- Code: nn_timeline.layers.recurrent.LSTMCell, GRUCell -->
