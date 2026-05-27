@@ -29,6 +29,9 @@ book:
         - 02_transformer/03_bert_gpt.qmd
         - 02_transformer/04_positional_encoding.qmd
         - 02_transformer/05_kv_cache.qmd
+    - part: "Going Deeper (supplementary)"
+      chapters:
+        - supp/01_artificial_neuron_numerical.qmd
     - references.qmd
 
 bibliography: references.bib
@@ -38,6 +41,6 @@ citations-hover: true
 
 format:
   html:
-    theme: cosmo
+    theme: [cosmo, custom.scss]
     code-fold: false
     toc: true

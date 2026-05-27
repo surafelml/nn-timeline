@@ -14,6 +14,8 @@ is a versioned, self-contained snapshot — RNN, Attention, Transformer — with
 notes that trace the scientific reasoning, not just the implementation. The moat
 is science depth and timeline; everything else is secondary.
 
+Most resources sit at three poles: textbooks (deep, stale), papers (deep, fragmented), blogs (current, shallow). The "I want to understand how we got here and how this works and have code I can run" middle ground is underserved. Timeline framing is forward-compatible: every new arch slots into the existing lineage rather than orphaning prior content -- establishing a **full picture**.
+
 For architectures beyond the Transformer era (MoE, alignment, etc.),
 dedicated `nn_timeline_xyz` packages inherit this core and explore those
 directions independently.

@@ -1,0 +1,35 @@
+/*-- scss:rules --*/
+
+// Per-page reference lists: smaller, muted, subtle separator above.
+h2#references {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #718096;
+  letter-spacing: 0.02em;
+  margin-top: 2.5rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+#refs.references {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #5f6b7a;
+}
+
+#refs .csl-entry {
+  margin-bottom: 0.45rem;
+  padding-left: 1.4em;
+  text-indent: -1.4em; // hanging indent, standard bibliography style
+}
+
+#refs .csl-entry a {
+  color: #5f6b7a;
+  text-decoration: underline;
+  text-decoration-color: #cbd5e0;
+}
+
+#refs .csl-entry a:hover {
+  color: #2563eb;
+  text-decoration-color: #2563eb;
+}

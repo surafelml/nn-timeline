@@ -144,6 +144,10 @@ the two diagonals — this is the wall.
   either change the features (kernels) or compose multiple neurons with a
   non-linearity in between (the MLP, next chapter).
 
+::: {.callout-tip title="Going deeper" icon="false"}
+- [Numerical walkthrough — perceptron updates on AND and XOR](../supp/01_artificial_neuron_numerical.qmd) — every step of the update rule by hand, with a figure showing the boundary rotating across epochs.
+:::
+
 ## Application & impact
 
 The artificial neuron is **legacy as a standalone learning machine** — no one
