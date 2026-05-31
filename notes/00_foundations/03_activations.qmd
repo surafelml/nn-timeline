@@ -1,0 +1,155 @@
+---
+title: "Activations & Non-linearity"
+format: html
+---
+
+<!-- Code: notes-only — no arch code, see notes/01_rnn for first implementation -->
+<!-- Next: 04_mlp_backprop.qmd -->
+<!-- Timeline anchor: sigmoid/tanh era (1980s-90s). ReLU (2010), GELU (2016) deferred. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Without a non-linearity, stacking layers is pointless — two linear maps
+collapse into one. The non-linearity $\phi$ is what makes depth *mean*
+something:
+$$\mathbf{h} = \phi(\mathbf{W}\mathbf{x} + \mathbf{b}).$$
+The early-era choices are **sigmoid** and **tanh**. Their **saturation** —
+flat tails where the derivative vanishes — is the seed of the
+vanishing-gradient problem taken up in the next chapter.
+:::
+
+**Depends on:** [Information Theory](02_information_theory.qmd)
+
+## Why this matters
+
+A neuron is a weighted sum followed by a non-linearity. The artificial-neuron
+chapter focused on the weighted sum; this one is about *why the non-linearity
+is not optional*. Strip it out and a deep network is algebraically identical
+to a shallow one — no amount of stacking buys representational power. The
+non-linearity is the single ingredient that lets composition build complexity.
+
+It also matters because the *choice* of activation shapes how gradients flow.
+The early activations (sigmoid, tanh) saturate, and that saturation is
+exactly what makes deep networks hard to train — the bridge to
+[gradient flow](05_gradient_flow.qmd).
+
+## The mechanism
+
+### Without non-linearity, depth collapses
+
+A linear layer is $\mathbf{h} = \mathbf{W}\mathbf{x}$. Stack two:
+
+$$
+\mathbf{y} = \mathbf{W}_2(\mathbf{W}_1\mathbf{x}) = (\mathbf{W}_2\mathbf{W}_1)\mathbf{x} = \mathbf{W}\mathbf{x}.
+$$
+
+The composition is *itself a single linear map* $\mathbf{W} = \mathbf{W}_2\mathbf{W}_1$.
+No depth, no gain. Inserting a non-linearity $\phi$ between layers breaks this
+collapse — the network can now represent functions no single linear map can.
+
+```{python}
+import numpy as np
+rng = np.random.default_rng(0)
+W1 = rng.normal(size=(4, 2))
+W2 = rng.normal(size=(1, 4))
+x  = rng.normal(size=(2,))
+
+two_layers = W2 @ (W1 @ x)        # stacked, no non-linearity
+one_layer  = (W2 @ W1) @ x        # a single equivalent linear map
+print("two linear layers:", two_layers)
+print("single equivalent:", one_layer)
+print("identical:", np.allclose(two_layers, one_layer))
+```
+
+### Sigmoid and tanh
+
+The two foundational activations:
+
+$$
+\sigma(z) = \frac{1}{1 + e^{-z}} \in (0, 1),
+\qquad
+\tanh(z) = \frac{e^{z} - e^{-z}}{e^{z} + e^{-z}} \in (-1, 1).
+$$
+
+Their derivatives have clean closed forms:
+
+$$
+\sigma'(z) = \sigma(z)\,(1 - \sigma(z)) \le \tfrac{1}{4},
+\qquad
+\tanh'(z) = 1 - \tanh^2(z) \le 1.
+$$
+
+Two things to note. First, both **saturate**: for large $|z|$ the output
+flattens and the derivative goes to zero. Second, **tanh is zero-centered**
+while sigmoid is not — sigmoid's all-positive outputs bias the gradients of
+the next layer, which is why tanh is generally preferred as a hidden
+activation [@lecun1998efficient].
+
+```{python}
+#| code-fold: true
+import matplotlib.pyplot as plt
+z = np.linspace(-6, 6, 300)
+sig  = 1 / (1 + np.exp(-z));  th = np.tanh(z)
+dsig = sig * (1 - sig);       dth = 1 - th**2
+
+fig, (a, b) = plt.subplots(1, 2, figsize=(8, 3))
+a.plot(z, sig, label="sigmoid"); a.plot(z, th, "--", label="tanh")
+a.set_title("activation"); a.legend(); a.grid(alpha=0.3)
+b.plot(z, dsig, label="sigmoid'"); b.plot(z, dth, "--", label="tanh'")
+b.set_title("derivative"); b.legend(); b.grid(alpha=0.3)
+plt.tight_layout(); plt.show()
+```
+
+### What to observe
+
+- The activations are **flat in the tails** — saturated. There, the
+  derivative (right panel) is near zero.
+- $\sigma'$ peaks at just $0.25$; $\tanh'$ at $1.0$. A chain of sigmoids
+  multiplies numbers $\le 0.25$ together — gradients shrink fast with depth.
+- This is the mechanism, not a side note: it is *why* deep sigmoid/tanh
+  networks were historically hard to train, and the direct setup for the
+  next chapter.
+
+::: {.callout-warning title="Pitfall — saturation kills gradients" icon="false"}
+A neuron driven deep into saturation (large $|z|$) has a near-zero
+derivative, so almost no gradient flows back through it — it stops learning.
+Picking activations, initializations, and normalizations that *keep units
+out of saturation* is a recurring theme for the rest of the book.
+:::
+
+## Application & impact
+
+Sigmoid and tanh are no longer the default hidden activation — modern nets
+use ReLU and its descendants (deferred to their timeline slots). But neither is legacy:
+both survive in specific, load-bearing roles.
+
+### What survived, what changed
+
+| Concept here | What it became | Where you see it today |
+|---|---|---|
+| **sigmoid** | gating function (squash to $(0,1)$) | LSTM input/forget/output gates; GLU/attention gates |
+| **tanh** | bounded state activation | LSTM cell-state update |
+| sigmoid output | probability head | binary classification output (with BCE from ch 02) |
+| **saturation problem** | motivation for non-saturating activations | ReLU (2010), GELU (2016) — deferred |
+| **non-linearity requirement** | universal approximation | every deep network; formalized with the MLP next chapter |
+
+### Concretely, where the lineage lands
+
+- **LSTM gates** are sigmoids: each gate outputs a value in $(0,1)$ that
+  multiplies a signal — "let none through" to "let all through."
+- **A binary classifier's output** is a sigmoid feeding the binary
+  cross-entropy of [chapter 02](02_information_theory.qmd) — i.e. logistic
+  regression.
+- **Modern hidden layers** abandoned sigmoid/tanh precisely *because* of the
+  saturation shown above; that story is told where ReLU and GELU appear.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+Non-linearity is the ingredient that makes depth worth having. The
+foundational choices — sigmoid and tanh — work, but their saturating tails
+choke gradients in deep stacks. That single weakness motivates both the
+vanishing-gradient analysis (next) and the modern activations that replaced
+them later in the timeline.
+:::
+
+→ Next: [MLP & Backpropagation](04_mlp_backprop.qmd)
+
+
