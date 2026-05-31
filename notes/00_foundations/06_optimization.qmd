@@ -1,0 +1,156 @@
+---
+title: "Optimization — GD, SGD, Momentum"
+format: html
+---
+
+<!-- Code: notes-only — no arch code, see notes/01_rnn for first implementation -->
+<!-- Next: ../01_rnn/01_rnn_bptt.qmd -->
+<!-- Timeline anchor: GD (Cauchy 1847), SGD (Robbins & Monro 1951), momentum (Polyak 1964). Adam (2014) deferred. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Backprop gives the gradient; **optimization** is the update rule applied to it. Walk
+downhill — $\boldsymbol{\theta} \leftarrow \boldsymbol{\theta} - \eta\,\nabla\mathcal{L}$.
+**SGD** estimates that gradient on a cheap, noisy mini-batch; **momentum**
+accumulates a velocity to accelerate along consistent directions and damp
+oscillation. Adaptive optimizers (Adam) build on exactly this, later.
+:::
+
+**Depends on:** [Gradient Flow & Vanishing Gradients](05_gradient_flow.qmd)
+
+## Why this matters
+
+Backprop ([chapter 04](04_mlp_backprop.qmd)) computes $\nabla\mathcal{L}$;
+it does not say how to *use* it. Optimization is the update machinery — and
+it is a direct descendant of the perceptron's rule from
+[chapter 01](01_artificial_neuron.qmd). The perceptron nudged
+$\mathbf{w}$ on each mistake; gradient descent generalizes that to *any*
+differentiable loss, and SGD + momentum make it fast and stable enough to
+train large networks. The choice of optimizer sets training speed, stability,
+and often the quality of the final solution.
+
+## The mechanism
+
+### Gradient descent
+
+The basic rule moves parameters opposite the gradient (Cauchy, 1847):
+
+$$
+\boldsymbol{\theta}_{t+1} = \boldsymbol{\theta}_t - \eta\,\nabla\mathcal{L}(\boldsymbol{\theta}_t).
+$$
+
+The **learning rate** $\eta$ is the one knob that matters most: too large and
+the iterates diverge or oscillate; too small and training crawls. **Batch**
+GD uses the full dataset for each step — accurate, but expensive.
+
+### Stochastic gradient descent
+
+SGD replaces the full-dataset gradient with an estimate from a **mini-batch**
+[@robbins1951]:
+
+$$
+\nabla\mathcal{L}(\boldsymbol{\theta}) \approx \frac{1}{|B|}\sum_{i \in B}\nabla\mathcal{L}_i(\boldsymbol{\theta}).
+$$
+
+It is far cheaper per step, and the **noise** is often a feature, not a bug:
+it helps escape saddle points and sharp minima. Essentially all deep-network
+training is mini-batch SGD or a descendant.
+
+### Momentum
+
+Plain GD crawls along gently sloped directions and oscillates across steep
+ones (the ill-conditioned bowl from [chapter 05](05_gradient_flow.qmd)).
+**Momentum** [@polyak1964] accumulates a velocity, so consistent gradient
+directions build speed while oscillations cancel:
+
+$$
+\mathbf{v}_{t+1} = \beta\,\mathbf{v}_t + \nabla\mathcal{L}(\boldsymbol{\theta}_t),
+\qquad
+\boldsymbol{\theta}_{t+1} = \boldsymbol{\theta}_t - \eta\,\mathbf{v}_{t+1}.
+$$
+
+### Minimal sketch — GD vs momentum
+
+On an ill-conditioned quadratic (steep in one axis, shallow in the other),
+watch momentum damp the oscillation and converge faster.
+
+```{python}
+import numpy as np, matplotlib.pyplot as plt
+
+a, b = 1.0, 20.0                       # curvatures: shallow x, steep y
+grad = lambda p: np.array([a*p[0], b*p[1]])
+
+def run(kind, steps=40, lr=0.08, beta=0.9):
+    p = np.array([9.0, 1.0]); v = np.zeros(2); traj = [p.copy()]
+    for _ in range(steps):
+        g = grad(p)
+        if kind == "gd":
+            p = p - lr*g
+        else:
+            v = beta*v + g
+            p = p - lr*v
+        traj.append(p.copy())
+    return np.array(traj)
+
+gd, mom = run("gd"), run("momentum")
+
+xs, ys = np.linspace(-10, 10, 100), np.linspace(-3, 3, 100)
+Xg, Yg = np.meshgrid(xs, ys); Z = 0.5*(a*Xg**2 + b*Yg**2)
+plt.figure(figsize=(6, 3))
+plt.contour(Xg, Yg, Z, levels=20, alpha=0.3)
+plt.plot(gd[:,0],  gd[:,1],  "o-", ms=3, label="GD")
+plt.plot(mom[:,0], mom[:,1], "o-", ms=3, label="momentum")
+plt.legend(); plt.title("GD vs momentum on an ill-conditioned bowl")
+plt.tight_layout(); plt.show()
+```
+
+### What to observe
+
+- **GD** zig-zags across the steep axis and inches along the shallow one —
+  the classic ill-conditioning slowdown.
+- **Momentum** cancels the back-and-forth (opposing steps subtract in the
+  velocity) and builds speed down the shallow axis — reaching the minimum in
+  far fewer steps.
+- Neither changes the gradient itself; they change *how the gradient is
+  used*. That is the whole job of an optimizer.
+
+::: {.callout-warning title="Pitfall — the learning rate dominates" icon="false"}
+Most training failures are learning-rate failures: too high → divergence or
+`NaN`; too low → apparent plateaus mistaken for convergence. Momentum adds a
+second knob ($\beta$) that can overshoot if set too high. Tune $\eta$ first;
+schedules and adaptive methods (later) automate part of this.
+:::
+
+## Application & impact
+
+This machinery is **live**, not legacy — every network in this book is
+trained by a descendant of SGD.
+
+### What this becomes
+
+| Concept here | What it became | Where you see it today |
+|---|---|---|
+| Perceptron update | Gradient descent on any loss | the foundation of all training |
+| Mini-batch SGD | The default training loop | every framework's optimizer step |
+| Momentum | SGD+momentum / Nesterov | still the workhorse for vision models |
+| Per-step velocity | **Adaptive optimizers** (Adam, AdamW) | trains essentially every transformer — deferred to Tier 4 / transformer era |
+| Fixed $\eta$ | Learning-rate **schedules** (warmup, cosine, inverse-sqrt) | LLM training recipes (deferred) |
+
+### Concretely, where the lineage lands
+
+- **`optimizer.step()`** in PyTorch is this update; `SGD(momentum=0.9)` is
+  literally the Polyak rule above.
+- **AdamW**, which trains most modern LLMs, is momentum plus a per-parameter
+  adaptive learning rate — a direct extension of what's here (deferred to a
+  later chapter).
+- **The XOR demo** in [chapter 04](04_mlp_backprop.qmd) was already doing
+  this — plain gradient descent on the cross-entropy loss.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+Optimization turns gradients into learning. Gradient descent is the skeleton,
+SGD makes it affordable, momentum makes it fast — and every adaptive optimizer
+later in the timeline is a refinement of these three moves, not a replacement.
+:::
+
+→ Next: RNN Era — [RNN & BPTT](../01_rnn/01_rnn_bptt.qmd)
+
+
