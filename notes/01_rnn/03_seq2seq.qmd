@@ -4,22 +4,8 @@ format: html
 ---
 
 <!-- Code: nn_timeline.archs.rnn.Seq2SeqRNN -->
-<!-- Next: 04_attention_bahdanau.qmd -->
 
-## Why this matters
-
-*Draft — write science note before implementation.*
-
-## The mechanism
-
-## Implementation
-
-```python
-# imports from nn_timeline once implemented
-```
-
-## What to observe
-
-## Key takeaway
-
-→ Next: 04_attention_bahdanau.qmd
+::: {.callout-note title="Coming soon" icon="false"}
+This chapter is in progress and will be published shortly.
+Return to the [book index](../index.qmd) or start from [Foundations](../00_foundations/00_historical.qmd).
+:::
