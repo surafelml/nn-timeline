@@ -1,0 +1,116 @@
+---
+title: "Numerical walkthrough — backprop by hand on a 2-2-1 net"
+format: html
+---
+
+← Back to: [MLP & Backpropagation](../00_foundations/04_mlp_backprop.qmd)
+
+::: {.callout-tip title="TL;DR" icon="false"}
+One forward pass and one backward pass through a 2-2-1 sigmoid network, with
+**explicit numbers** at every step. The goal is to demystify
+$\partial\mathcal{L}/\partial\mathbf{W}$ — it is arithmetic, not magic.
+:::
+
+## Setup
+
+A network with 2 inputs, 2 hidden units, 1 output, all sigmoid. Fixed
+weights and a single training example so every number is concrete.
+
+$$
+\mathbf{x} = \begin{bmatrix} 1 \\ 0 \end{bmatrix},\quad y = 1,
+\qquad
+\mathbf{W}^{(1)} = \begin{bmatrix} 0.1 & 0.2 \\ 0.3 & 0.4 \end{bmatrix},\;
+\mathbf{W}^{(2)} = \begin{bmatrix} 0.5 \\ 0.6 \end{bmatrix},
+$$
+
+biases zero, loss = binary cross-entropy. The code below is followed rather
+than transcribe every multiplication — the point is that each step is a
+small, checkable number.
+
+## Forward pass
+
+```{python}
+import numpy as np
+
+x  = np.array([1.0, 0.0])
+y  = 1.0
+W1 = np.array([[0.1, 0.2],
+               [0.3, 0.4]])      # rows = hidden units
+W2 = np.array([0.5, 0.6])        # hidden -> output
+
+sig = lambda z: 1 / (1 + np.exp(-z))
+
+z1 = W1 @ x          # pre-activation, hidden
+a1 = sig(z1)         # activation, hidden
+z2 = W2 @ a1         # pre-activation, output
+yhat = sig(z2)       # prediction
+
+print("z1 =", z1.round(4), " a1 =", a1.round(4))
+print("z2 =", round(z2, 4), " yhat =", round(yhat, 4))
+
+bce = -(y*np.log(yhat) + (1-y)*np.log(1-yhat))
+print("loss =", round(bce, 4))
+```
+
+## Backward pass
+
+Apply the two backprop facts from the parent note.
+
+**Output error** (sigmoid + BCE cancels to $\hat{y} - y$):
+
+```{python}
+d2 = yhat - y                    # scalar error at the output pre-activation
+dW2 = d2 * a1                    # gradient for W2 (outer product, here a vector)
+print("d2  =", round(d2, 4))
+print("dW2 =", dW2.round(4))
+```
+
+**Backprop into the hidden layer** ($\boldsymbol{\delta}^{(1)} = (\mathbf{W}^{(2)\top}\delta^{(2)}) \odot a_1(1-a_1)$):
+
+```{python}
+d1 = (W2 * d2) * a1 * (1 - a1)   # error at hidden pre-activations
+dW1 = np.outer(d1, x)            # gradient for W1
+print("d1  =", d1.round(4))
+print("dW1 =\n", dW1.round(4))
+```
+
+## Verify against numerical gradients
+
+Hand-derived gradients should match finite differences
+$\big(\mathcal{L}(w+\epsilon) - \mathcal{L}(w-\epsilon)\big)/2\epsilon$.
+
+```{python}
+def loss_with(W1, W2):
+    a1 = sig(W1 @ x)
+    yhat = sig(W2 @ a1)
+    return -(y*np.log(yhat) + (1-y)*np.log(1-yhat))
+
+eps = 1e-6
+num_dW2 = np.zeros_like(W2)
+for i in range(len(W2)):
+    Wp = W2.copy(); Wp[i] += eps
+    Wm = W2.copy(); Wm[i] -= eps
+    num_dW2[i] = (loss_with(W1, Wp) - loss_with(W1, Wm)) / (2*eps)
+
+print("analytic dW2:", dW2.round(6))
+print("numeric  dW2:", num_dW2.round(6))
+print("match:", np.allclose(dW2, num_dW2, atol=1e-5))
+```
+
+The analytic and numerical gradients agree — confirming the chain-rule
+bookkeeping is correct.
+
+## What this walkthrough teaches
+
+- Every gradient is a **product of local terms** already computed in the
+  forward pass ($a_1$, $\hat{y}$) — backprop reuses them rather than
+  recomputing.
+- The **outer-product** shape $\boldsymbol{\delta}\,\mathbf{a}^\top$ is why
+  weight gradients have the same shape as the weights.
+- **Gradient checking** (analytic vs finite-difference) is the standard way
+  to catch a backprop bug — a habit worth keeping when implementing layers
+  by hand later in the timeline.
+
+← Back to: [MLP & Backpropagation](../00_foundations/04_mlp_backprop.qmd)
+
+

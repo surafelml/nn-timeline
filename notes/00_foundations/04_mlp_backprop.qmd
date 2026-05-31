@@ -3,23 +3,163 @@ title: "MLP & Backpropagation"
 format: html
 ---
 
-<!-- Code: notes-only -->
-<!-- Next: 03_gradient_flow.qmd -->
+<!-- Code: notes-only — no arch code, see notes/01_rnn for first implementation -->
+<!-- Next: 05_gradient_flow.qmd -->
+<!-- Timeline anchor: Rumelhart, Hinton & Williams 1986. Sidecars: autodiff (1970s), universal approx (1989). -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+One **hidden layer** with a non-linearity solves XOR — the wall the
+perceptron hit. To *train* the hidden weights their gradients are needed, and
+**backpropagation** is just the chain rule applied layer by layer, reusing
+intermediate results:
+$$\frac{\partial \mathcal{L}}{\partial \mathbf{W}^{(l)}} = \boldsymbol{\delta}^{(l)} \, (\mathbf{a}^{(l-1)})^\top.$$
+Rumelhart, Hinton & Williams (1986) made this practical — and it still
+trains every network in this book.
+:::
+
+**Depends on:** [Activations & Non-linearity](03_activations.qmd)
 
 ## Why this matters
 
-*Draft — write science note before implementation.*
+The perceptron failed at XOR because one linear boundary can't separate the
+diagonals. A **multilayer perceptron** (MLP) — one hidden layer of neurons,
+each with a non-linearity — *can*: the hidden units carve the input space
+into pieces a final linear layer can combine. Representational power was
+never the hard part once you add a hidden layer.
+
+The hard part was **training** it. A hidden weight affects the loss only
+*indirectly*, through everything downstream of it. How much should it change?
+The answer — **backpropagation** [@rumelhart1986] — is the chain rule
+organized so that each layer's gradient is computed once and reused. It is
+the algorithm that turned multilayer networks from a known idea into a
+trainable reality.
 
 ## The mechanism
 
-## Implementation
+### The MLP
 
-```python
-# imports from nn_timeline once implemented
+A one-hidden-layer network maps input $\mathbf{x}$ to output $\hat{\mathbf{y}}$:
+
+$$
+\mathbf{z}^{(1)} = \mathbf{W}^{(1)}\mathbf{x} + \mathbf{b}^{(1)},
+\quad
+\mathbf{a}^{(1)} = \phi(\mathbf{z}^{(1)}),
+\quad
+\hat{\mathbf{y}} = \phi\!\big(\mathbf{W}^{(2)}\mathbf{a}^{(1)} + \mathbf{b}^{(2)}\big).
+$$
+
+The non-linearity $\phi$ (from [chapter 03](03_activations.qmd)) is what
+stops this collapsing to one linear map.
+
+### Backprop = chain rule, organized
+
+Training minimizes a loss $\mathcal{L}(\hat{\mathbf{y}}, \mathbf{y})$ (the
+cross-entropy from [chapter 02](02_information_theory.qmd)) by gradient
+descent. The target is $\partial\mathcal{L}/\partial\mathbf{W}^{(l)}$ for every
+layer. Define the **error signal** at layer $l$:
+
+$$
+\boldsymbol{\delta}^{(l)} = \frac{\partial \mathcal{L}}{\partial \mathbf{z}^{(l)}}.
+$$
+
+Two facts give the whole algorithm:
+
+1. **Output error.** For a sigmoid output with cross-entropy loss, the error
+   simplifies beautifully: $\boldsymbol{\delta}^{(\text{out})} = \hat{\mathbf{y}} - \mathbf{y}$.
+2. **Backward recursion.** Error propagates *backward* through the weights and
+   the activation's derivative:
+   $$
+   \boldsymbol{\delta}^{(l)} = \big((\mathbf{W}^{(l+1)})^\top \boldsymbol{\delta}^{(l+1)}\big) \odot \phi'(\mathbf{z}^{(l)}).
+   $$
+
+Then each weight gradient is an outer product of the error with the layer's
+input: $\partial\mathcal{L}/\partial\mathbf{W}^{(l)} = \boldsymbol{\delta}^{(l)}(\mathbf{a}^{(l-1)})^\top$.
+
+The efficiency comes from **reuse**: $\boldsymbol{\delta}^{(l)}$ is computed
+once and feeds both this layer's weight gradient and the next layer back.
+That reuse — dynamic programming over the computational graph — is why
+backprop costs about the same as the forward pass.
+
+### Minimal sketch — an MLP solving XOR
+
+A 2-2-1 network with manual backprop. Watch it learn the function the
+perceptron couldn't.
+
+```{python}
+import numpy as np
+rng = np.random.default_rng(1)
+
+X = np.array([[0,0],[0,1],[1,0],[1,1]], dtype=float)
+y = np.array([[0],[1],[1],[0]], dtype=float)        # XOR
+
+sigmoid = lambda z: 1 / (1 + np.exp(-z))
+
+W1 = rng.normal(size=(2, 2)); b1 = np.zeros((1, 2))
+W2 = rng.normal(size=(2, 1)); b2 = np.zeros((1, 1))
+lr = 0.5
+
+for epoch in range(8000):
+    a1   = sigmoid(X @ W1 + b1)            # hidden activations  (4,2)
+    yhat = sigmoid(a1 @ W2 + b2)           # output              (4,1)
+
+    d2 = (yhat - y) / len(X)               # output error  (BCE + sigmoid)
+    dW2 = a1.T @ d2;  db2 = d2.sum(0, keepdims=True)
+    d1 = (d2 @ W2.T) * a1 * (1 - a1)       # backprop through hidden
+    dW1 = X.T @ d1;   db1 = d1.sum(0, keepdims=True)
+
+    W2 -= lr*dW2; b2 -= lr*db2
+    W1 -= lr*dW1; b1 -= lr*db1
+
+pred = sigmoid(sigmoid(X @ W1 + b1) @ W2 + b2)
+print("predictions:", pred.round(2).ravel())
+print("targets:    ", y.ravel())
 ```
 
-## What to observe
+The predictions snap to the XOR targets — one hidden layer plus backprop
+clears the wall from [chapter 01](01_artificial_neuron.qmd).
 
-## Key takeaway
+::: {.callout-tip title="Going deeper" icon="false"}
+- [Numerical walkthrough — backprop by hand on a 2-2-1 net](../supp/04_mlp_backprop_numerical.qmd) — every partial derivative of one forward+backward pass, with explicit numbers.
+:::
 
-→ Next: 03_gradient_flow.qmd
+::: {.callout-warning title="Pitfall — backprop needs differentiable activations" icon="false"}
+The backward recursion multiplies by $\phi'(\mathbf{z})$. A hard step/sign
+function (the original perceptron) has zero derivative almost everywhere, so
+no gradient flows — which is exactly why the move to smooth activations
+(ch 03) was a prerequisite for training depth.
+:::
+
+## Application & impact
+
+Backpropagation is **not legacy** — it is the training algorithm, unchanged
+in principle since 1986. What grew around it is automation and scale.
+
+### What this becomes
+
+| Concept here | What it became | Where you see it today |
+|---|---|---|
+| Manual chain-rule recursion | **Reverse-mode autodiff** | PyTorch `autograd`, JAX `grad`, TensorFlow — every framework |
+| One hidden layer solves XOR | **Universal approximation** | the theoretical license for deep nets (upcoming sidecar) |
+| $\boldsymbol{\delta}^{(l)}$ recursion | The backward pass | `loss.backward()` in every training loop |
+| Outer-product weight gradients | Batched matmul gradients | every GPU training kernel |
+
+### Concretely, where the lineage lands
+
+- **`loss.backward()`** in PyTorch *is* this recursion, generalized to an
+  arbitrary computational graph by reverse-mode autodiff (deferred to a later
+  chapter).
+- **Training a transformer** is the same two-phase forward/backward loop —
+  only the graph is bigger and the matmuls run on a GPU.
+- **The XOR demo above** is, structurally, a tiny language model's training
+  step: forward, cross-entropy, backward, update.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+A hidden layer buys representational power; backpropagation makes that power
+*trainable* by computing every parameter's gradient in one organized backward
+sweep. Everything downstream — CNNs, RNNs, transformers — is this same
+forward/backward loop at larger scale.
+:::
+
+→ Next: [Gradient Flow & Vanishing Gradients](05_gradient_flow.qmd)
+
+
