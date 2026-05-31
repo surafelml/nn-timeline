@@ -4,7 +4,7 @@ format: html
 ---
 
 <!-- Code: notes-only -->
-<!-- Next: 02_mlp_backprop.qmd -->
+<!-- Next: 02_information_theory.qmd -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
 An artificial neuron is a weighted sum followed by a non-linearity:
@@ -29,6 +29,18 @@ It also matters for what it **cannot** do. Minsky & Papert [@minsky1969]
 proved that a single-layer perceptron cannot learn XOR — one linear boundary
 cannot separate non-linearly-separable classes. That single negative result
 motivates the multi-layer perceptron, and through it, every deep network.
+
+::: {.callout-note title="The setup: supervised learning" icon="false"}
+Everything in this chapter (and most of the book) lives in the **supervised
+learning** paradigm. The setup is a dataset of labelled examples
+$\{(\mathbf{x}_i, y_i)\}$ — each input $\mathbf{x}_i$ (the *features*) paired
+with a target $y_i$ (the *label*). The model is a parametric function
+$f_\theta$; *learning* means adjusting parameters $\theta$ so $f_\theta(\mathbf{x})$
+matches $y$ on examples it has seen (**training**) and, crucially, on examples
+it has not (**generalization**, measured on a held-out **test** set). The
+perceptron is the simplest instance: $\theta = (\mathbf{w}, b)$, and "matches"
+means the predicted sign equals the label.
+:::
 
 ## The mechanism
 
@@ -140,8 +152,8 @@ the two diagonals — this is the wall.
 - For AND the perceptron converges in a few epochs; mistakes go to zero.
 - For XOR mistakes oscillate forever — the *update rule is working*, the
   *hypothesis class* is the problem.
-- The boundary is **linear in input space**. To get curved boundaries we
-  either change the features (kernels) or compose multiple neurons with a
+- The boundary is **linear in input space**. Curved boundaries require
+  either changed features (kernels) or composed neurons with a
   non-linearity in between (the MLP, next chapter).
 
 ::: {.callout-tip title="Going deeper" icon="false"}
@@ -236,12 +248,10 @@ Three threads survived; the XOR limitation forced the fourth.
 The artificial neuron pins down the three pieces every later architecture
 keeps: a parametric prediction function, a parameter-update rule, and a
 convergence story. The XOR wall is what forces *depth* and *non-linearity*
-into the picture — the bridge to the next chapter.
+into the picture — resolved in the chapters ahead, once the learning
+signal (what to optimize) and activations (the non-linearity) are established.
 :::
 
-→ Next: [MLP & Backpropagation](02_mlp_backprop.qmd)
+→ Next: [Information Theory](02_information_theory.qmd)
 
-## References {.unnumbered}
 
-::: {#refs}
-:::

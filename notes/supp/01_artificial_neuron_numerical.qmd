@@ -130,7 +130,4 @@ on the other.
 
 ← Back to: [The Artificial Neuron](../00_foundations/01_artificial_neuron.qmd)
 
-## References {.unnumbered}
 
-::: {#refs}
-:::
