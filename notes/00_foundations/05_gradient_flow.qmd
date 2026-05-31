@@ -3,23 +3,147 @@ title: "Gradient Flow & Vanishing Gradients"
 format: html
 ---
 
-<!-- Code: notes-only -->
-<!-- Next: 01_rnn/01_rnn_bptt.qmd -->
+<!-- Code: notes-only — no arch code, see notes/01_rnn for first implementation -->
+<!-- Next: 06_optimization.qmd -->
+<!-- Timeline anchor: Hochreiter 1991, Bengio et al. 1994, Pascanu et al. 2013. Sidecar: initialization (Xavier 2010, He 2015). -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Backprop multiplies one factor per layer. In a deep stack those factors
+**compound**: if each is $< 1$ the gradient **vanishes** exponentially; if
+$> 1$ it **explodes**.
+$$\|\boldsymbol{\delta}^{(1)}\| \sim \prod_{l} \|\mathbf{W}^{(l)}\|\,\big|\phi'(\mathbf{z}^{(l)})\big|.$$
+This single fact — identified by Hochreiter (1991) and Bengio et al. (1994) —
+is the central obstacle to depth, and the reason much of the rest of this
+timeline exists.
+:::
+
+**Depends on:** [MLP & Backpropagation](04_mlp_backprop.qmd)
 
 ## Why this matters
 
-*Draft — write science note before implementation.*
+The previous chapter gave the backward recursion. This one asks: *what
+happens to that signal across many layers?* The answer is the deepest
+practical problem in the field's history. Because backprop **multiplies** a
+weight-and-derivative factor at every layer, the gradient reaching early
+layers is a long product. Products of numbers below one collapse toward zero;
+products above one blow up. Either way, early layers get an unusable signal —
+**vanishing** or **exploding** gradients [@hochreiter1991; @bengio1994].
+
+This is not a minor caveat. It is *why* deep sigmoid/tanh networks were
+nearly untrainable for years, *why* vanilla RNNs cannot learn long-range
+dependencies, and the direct motivation for LSTM gating, residual
+connections, normalization, and non-saturating activations — most of the
+architectural story still to come.
 
 ## The mechanism
 
-## Implementation
+### The product that backprop builds
 
-```python
-# imports from nn_timeline once implemented
+From [chapter 04](04_mlp_backprop.qmd), the error recursion is
+
+$$
+\boldsymbol{\delta}^{(l)} = \big((\mathbf{W}^{(l+1)})^\top \boldsymbol{\delta}^{(l+1)}\big) \odot \phi'(\mathbf{z}^{(l)}).
+$$
+
+Unrolling from the output down to layer 1 turns it into a **product** of
+$L$ such factors. In magnitude:
+
+$$
+\|\boldsymbol{\delta}^{(1)}\| \;\sim\; \prod_{l=1}^{L} \underbrace{\|\mathbf{W}^{(l)}\|}_{\text{weight scale}} \cdot \underbrace{\big|\phi'(\mathbf{z}^{(l)})\big|}_{\le\,0.25\text{ for sigmoid}}.
+$$
+
+The behavior is governed by whether the typical factor is below or above 1:
+
+- **Vanishing**: factor $< 1$ → $\|\boldsymbol{\delta}^{(1)}\|$ decays like
+  $r^{L}$, $r<1$. With sigmoid ($\phi' \le 0.25$), decay is severe.
+- **Exploding**: factor $> 1$ (large weights) → growth like $r^{L}$, $r>1$,
+  producing `NaN` losses [@pascanu2013].
+
+### Minimal sketch — gradient norm across depth
+
+Propagate an error signal back through a 50-layer sigmoid stack and watch its
+norm on a log scale.
+
+```{python}
+import numpy as np, matplotlib.pyplot as plt
+rng = np.random.default_rng(0)
+
+L, dim = 50, 32
+sig = lambda z: 1 / (1 + np.exp(-z))
+
+def gradient_norms(weight_scale):
+    Ws = [rng.normal(size=(dim, dim)) * weight_scale / np.sqrt(dim) for _ in range(L)]
+    a = rng.normal(size=dim); acts = [a]
+    for W in Ws:                       # forward
+        a = sig(W @ a); acts.append(a)
+    delta = rng.normal(size=dim)       # error injected at the output
+    norms = []
+    for l in reversed(range(L)):       # backward
+        delta = (Ws[l].T @ delta) * acts[l+1] * (1 - acts[l+1])
+        norms.append(np.linalg.norm(delta))
+    return norms[::-1]
+
+plt.figure(figsize=(5, 3))
+plt.semilogy(gradient_norms(1.0), label="weight scale 1.0  (vanishes)")
+plt.semilogy(gradient_norms(6.0), "--", label="weight scale 6.0  (explodes)")
+plt.xlabel("layer  (input ← output)"); plt.ylabel("‖gradient‖  (log scale)")
+plt.legend(); plt.grid(alpha=0.3); plt.tight_layout(); plt.show()
 ```
 
-## What to observe
+### What to observe
 
-## Key takeaway
+- On a **log scale** both curves are roughly straight lines — the hallmark of
+  **exponential** behavior in depth.
+- The default-scale sigmoid stack **vanishes**: by layer 1 the gradient is
+  many orders of magnitude smaller than at the output. Early layers barely
+  learn.
+- Large weights **explode** in the opposite direction. The knife-edge between
+  them is what good **initialization** targets — keeping the per-layer factor
+  near 1 (Xavier/He; a look-ahead) [@glorot2010].
 
-→ Next: 01_rnn/01_rnn_bptt.qmd
+::: {.callout-warning title="Pitfall — depth alone is not progress" icon="false"}
+Stacking more layers does **not** monotonically help if gradients vanish:
+the early layers stop receiving signal and the effective depth is far less
+than the nominal depth. Naively going deeper without addressing gradient
+flow (init, normalization, residuals, gating) often makes training *worse*.
+:::
+
+## Application & impact
+
+The vanishing/exploding gradient problem is arguably the **most
+consequential** entry in this book: a remarkable share of architectural
+innovation is, at heart, a fix for it.
+
+### What this problem motivated
+
+| The fix | What it does about gradient flow | Where in the timeline |
+|---|---|---|
+| **LSTM / GRU gating** | A near-additive cell path keeps the factor $\approx 1$ (constant error carousel) | RNN era — the next part |
+| **ReLU & non-saturating activations** | $\phi' = 1$ for active units → no $0.25$ shrink | deep-net / transformer era (deferred) |
+| **Careful initialization** (Xavier/He) | Sets weight scale so the per-layer factor starts near 1 | upcoming sidecar |
+| **Normalization** (Batch/Layer/RMS) | Re-centers activations to avoid saturation each layer | transformer era |
+| **Residual connections** | An identity path gives gradients a factor-1 shortcut | deep-net / transformer era |
+| **Gradient clipping** | Caps the norm to stop explosion → `NaN` | RNN training onward [@pascanu2013] |
+
+### Concretely, where the lineage lands
+
+- **The LSTM** (next part) exists primarily to solve this: its cell state is
+  an *additive* path, so the gradient does not get multiplied into oblivion
+  across time steps.
+- **Residual connections** in transformers are the same idea for depth: add,
+  don't only multiply, so a factor-1 route always exists.
+- **Every modern stack** combines several of these fixes at once —
+  non-saturating activations + normalization + residuals + good init — which
+  together is what finally made very deep networks routinely trainable.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+Backprop's strength — multiplying a factor per layer — is also its
+weakness: those factors compound into vanishing or exploding gradients. Hold
+this picture; the architectures ahead (LSTM gating, residuals, normalization)
+are best understood as different answers to *"how to keep the per-layer
+factor near 1?"*
+:::
+
+→ Next: [Optimization — GD, SGD, Momentum](06_optimization.qmd)
+
+
