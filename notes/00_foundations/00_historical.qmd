@@ -8,7 +8,7 @@ format: html
 
 ::: {.callout-tip title="TL;DR" icon="false"}
 Neural networks did not start with Rosenblatt. Two streams of work —
-**theoretical** (what *is* a neuron?) and **computational** (can we *run*
+**theoretical** (what *is* a neuron?) and **computational** (can a machine *run*
 one?) — converged in the late 1950s into the perceptron. The prehistory
 matters because every later innovation in this timeline traces back to one
 of these threads.
@@ -115,7 +115,7 @@ decade.
 **Hebb (1949)** [@hebb1949] proposed the first biologically grounded learning
 hypothesis: synapses strengthen when pre- and post-synaptic neurons fire
 together. "Hebbian learning" is the conceptual ancestor of every weight-update
-rule we use today.
+rule still in use today.
 
 ### Automatic / Computational (1951 – 1956)
 
@@ -175,7 +175,4 @@ or reacts against pieces inherited from the 1943–1956 prehistory.
 
 → Next: [The Artificial Neuron](01_artificial_neuron.qmd)
 
-## References {.unnumbered}
 
-::: {#refs}
-:::
