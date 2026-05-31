@@ -1,14 +1,8 @@
 ---
-title: "Bibliography"
-format: html
-nocite: |
-  @*
+title: "References"
 ---
 
-Complete bibliography of every work cited across the book, plus any
-additional entries in [references.bib](references.bib) not yet cited
-inline. Per-chapter reference sections show only the works cited on that
-page — this chapter shows everything.
+# References {#refs .unnumbered}
 
 ::: {#refs}
 :::

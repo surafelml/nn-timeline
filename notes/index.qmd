@@ -3,7 +3,12 @@ title: "nn_timeline"
 format: html
 ---
 
+*Published May 14, 2026 (updated: May 29, 2026)*
+
+> **Note:** Foundations chapters are available now. Later chapters are being added on a weekly basis.
+
 # Neural network architectures through time
+
 
 A notes-first walk through the architectures that shaped modern deep learning —
 from the perceptron to the transformer. Each chapter pairs a **science note**
@@ -179,7 +184,6 @@ and dynamic:
 - **Cross-links** between related nodes (e.g., LSTM gates ↔ GRU gates ↔
   Transformer gating in SwiGLU) to make conceptual lineage visible.
 
-Tracked under Phase 2 web tooling — see [tracker/ssot_plan.md](https://github.com/surafelml/nn-timeline/blob/main/tracker/ssot_plan.md) §10.
 :::
 
 ## How to read this book

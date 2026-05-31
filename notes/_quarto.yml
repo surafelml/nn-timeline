@@ -13,8 +13,11 @@ book:
       chapters:
         - 00_foundations/00_historical.qmd
         - 00_foundations/01_artificial_neuron.qmd
-        - 00_foundations/02_mlp_backprop.qmd
-        - 00_foundations/03_gradient_flow.qmd
+        - 00_foundations/02_information_theory.qmd
+        - 00_foundations/03_activations.qmd
+        - 00_foundations/04_mlp_backprop.qmd
+        - 00_foundations/05_gradient_flow.qmd
+        - 00_foundations/06_optimization.qmd
     - part: "RNN Era"
       chapters:
         - 01_rnn/01_rnn_bptt.qmd
@@ -32,12 +35,15 @@ book:
     - part: "Going Deeper (supplementary)"
       chapters:
         - supp/01_artificial_neuron_numerical.qmd
+        - supp/04_mlp_backprop_numerical.qmd
     - references.qmd
 
 bibliography: references.bib
-csl: https://www.zotero.org/styles/apa
+csl: sort-by-year.csl
 link-citations: true
+link-bibliography: true
 citations-hover: true
+suppress-bibliography: false
 
 format:
   html:

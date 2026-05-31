@@ -15,10 +15,10 @@ experiments/
 .DS_Store
 _site/
 .quarto/
-legacy/
-tracker/
 *.ipynb
 .idea/
 models/
 .mypy_cache/
 .claude/
+.legacy/
+.tracker/
