@@ -35,6 +35,9 @@ jobs:
       - name: Render Quarto book
         run: quarto render notes/
 
+      - name: Disable Jekyll
+        run: touch _site/.nojekyll
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
