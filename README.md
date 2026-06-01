@@ -1,126 +1,57 @@
 # nn_timeline
 
-A minimal package tracing neural network architectures and models through time.
+> A notes-first walk through the architectures that shaped modern deep learning —
+> from the perceptron to the transformer. Each chapter pairs a science note
+> (motivation, math, intuition) with a reference implementation in the `nn_timeline` package.
 
-```
-pip install nn-timeline
-```
+<img src="notes/assets/timeline.svg" alt="Neural network architecture timeline 1943–2026" width="100%">
+
+**Book:** [surafelml.github.io/nn-timeline](https://surafelml.github.io/nn-timeline)
+
+---
+
+## Updates
+
+| Date | Status |
+|---|---|
+| 2026-05-31 | **Foundations complete** — all 7 notes published (MP neuron → optimization). RNN and Transformer chapters: stubs live, drafts in progress. |
+| 2026-05-14 | Initial release — package skeleton, CI, notes infrastructure. |
+
+---
 
 ## Motivation
 
-The field moves fast, but understanding *why* each architecture superseded the last
-requires slowing down. `nn_timeline` is built around that premise: each milestone
-is a versioned, self-contained snapshot — RNN, Attention, Transformer — with
-notes that trace the scientific reasoning, not just the implementation. The moat
-is science depth and timeline; everything else is secondary.
+The field moves fast, but understanding *why* each architecture superseded the last requires slowing down. `nn_timeline` is built around that premise: each milestone is a self-contained chapter — notes that trace the scientific reasoning, not just the implementation.
 
-Most resources sit at three poles: textbooks (deep, stale), papers (deep, fragmented), blogs (current, shallow). The "I want to understand how we got here and how this works and have code I can run" middle ground is underserved. Timeline framing is forward-compatible: every new arch slots into the existing lineage rather than orphaning prior content -- establishing a **full picture**.
-
-For architectures beyond the Transformer era (MoE, alignment, etc.),
-dedicated `nn_timeline_xyz` packages inherit this core and explore those
-directions independently.
+Most resources sit at three poles: textbooks (deep, stale), papers (deep, fragmented), blogs (current, shallow). The *"I want to understand how we got here and how this works, with code I can run"* middle ground is underserved. Timeline framing is forward-compatible: every new architecture slots into the existing lineage rather than orphaning prior content.
 
 ## What it is
 
-- **Architecture timeline**: RNN → Attention → Transformer (versioned milestones, not a moving target)
-- **Importable package**: `from nn_timeline.layers import RoPE, MultiHeadAttention`
-- **Notes-first**: Quarto `.qmd`, math and derivations before every line of code
+- **Science notes**: Quarto `.qmd`, math and derivations before every line of code
+- **Architecture timeline**: Perceptron → RNN → Attention → Transformer (versioned milestones, not a moving target)
+- **Importable package**: `from nn_timeline.layers import MultiHeadAttention` *(coming — foundations notes are complete; layer implementations follow)*
 - **Runnable on Mac M\* or a single GPU** — no cluster required
-
-## How it works
-
-### Development loop
-
-Every component starts with a science note — no code before the note exists.
-
-```
-write science note (.qmd)        ← always start here
-  math, derivations, diagrams
-         │
-         ▼
-write test (red)
-         │
-         ▼
-implement until green
-         │
-         ▼
-revise note with findings
-         │
-         ▼
-tag versioned milestone
-```
-
-### Ecosystem: where new ideas go
-
-`nn_timeline` is the stable baseline floor, not a prototyping surface.
-When a new paper drops, the workflow is:
-
-```
-new paper (arxiv)
-       │
-       ├── need a baseline? ──► nn_timeline has it — import directly
-       │
-       ▼
-create nn-timeline-{topic}
-(separate repo, inherits nn_timeline)
-       │
-       ▼
-write science note first (.qmd)
-       │
-       ▼
-implement & benchmark vs nn_timeline baseline
-       │
-       ▼
-foundational to the timeline? ──yes──► candidate for nn_timeline v{next}
-                               ──no───► stays in nn-timeline-{topic}
-```
-
-This keeps `nn_timeline` stable and deep; extensions stay isolated until proven.
-
-## Quick start
-
-```python
-from nn_timeline.archs.tnn import Transformer
-from nn_timeline.archs.rnn import Seq2SeqRNN
-from nn_timeline.layers.attention import BahdanauAttention, MultiHeadAttention
-from nn_timeline.layers.embeddings import SinusoidalPE, RoPE
-from nn_timeline.train import Trainer
-from nn_timeline.metrics import BLEU
-```
 
 ## Repository layout
 
 ```
-nn_timeline/        # installable package
-  archs/rnn/        # LSTM, GRU, Seq2SeqRNN
-  archs/tnn/        # Transformer, GPT
-  layers/attention/ # BahdanauAttention, MultiHeadAttention
-  layers/embeddings/# SinusoidalPE, RoPE
-  layers/ffn/       # FFN, SwiGLU
-  layers/norm/      # LayerNorm, RMSNorm
-  layers/recurrent/ # LSTMCell, GRUCell
+nn_timeline/        # installable package (implementations follow notes)
+  archs/            # rnn/, tnn/ — milestone architectures
+  layers/           # attention/, embeddings/, ffn/, norm/, recurrent/
   train/            # Trainer, optimizer, scheduler, checkpoint
-  generate/         # beam search, sampling, kv_cache
   metrics/          # BLEU, chrF, Perplexity
-  data/             # dictionary, BPE tokenizer, datasets
-cli/                # preprocess / train / generate / evaluate
-notes/              # Quarto .qmd — science notes, math-first, one concept per file
+notes/              # Quarto .qmd — science notes, one concept per file
+  00_foundations/   # complete: 7 notes, 1958–1991
+  01_rnn/           # in progress
+  02_transformer/   # in progress
 tests/              # pytest suite, TDD red→green
 ```
 
 ## Notes
 
-Notes live at [surafelml.github.io/nn-timeline](https://surafelml.github.io/nn-timeline) (Quarto → GitHub Pages).
-Each notebook imports from `nn_timeline` directly — code is always the SSOT.
+Notes live at [surafelml.github.io/nn-timeline](https://surafelml.github.io/nn-timeline).
 
-## Pre-trained models
-
-Checkpoints are hosted on [HuggingFace Hub](https://huggingface.co/surafelml).
-
-```python
-from nn_timeline.train.checkpoint import load_from_hub
-model = load_from_hub("surafelml/transformer-mt-en-de-small")
-```
+Foundations chapters are available now. RNN and Transformer chapters are being added on a rolling basis.
 
 ## Ecosystem
 
