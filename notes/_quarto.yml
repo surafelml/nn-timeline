@@ -47,6 +47,8 @@ suppress-bibliography: false
 
 format:
   html:
-    theme: [cosmo, custom.scss]
+    theme:
+      light: [cosmo, custom.scss]
+      dark: [darkly, custom.scss]
     code-fold: false
     toc: true
