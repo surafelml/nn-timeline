@@ -3,7 +3,7 @@ title: "The Artificial Neuron — From McCulloch-Pitts to the Perceptron"
 format: html
 ---
 
-<!-- Code: notes-only -->
+<!-- Code: notes-only — no arch code, see notes/01_rnn for first implementation -->
 <!-- Next: 02_information_theory.qmd -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}

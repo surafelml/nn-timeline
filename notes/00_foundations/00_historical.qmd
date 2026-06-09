@@ -3,7 +3,7 @@ title: "Before the Perceptron — A Short Prehistory"
 format: html
 ---
 
-<!-- Code: notes-only -->
+<!-- Code: notes-only — no arch code, see notes/01_rnn for first implementation -->
 <!-- Next: 01_artificial_neuron.qmd -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
