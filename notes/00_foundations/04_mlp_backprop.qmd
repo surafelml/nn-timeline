@@ -139,7 +139,7 @@ in principle since 1986. What grew around it is automation and scale.
 | Concept here | What it became | Where you see it today |
 |---|---|---|
 | Manual chain-rule recursion | **Reverse-mode autodiff** | PyTorch `autograd`, JAX `grad`, TensorFlow — every framework |
-| One hidden layer solves XOR | **Universal approximation** | the theoretical license for deep nets (upcoming sidecar) |
+| One hidden layer solves XOR | **Universal approximation** | the theoretical license for deep nets (upcoming sidecar); raises the question of *capacity* — see [Prerequisites](../supp/00_prerequisites.qmd#capacity-and-generalization-a-preview) |
 | $\boldsymbol{\delta}^{(l)}$ recursion | The backward pass | `loss.backward()` in every training loop |
 | Outer-product weight gradients | Batched matmul gradients | every GPU training kernel |
 

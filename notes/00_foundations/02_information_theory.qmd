@@ -89,7 +89,9 @@ Since $H(p)$ is fixed by the data, **minimizing cross-entropy is exactly
 minimizing $D_{\mathrm{KL}}(p\,\|\,q)$** — pushing the model's distribution
 toward the data's. (And minimizing cross-entropy is equivalent to
 **maximizing log-likelihood** — the same objective from a statistician's
-chair.)
+chair. If maximum-likelihood estimation is unfamiliar, the
+[Prerequisites appendix](../supp/00_prerequisites.qmd#probability)
+has a one-table refresher.)
 
 ### Minimal sketch
 

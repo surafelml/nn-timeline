@@ -1,0 +1,120 @@
+---
+title: "Mathematical Prerequisites"
+format: html
+---
+
+← Back to: [Home](../index.qmd)
+
+::: {.callout-tip title="TL;DR" icon="false"}
+You need three tools: **linear algebra** (vectors and matrix multiplication),
+**calculus** (partial derivatives and the chain rule), and **probability**
+(expected values and distributions). If these feel familiar, start at
+[Chapter 1](../00_foundations/01_artificial_neuron.qmd). If not, this page
+gives you enough to follow every derivation in Foundations — no prior
+deep-learning background required.
+:::
+
+---
+
+## Linear algebra
+
+Every layer in a neural network is a matrix–vector product. The table below
+lists what you need to be fluent with.
+
+| Concept | Notation | What it means |
+|---|---|---|
+| Column vector | $\mathbf{x} \in \mathbb{R}^n$ | $n$ numbers stacked vertically |
+| Dot product | $\mathbf{w}^\top \mathbf{x} = \sum_i w_i x_i$ | weighted sum; how "aligned" two vectors are |
+| Matrix–vector product | $\mathbf{z} = \mathbf{W}\mathbf{x}$, $\mathbf{W} \in \mathbb{R}^{m \times n}$ | apply a linear map; output is $m$-dimensional |
+| Transpose | $\mathbf{W}^\top \in \mathbb{R}^{n \times m}$ | flip rows and columns |
+| Matrix product | $\mathbf{AB}$, shapes $(m \times k)(k \times n) \to (m \times n)$ | compose two linear maps |
+| Outer product | $\mathbf{u}\mathbf{v}^\top \in \mathbb{R}^{m \times n}$ | rank-1 matrix; appears in every weight-gradient formula |
+| Norm | $\|\mathbf{x}\|_2 = \sqrt{\sum_i x_i^2}$ | "length" of a vector |
+
+**Self-check:** if you can multiply a $(3 \times 2)$ matrix by a $(2,)$
+vector by hand and explain why the output is 3-dimensional, you have enough.
+
+**Further reading:**
+[3Blue1Brown — Essence of Linear Algebra](https://www.3blue1brown.com/topics/linear-algebra)
+(chapters 1–9 cover everything above in ~2 hours).
+
+---
+
+## Calculus
+
+Training is minimizing a loss over parameters. That requires derivatives.
+
+| Concept | Notation | What it means |
+|---|---|---|
+| Derivative | $\frac{df}{dx}$ | rate of change of $f$ w.r.t. $x$; slope of the curve at a point |
+| Partial derivative | $\frac{\partial f}{\partial x_i}$ | derivative w.r.t. one variable, holding all others fixed |
+| Gradient | $\nabla_{\mathbf{x}} f = \left(\frac{\partial f}{\partial x_1}, \ldots, \frac{\partial f}{\partial x_n}\right)$ | vector of all partial derivatives; points in the direction of steepest increase |
+| Chain rule | $\frac{d}{dx}[f(g(x))] = f'(g(x))\cdot g'(x)$ | derivative of a composed function; the engine of backpropagation |
+| Multivariate chain rule | $\frac{\partial \mathcal{L}}{\partial x} = \sum_k \frac{\partial \mathcal{L}}{\partial z_k}\frac{\partial z_k}{\partial x}$ | each intermediate variable contributes a gradient path |
+
+**Self-check:** if you can differentiate $\mathcal{L} = (wx + b - y)^2$ with
+respect to both $w$ and $b$, and can state the chain rule in your own words,
+you have enough.
+
+**Further reading:**
+[3Blue1Brown — Essence of Calculus](https://www.3blue1brown.com/topics/calculus)
+(chapters 1–4 for derivatives; chapter 8 for multivariate / gradient).
+
+---
+
+## Probability
+
+Cross-entropy and likelihood are probabilistic quantities. You need a
+working definition of distributions and expectation.
+
+| Concept | Notation | What it means |
+|---|---|---|
+| Random variable | $X$ | a quantity whose value is drawn from a distribution |
+| Probability mass/density | $P(X = x)$, $p(x)$ | how likely each outcome is; must sum/integrate to 1 |
+| Expectation | $\mathbb{E}[f(X)] = \sum_x p(x)\,f(x)$ | average value of $f$ under the distribution |
+| Bernoulli distribution | $X \sim \text{Bern}(p)$ | binary outcome: 1 with probability $p$, 0 with $1{-}p$ |
+| Gaussian distribution | $X \sim \mathcal{N}(\mu, \sigma^2)$ | bell curve; mean $\mu$, variance $\sigma^2$ |
+| Log-likelihood | $\log P(y \mid \mathbf{x}; \theta)$ | log of the probability the model assigns to the true outcome |
+| Maximum likelihood estimation (MLE) | $\hat{\theta} = \arg\max_\theta \log P(\mathbf{y} \mid \mathbf{X}; \theta)$ | choose parameters that make the observed data most probable |
+
+**Self-check:** if you can write the likelihood of $n$ independent coin
+flips and explain why taking the log turns a product into a sum, you have
+enough.
+
+The key connection for this book: **minimizing cross-entropy loss is
+identical to maximizing log-likelihood** — the same optimization from two
+different starting points (information theory vs. statistics). This is
+derived in [Chapter 2 — Information Theory](../00_foundations/02_information_theory.qmd).
+
+**Further reading:**
+[StatQuest — Probability Fundamentals](https://www.youtube.com/c/joshstarmer)
+(search "MLE" and "probability distributions").
+
+---
+
+## Capacity and generalization (a preview)
+
+**Capacity** is a rough measure of the complexity of functions a model can
+represent. As architectures grow more powerful, capacity grows — and with it,
+the risk of *overfitting*: fitting the training data so well that the model
+fails on new examples.
+
+| Architecture | What raises capacity | Risk it introduces |
+|---|---|---|
+| Perceptron | single linear boundary | underfits non-linear data |
+| MLP | hidden layers + non-linearities | overfits small datasets |
+| RNN / LSTM | recurrent state, gating | overfits long sequences |
+| Transformer | attention over all positions | overfits without regularization |
+
+The pattern holds across the whole timeline: **each architecture adds
+capacity in a targeted way** — not arbitrarily. Understanding *why* the
+capacity was added (and what it was meant to fix) is the throughline of
+every chapter.
+
+::: {.callout-note title="What this book does not cover" icon="false"}
+The formal tools for reasoning about capacity — VC dimension, bias–variance
+decomposition, regularization — go beyond these notes. The intuition above
+is all that's needed to follow the derivations.
+:::
+
+This thread starts at [MLP & Backpropagation](../00_foundations/04_mlp_backprop.qmd).

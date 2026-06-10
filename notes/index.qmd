@@ -188,6 +188,9 @@ and dynamic:
 
 ## How to read this book
 
+- **New to the math?** Start with
+  [Mathematical Prerequisites](supp/00_prerequisites.qmd) — a one-page
+  reference for the linear algebra, calculus, and probability used throughout.
 - Start with **Foundations** for the math and intuition.
 - Each later chapter assumes the previous one; cross-references point back when
   a derivation depends on earlier material.
