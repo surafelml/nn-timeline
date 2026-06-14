@@ -4,7 +4,7 @@ format: html
 ---
 
 <!-- Code: notes-only — no arch code, see notes/01_rnn for first implementation -->
-<!-- Next: ../01_rnn/01_rnn_bptt.qmd -->
+<!-- Next: ../01_rnn/00_embeddings.qmd -->
 <!-- Timeline anchor: GD (Cauchy 1847), SGD (Robbins & Monro 1951), momentum (Polyak 1964). Adam (2014) deferred. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
@@ -151,6 +151,6 @@ SGD makes it affordable, momentum makes it fast — and every adaptive optimizer
 later in the timeline is a refinement of these three moves, not a replacement.
 :::
 
-→ Next: RNN Era — [RNN & BPTT](../01_rnn/01_rnn_bptt.qmd)
+→ Next: RNN Era — [Word Embeddings](../01_rnn/00_embeddings.qmd)
 
 

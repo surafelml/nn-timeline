@@ -130,11 +130,8 @@ from the perceptron to the transformer. Each chapter pairs a **science note**
     <line class="lead" x1="0" y1="-4" x2="0" y2="-50" />
     <circle class="dot-rnn" cx="0" cy="0" r="6" />
     <text class="yr" x="0" y="-58" text-anchor="middle">2015</text>
-    <a href="01_rnn/04_attention_bahdanau.html">
-      <text x="0" y="-75" text-anchor="middle">Bahdanau attn</text>
-    </a>
-    <a href="01_rnn/05_attention_luong.html">
-      <text x="0" y="-93" text-anchor="middle">Luong attn</text>
+    <a href="01_rnn/05_attention.html">
+      <text x="0" y="-75" text-anchor="middle">Attention</text>
     </a>
   </g>
 

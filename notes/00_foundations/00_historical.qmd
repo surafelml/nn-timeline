@@ -173,6 +173,19 @@ one *learn*. Every later chapter in this timeline either extends, replaces,
 or reacts against pieces inherited from the 1943–1956 prehistory.
 :::
 
+::: {.callout-note title="The 2012 inflection point" icon="false"}
+The perceptron's first AI winter ended with a slow revival through the 1980s
+and 1990s (backpropagation, LSTMs). The moment the field went mainstream was
+**2012**: Krizhevsky, Sutskever & Hinton's **AlexNet** won ImageNet by a
+margin that shocked the computer vision community — cutting the error rate
+nearly in half using deep convolutional networks trained on GPUs. It
+validated depth, ReLU, dropout, and GPU training in a single result. The
+credibility that unlocked investment in RNNs, attention, and eventually the
+Transformer was largely borrowed from this moment, even though AlexNet was
+a vision model. Vision CNNs are a parallel lineage outside the scope of this
+book; AlexNet's *impact on the field* is not.
+:::
+
 → Next: [The Artificial Neuron](01_artificial_neuron.qmd)
 
 

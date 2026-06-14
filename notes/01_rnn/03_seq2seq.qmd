@@ -4,8 +4,251 @@ format: html
 ---
 
 <!-- Code: nn_timeline.archs.rnn.Seq2SeqRNN -->
+<!-- Next: 04_convseq2seq.qmd -->
+<!-- Timeline anchor: Sutskever et al. 2014, Cho et al. 2014. -->
 
-::: {.callout-note title="Coming soon" icon="false"}
-This chapter is in progress and will be published shortly.
-Return to the [book index](../index.qmd) or start from [Foundations](../00_foundations/00_historical.qmd).
+::: {.callout-tip title="TL;DR" icon="false"}
+Two LSTMs end-to-end: an **encoder** reads the entire source sequence and
+compresses it to a fixed vector $c = h_T^{\text{enc}}$; a **decoder**
+generates the target token by token, conditioned on $c$.
+**Sutskever, Vinyals & Le** (2014) used this to build the first neural MT
+system competitive with phrase-based pipelines. The fixed context vector
+is both the architecture's breakthrough and its bottleneck — the problem
+attention was built to solve.
 :::
+
+**Depends on:** [LSTM & GRU](02_lstm_gru.qmd)
+
+## Why this matters
+
+Before Seq2Seq, natural language processing was a pipeline: tokenise,
+parse, align, translate, reorder, score. Each component was separately
+engineered and separately trained. A single differentiable model that maps
+an entire input sequence to an entire output sequence — trained end-to-end
+on (source, target) pairs — was architecturally new.
+
+Three things Seq2Seq introduced that every downstream model inherits:
+
+- **Encoder-decoder abstraction.** The encoder produces a representation;
+  the decoder consumes it. Attention, the Transformer, and T5 all follow
+  this split.
+- **Autoregressive decoding.** The decoder generates one token at a time,
+  conditioning each token on all previous outputs.
+- **End-to-end differentiability.** The entire system — encoder, decoder,
+  output projection — is trained jointly on cross-entropy.
+
+## The mechanism
+
+### Encoder
+
+The encoder is a stack of LSTMs that reads the source sequence left to right:
+
+$$
+h_t^{\text{enc}}, c_t^{\text{enc}}
+= \text{LSTM}\!\bigl(h_{t-1}^{\text{enc}},\, c_{t-1}^{\text{enc}},\, x_t\bigr).
+$$
+
+The context vector is the final hidden state:
+$\mathbf{c} = h_{T_x}^{\text{enc}}$.
+
+**Sutskever et al.** [@sutskever2014] found that reversing the source
+sequence before encoding improved translation quality — putting the
+beginning of the source closer to the beginning of the target in the
+unrolled graph shortens the gradient path.
+
+### Decoder
+
+The decoder generates the target sequence autoregressively:
+
+$$
+h_t^{\text{dec}}, c_t^{\text{dec}}
+= \text{LSTM}\!\bigl(h_{t-1}^{\text{dec}},\, c_{t-1}^{\text{dec}},\,
+  [y_{t-1};\, \mathbf{c}]\bigr),
+$$
+$$
+P(y_t \mid y_{<t}, \mathbf{c})
+= \operatorname{softmax}\!\bigl(\mathbf{W}_o h_t^{\text{dec}} + \mathbf{b}_o\bigr).
+$$
+
+The embedding of the previous target token $y_{t-1}$ and the context
+vector $\mathbf{c}$ are concatenated as the decoder's input at each step.
+At inference, $y_{t-1}$ is the model's own previous prediction
+(greedy or beam-search).
+
+```{=html}
+<svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:680px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="s2s-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#2563eb"/>
+    </marker>
+    <marker id="s2s-ay" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#d97706"/>
+    </marker>
+    <marker id="s2s-ac" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <!-- Encoder label -->
+  <text x="130" y="18" text-anchor="middle" font-size="12" font-weight="700" fill="#1e40af">Encoder</text>
+
+  <!-- Encoder cells -->
+  <rect x="30"  y="70" width="64" height="44" rx="5" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="62"  y="97" text-anchor="middle" font-size="11" font-weight="600" fill="#1e40af">LSTM</text>
+
+  <rect x="114" y="70" width="64" height="44" rx="5" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="146" y="97" text-anchor="middle" font-size="11" font-weight="600" fill="#1e40af">LSTM</text>
+
+  <rect x="198" y="70" width="64" height="44" rx="5" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="230" y="97" text-anchor="middle" font-size="11" font-weight="600" fill="#1e40af">LSTM</text>
+
+  <!-- Encoder h arrows -->
+  <line x1="94"  y1="92" x2="112" y2="92" stroke="#2563eb" stroke-width="1.5" marker-end="url(#s2s-ah)"/>
+  <line x1="178" y1="92" x2="196" y2="92" stroke="#2563eb" stroke-width="1.5" marker-end="url(#s2s-ah)"/>
+
+  <!-- Encoder x inputs -->
+  <line x1="62"  y1="150" x2="62"  y2="116" stroke="#64748b" stroke-width="1.2" marker-end="url(#s2s-ah)"/>
+  <line x1="146" y1="150" x2="146" y2="116" stroke="#64748b" stroke-width="1.2" marker-end="url(#s2s-ah)"/>
+  <line x1="230" y1="150" x2="230" y2="116" stroke="#64748b" stroke-width="1.2" marker-end="url(#s2s-ah)"/>
+  <text x="62"  y="168" text-anchor="middle" font-size="11" fill="#374151">x₁</text>
+  <text x="146" y="168" text-anchor="middle" font-size="11" fill="#374151">x₂</text>
+  <text x="230" y="168" text-anchor="middle" font-size="11" fill="#374151">x_T</text>
+
+  <!-- Context vector -->
+  <rect x="282" y="78" width="60" height="28" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="312" y="97" text-anchor="middle" font-size="12" font-weight="700" fill="#6d28d9">c</text>
+  <line x1="262" y1="92" x2="280" y2="92" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#s2s-ac)"/>
+
+  <!-- Decoder label -->
+  <text x="530" y="18" text-anchor="middle" font-size="12" font-weight="700" fill="#1e40af">Decoder</text>
+
+  <!-- Decoder cells -->
+  <rect x="360" y="70" width="64" height="44" rx="5" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="392" y="97" text-anchor="middle" font-size="11" font-weight="600" fill="#1e40af">LSTM</text>
+
+  <rect x="444" y="70" width="64" height="44" rx="5" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="476" y="97" text-anchor="middle" font-size="11" font-weight="600" fill="#1e40af">LSTM</text>
+
+  <rect x="528" y="70" width="64" height="44" rx="5" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="560" y="97" text-anchor="middle" font-size="11" font-weight="600" fill="#1e40af">LSTM</text>
+
+  <!-- c → decoder -->
+  <line x1="342" y1="92" x2="358" y2="92" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#s2s-ac)"/>
+
+  <!-- Decoder h arrows -->
+  <line x1="424" y1="92" x2="442" y2="92" stroke="#2563eb" stroke-width="1.5" marker-end="url(#s2s-ah)"/>
+  <line x1="508" y1="92" x2="526" y2="92" stroke="#2563eb" stroke-width="1.5" marker-end="url(#s2s-ah)"/>
+
+  <!-- Decoder outputs (top) -->
+  <line x1="392" y1="70" x2="392" y2="34" stroke="#d97706" stroke-width="1.2" marker-end="url(#s2s-ay)"/>
+  <line x1="476" y1="70" x2="476" y2="34" stroke="#d97706" stroke-width="1.2" marker-end="url(#s2s-ay)"/>
+  <line x1="560" y1="70" x2="560" y2="34" stroke="#d97706" stroke-width="1.2" marker-end="url(#s2s-ay)"/>
+  <text x="392" y="24" text-anchor="middle" font-size="11" fill="#d97706">y₁</text>
+  <text x="476" y="24" text-anchor="middle" font-size="11" fill="#d97706">y₂</text>
+  <text x="560" y="24" text-anchor="middle" font-size="11" fill="#d97706">y_T</text>
+
+  <!-- Decoder y_{t-1} inputs (bottom) -->
+  <line x1="392" y1="150" x2="392" y2="116" stroke="#64748b" stroke-width="1.2" marker-end="url(#s2s-ah)"/>
+  <line x1="476" y1="150" x2="476" y2="116" stroke="#64748b" stroke-width="1.2" marker-end="url(#s2s-ah)"/>
+  <line x1="560" y1="150" x2="560" y2="116" stroke="#64748b" stroke-width="1.2" marker-end="url(#s2s-ah)"/>
+  <text x="392" y="168" text-anchor="middle" font-size="11" fill="#374151">⟨BOS⟩</text>
+  <text x="476" y="168" text-anchor="middle" font-size="11" fill="#374151">y₁</text>
+  <text x="560" y="168" text-anchor="middle" font-size="11" fill="#374151">y₂</text>
+</svg>
+```
+
+### Teacher forcing and exposure bias
+
+At **training** time, the decoder receives the gold target token
+$y_{t-1}$ as input at each step, regardless of its own prediction.
+This makes gradients stable and training fast.
+
+At **inference** time, there is no gold input — the decoder must feed
+its own previous prediction $\hat{y}_{t-1}$. The mismatch between
+training distribution (perfect prefix) and inference distribution
+(own predictions, possibly wrong) is called **exposure bias**. Errors
+accumulate: a wrong token at step 3 corrupts step 4's input, compounding
+throughout the sequence.
+
+::: {.callout-warning title="Pitfall — the fixed context bottleneck" icon="false"}
+$\mathbf{c} = h_{T_x}^{\text{enc}}$ must encode the entire source sentence
+in a vector of fixed size $d_h$. For short sentences this is fine; for long
+sentences, information is lost. Translation quality degrades sharply beyond
+~20 tokens. This is the problem Bahdanau et al. (2015) solve by replacing
+$\mathbf{c}$ with a dynamic, per-step weighted sum over all encoder hidden
+states.
+:::
+
+### Minimal sketch
+
+A minimal NumPy Seq2Seq: encode a source sequence to a context vector,
+then decode greedily using the context at every step.
+
+```{python}
+import numpy as np
+
+rng = np.random.default_rng(1)
+d_x, d_h, V = 8, 16, 20   # embed dim, hidden dim, vocab size
+
+def sigmoid(z): return 1 / (1 + np.exp(-z))
+
+# Shared LSTM step (same structure for encoder and decoder)
+W = rng.normal(scale=0.1, size=(4 * d_h, d_h + d_x))
+b = np.zeros(4 * d_h)
+
+def lstm_step(h, c, x):
+    f, i, g, o = np.split(W @ np.concatenate([h, x]) + b, 4)
+    c = sigmoid(f) * c + sigmoid(i) * np.tanh(g)
+    return sigmoid(o) * np.tanh(c), c
+
+# Encoder
+source = rng.normal(size=(6, d_x))       # 6-token source sequence
+h, c = np.zeros(d_h), np.zeros(d_h)
+for x in source:
+    h, c = lstm_step(h, c, x)
+context = h                               # fixed context vector
+
+# Decoder — greedy, feed context at every step
+Wo = rng.normal(scale=0.1, size=(V, d_h))
+E  = rng.normal(scale=0.01, size=(d_x, V))  # target token embeddings
+
+h, c = context, np.zeros(d_h)
+token = 0                                  # <BOS> token id
+output = []
+for _ in range(4):                         # decode 4 steps
+    x = np.concatenate([E[:, token], context])[:d_x]   # embed + context
+    h, c = lstm_step(h, c, x)
+    token = (Wo @ h).argmax()
+    output.append(token)
+
+print("decoded token ids:", output)
+```
+
+## Application & impact
+
+| Concept here | What it became | Where |
+|---|---|---|
+| Encoder-decoder split | Universal abstraction | Transformer, T5, BART, every MT system |
+| Fixed context vector | Dynamic context (attention) | Bahdanau 2015 → Transformer 2017 |
+| Autoregressive decoding | Unchanged | Every LLM (GPT, LLaMA, Gemini) |
+| Teacher forcing | Standard training recipe | All seq-to-seq models |
+| Exposure bias | Scheduled sampling, RL fine-tuning | MIXER, REINFORCE, DPO |
+
+- **Cho et al.** [@cho2014] introduced the encoder-decoder framing for phrase
+  representations in the same year; their GRU-based variant is the direct
+  predecessor of attention-based MT.
+- Seq2Seq with beam search became the dominant NMT architecture from
+  2014–2016, before attention made the fixed context bottleneck obsolete.
+- The encoder-decoder abstraction outlived the RNN: the Transformer adopts
+  it unchanged, replacing recurrence with self-attention.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+Seq2Seq made neural MT viable by collapsing a multi-component pipeline into
+a single differentiable model. The architecture it introduced —
+encoder compresses source, decoder generates target — remains the dominant
+framing for structured generation. Its one structural weakness, the fixed
+context bottleneck, is precisely the problem the next chapters address.
+:::
+
+→ Next: [Convolutional Seq2Seq](04_convseq2seq.qmd)

@@ -20,11 +20,12 @@ book:
         - 00_foundations/06_optimization.qmd
     - part: "RNN Era"
       chapters:
+        - 01_rnn/00_embeddings.qmd
         - 01_rnn/01_rnn_bptt.qmd
         - 01_rnn/02_lstm_gru.qmd
         - 01_rnn/03_seq2seq.qmd
-        - 01_rnn/04_attention_bahdanau.qmd
-        - 01_rnn/05_attention_luong.qmd
+        - 01_rnn/04_convseq2seq.qmd
+        - 01_rnn/05_attention.qmd
     - part: "Transformer Era"
       chapters:
         - 02_transformer/01_self_attention.qmd

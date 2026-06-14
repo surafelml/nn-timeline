@@ -1,0 +1,26 @@
+---
+title: "Additive and Multiplicative Attention"
+format: html
+---
+
+<!-- Code: nn_timeline.layers.attention.AdditiveAttention, DotProductAttention -->
+<!-- Next: ../02_transformer/01_self_attention.qmd -->
+<!-- Timeline anchor: Bahdanau et al. 2015 (additive), Luong et al. 2015 (multiplicative). -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+The Seq2Seq bottleneck — one fixed context vector for the entire source
+sentence — is broken by **attention**: a dynamic weighted sum over all
+encoder states, recomputed at each decoding step.
+**Additive attention** (Bahdanau, 2015) learns a small MLP to score
+alignment; **multiplicative attention** (Luong, 2015) replaces it with a
+dot product. The dot product scales to the Transformer's scaled
+dot-product attention unchanged.
+:::
+
+**Depends on:** [Seq2Seq RNN Encoder-Decoder](03_seq2seq.qmd)
+
+::: {.callout-note title="Coming soon" icon="false"}
+This chapter is in progress and will be published shortly.
+Return to the [book index](../index.qmd) or continue to the
+[Transformer Era](../02_transformer/01_self_attention.qmd).
+:::

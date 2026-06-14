@@ -160,6 +160,17 @@ sweep. Everything downstream — CNNs, RNNs, transformers — is this same
 forward/backward loop at larger scale.
 :::
 
+::: {.callout-note title="Parallel track — Convolutional Networks" icon="false"}
+While MLP + backprop was being explored for sequences, LeCun et al. (1989)
+applied the same forward/backward loop to **convolutional layers** — weight
+sharing across spatial positions — producing **LeNet**, the first practical
+image classifier. The convolution idea (local receptive fields, shared
+weights, pooling) forms a parallel architectural lineage that rejoins the
+sequence-modeling timeline via ResNet's residual connections (2015) and
+ConvSeq2Seq (2017). Vision CNNs are outside the scope of this book;
+the concepts resurface where they directly influence sequence architectures.
+:::
+
 → Next: [Gradient Flow & Vanishing Gradients](05_gradient_flow.qmd)
 
 

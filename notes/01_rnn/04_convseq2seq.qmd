@@ -1,0 +1,197 @@
+---
+title: "Convolutional Seq2Seq — CNNs for Sequence Modeling"
+format: html
+---
+
+<!-- Code: nn_timeline.archs.rnn (ConvSeq2Seq — planned) -->
+<!-- Next: 05_attention.qmd -->
+<!-- Timeline anchor: Gehring et al. 2017 (Facebook AI Research). -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Before the Transformer, **Gehring et al.** (2017) showed that stacked 1D
+convolutions — not RNNs — could match or beat the best recurrent Seq2Seq
+models on translation, at a fraction of the training time.
+The key: convolutions process all positions **in parallel**; the sequential
+bottleneck of the RNN is gone. ConvSeq2Seq beat RNN Seq2Seq on WMT14
+en→de. Three months later, Vaswani et al. published the Transformer.
+:::
+
+**Depends on:** [Seq2Seq RNN Encoder-Decoder](03_seq2seq.qmd)
+
+## Why this matters
+
+RNNs process sequences left to right — step $t$ cannot begin until step
+$t-1$ is complete. On modern GPU hardware, which is built for massive
+parallelism, this is a structural bottleneck: a 100-token sequence requires
+100 sequential LSTM steps, regardless of batch size or hardware.
+ConvSeq2Seq proves the bottleneck is not fundamental to sequence modeling
+— it is specific to the recurrent architecture.
+
+The lesson that carries forward into the Transformer: **parallelism enables
+scale**. If every position can be computed simultaneously, training time
+falls from $O(T)$ to $O(1)$ in depth, enabling larger models, larger
+batches, and longer sequences.
+
+## The mechanism
+
+### 1D convolution over a sequence
+
+A 1D convolution with kernel width $k$ and $d$ output channels maps a
+sequence of vectors $(x_1, \ldots, x_T) \in \mathbb{R}^{T \times d}$ to
+an output sequence of the same length by sliding a weight matrix
+$\mathbf{W} \in \mathbb{R}^{kd \times 2d}$ over every window of $k$
+consecutive positions:
+
+$$
+z_t = \mathbf{W} [x_{t-k/2}; \ldots; x_{t+k/2}] + \mathbf{b}
+\in \mathbb{R}^{2d}.
+$$
+
+Padding keeps the sequence length constant across layers.
+
+### Gated Linear Unit (GLU)
+
+**Gehring et al.** [@gehring2017] apply a **Gated Linear Unit** to the
+convolution output — split $z_t$ into two halves and gate one with the other:
+
+$$
+\text{GLU}(z_t) = z_t^{(1)} \odot \sigma(z_t^{(2)}) \in \mathbb{R}^d.
+$$
+
+The gate $\sigma(z_t^{(2)})$ controls how much of the linear output
+$z_t^{(1)}$ passes through, analogous to the LSTM's output gate but
+applied position-wise.
+
+### Receptive field grows with depth
+
+A single conv layer with kernel $k$ sees $k$ consecutive positions.
+Stack $N$ layers: the receptive field grows to $k + (k-1)(N-1)$.
+With $k = 5$ and $N = 20$, every output position sees 81 input positions —
+enough for most practical sentence lengths.
+
+```{=html}
+<svg viewBox="0 0 500 220" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:500px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="cv-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#2563eb"/>
+    </marker>
+  </defs>
+
+  <!-- Token positions (bottom) -->
+  <text x="250" y="205" text-anchor="middle" font-size="11" fill="#64748b">token positions (all processed in parallel)</text>
+  <rect x="30"  y="170" width="44" height="24" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+  <rect x="84"  y="170" width="44" height="24" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+  <rect x="138" y="170" width="44" height="24" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+  <rect x="192" y="170" width="44" height="24" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+  <rect x="246" y="170" width="44" height="24" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+  <rect x="300" y="170" width="44" height="24" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+  <rect x="354" y="170" width="44" height="24" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+  <rect x="408" y="170" width="44" height="24" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+  <text x="52"  y="187" text-anchor="middle" font-size="10" fill="#334155">x₁</text>
+  <text x="106" y="187" text-anchor="middle" font-size="10" fill="#334155">x₂</text>
+  <text x="160" y="187" text-anchor="middle" font-size="10" fill="#334155">x₃</text>
+  <text x="214" y="187" text-anchor="middle" font-size="10" fill="#334155">x₄</text>
+  <text x="268" y="187" text-anchor="middle" font-size="10" fill="#334155">x₅</text>
+  <text x="322" y="187" text-anchor="middle" font-size="10" fill="#334155">x₆</text>
+  <text x="376" y="187" text-anchor="middle" font-size="10" fill="#334155">x₇</text>
+  <text x="430" y="187" text-anchor="middle" font-size="10" fill="#334155">x₈</text>
+
+  <!-- Conv layer 1 -->
+  <rect x="30"  y="112" width="422" height="28" rx="4" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="241" y="131" text-anchor="middle" font-size="12" font-weight="600" fill="#1e40af">Conv layer 1  (k=3, receptive field = 3)</text>
+
+  <!-- Conv layer 2 -->
+  <rect x="30"  y="68" width="422" height="28" rx="4" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="241" y="87" text-anchor="middle" font-size="12" font-weight="600" fill="#1e40af">Conv layer 2  (k=3, receptive field = 5)</text>
+
+  <!-- Conv layer 3 -->
+  <rect x="30"  y="24" width="422" height="28" rx="4" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="241" y="43" text-anchor="middle" font-size="12" font-weight="600" fill="#1e40af">Conv layer 3  (k=3, receptive field = 7)</text>
+
+  <!-- Parallel arrows -->
+  <line x1="52"  y1="168" x2="52"  y2="142" stroke="#2563eb" stroke-width="1" marker-end="url(#cv-ah)"/>
+  <line x1="160" y1="168" x2="160" y2="142" stroke="#2563eb" stroke-width="1" marker-end="url(#cv-ah)"/>
+  <line x1="268" y1="168" x2="268" y2="142" stroke="#2563eb" stroke-width="1" marker-end="url(#cv-ah)"/>
+  <line x1="376" y1="168" x2="376" y2="142" stroke="#2563eb" stroke-width="1" marker-end="url(#cv-ah)"/>
+
+  <line x1="52"  y1="110" x2="52"  y2="98" stroke="#2563eb" stroke-width="1" marker-end="url(#cv-ah)"/>
+  <line x1="268" y1="110" x2="268" y2="98" stroke="#2563eb" stroke-width="1" marker-end="url(#cv-ah)"/>
+  <line x1="430" y1="110" x2="430" y2="98" stroke="#2563eb" stroke-width="1" marker-end="url(#cv-ah)"/>
+
+  <line x1="160" y1="66" x2="160" y2="54" stroke="#2563eb" stroke-width="1" marker-end="url(#cv-ah)"/>
+  <line x1="268" y1="66" x2="268" y2="54" stroke="#2563eb" stroke-width="1" marker-end="url(#cv-ah)"/>
+  <line x1="376" y1="66" x2="376" y2="54" stroke="#2563eb" stroke-width="1" marker-end="url(#cv-ah)"/>
+</svg>
+```
+
+### Multi-hop attention
+
+Between each decoder convolution layer and the encoder output,
+ConvSeq2Seq adds an attention step — a weighted sum over encoder states,
+recomputed per layer. With $N$ decoder layers, the decoder performs $N$
+attention lookups per output token. This multi-hop attention approximates
+the global context an LSTM accumulates over the full source.
+
+### Minimal sketch
+
+A single 1D conv + GLU step in NumPy, applied to all positions at once.
+
+```{python}
+import numpy as np
+
+rng = np.random.default_rng(2)
+T, d, k = 8, 16, 3    # seq length, channels, kernel width
+
+# Weight matrix: maps k*d inputs → 2d outputs (for GLU)
+W = rng.normal(scale=0.1, size=(2 * d, k * d))
+b = np.zeros(2 * d)
+
+def conv_glu(X):
+    """X: (T, d) → (T, d) via 1D conv + GLU, same-padding."""
+    pad = k // 2
+    X_pad = np.pad(X, ((pad, pad), (0, 0)))
+    out = np.zeros((T, d))
+    for t in range(T):
+        window = X_pad[t:t + k].ravel()   # k*d
+        z = W @ window + b                 # 2d
+        out[t] = z[:d] * (1 / (1 + np.exp(-z[d:])))   # GLU
+    return out
+
+X = rng.normal(size=(T, d))
+Y = conv_glu(X)
+print(f"input shape: {X.shape} → output shape: {Y.shape}")
+print(f"all positions computed simultaneously: T={T} steps → O(1) parallel depth")
+```
+
+::: {.callout-warning title="Pitfall — fixed receptive field" icon="false"}
+A stack of $N$ conv layers with kernel $k$ has a maximum receptive field
+of $k + (k-1)(N-1)$. Sentences longer than this window are invisible to
+the model across the full depth. Self-attention — which attends to all
+positions from every layer — removes this constraint entirely, which is
+why the Transformer superseded ConvSeq2Seq within months.
+:::
+
+## Application & impact
+
+| Concept here | What it became | Where |
+|---|---|---|
+| Parallel sequence processing | Multi-head self-attention | Transformer (2017) |
+| GLU activation | SwiGLU, GeGLU | LLaMA, PaLM, Gemini |
+| Multi-hop attention | Multi-layer cross-attention | Transformer decoder |
+| Residual connections | Unchanged | Every deep network since ResNet |
+
+- ConvSeq2Seq (May 2017) set a new WMT14 en→de BLEU record.
+- The Transformer (June 2017) surpassed it within weeks and introduced
+  unlimited receptive field via self-attention, ending the conv-vs-RNN debate.
+- **GLU activations** are a direct legacy: SwiGLU (used in LLaMA, PaLM,
+  and Gemini) is a gated linear unit with a Swish gate instead of sigmoid.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+ConvSeq2Seq proved that the sequential constraint of RNNs was not necessary
+for sequence modeling — full parallelism is achievable. It did not solve
+the fixed receptive-field limit. The Transformer solved both by replacing
+the convolution window with attention over all positions simultaneously.
+:::
+
+→ Next: [Additive and Multiplicative Attention](05_attention.qmd)
