@@ -175,9 +175,9 @@ throughout the sequence.
 $\mathbf{c} = h_{T_x}^{\text{enc}}$ must encode the entire source sentence
 in a vector of fixed size $d_h$. For short sentences this is fine; for long
 sentences, information is lost. Translation quality degrades sharply beyond
-~20 tokens. This is the problem Bahdanau et al. (2015) solve by replacing
-$\mathbf{c}$ with a dynamic, per-step weighted sum over all encoder hidden
-states.
+~20 tokens. This is the problem [Additive and Multiplicative Attention](05_attention.qmd)
+solves by replacing $\mathbf{c}$ with a dynamic, per-step weighted sum over
+all encoder hidden states.
 :::
 
 ### Minimal sketch

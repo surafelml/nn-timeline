@@ -8,19 +8,249 @@ format: html
 <!-- Timeline anchor: Bahdanau et al. 2015 (additive), Luong et al. 2015 (multiplicative). -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-The Seq2Seq bottleneck — one fixed context vector for the entire source
-sentence — is broken by **attention**: a dynamic weighted sum over all
-encoder states, recomputed at each decoding step.
-**Additive attention** (Bahdanau, 2015) learns a small MLP to score
-alignment; **multiplicative attention** (Luong, 2015) replaces it with a
-dot product. The dot product scales to the Transformer's scaled
-dot-product attention unchanged.
+Attention replaces the Seq2Seq fixed context vector with a **dynamic
+weighted sum** over all encoder states, recomputed at each decoding step.
+The weights $\alpha_{t,s}$ — a soft alignment between target position $t$
+and source position $s$ — are fully differentiable and learned end-to-end.
+**Bahdanau et al.** (2015) use a small MLP to score alignment (additive);
+**Luong et al.** (2015) replace it with a dot product (multiplicative).
+The dot product, scaled by $1/\sqrt{d_k}$, is exactly the Transformer's
+attention mechanism — applied here to encoder-decoder pairs, applied there
+to every position in a sequence attending to itself.
 :::
 
 **Depends on:** [Seq2Seq RNN Encoder-Decoder](03_seq2seq.qmd)
 
-::: {.callout-note title="Coming soon" icon="false"}
-This chapter is in progress and will be published shortly.
-Return to the [book index](../index.qmd) or continue to the
-[Transformer Era](../02_transformer/01_self_attention.qmd).
+## Why this matters
+
+The Seq2Seq bottleneck is a single vector $\mathbf{c} = h_T^{\text{enc}}$
+that must represent an entire source sentence. Translation quality
+degrades sharply for sentences beyond ~20 tokens — not because the LSTM
+is weak, but because the fixed-size bottleneck cannot hold everything.
+
+Attention removes the bottleneck by letting the decoder **query the encoder
+directly** at each step. Instead of one compressed representation, the
+decoder has access to the full sequence of encoder hidden states and learns
+which ones matter for each output token. The alignment weights
+$\alpha_{t,s}$ are interpretable: plotting them produces a heatmap showing
+which source words influenced each target word.
+
+This is the insight the Transformer generalises: if a decoder can attend to
+encoder states, why not let every position attend to every other position
+in the same sequence?
+
+## The mechanism
+
+### General formulation
+
+At decoding step $t$, attention computes a **context vector** $\mathbf{c}_t$
+as a soft, weighted combination of all encoder hidden states
+$\{h_1^{\text{enc}}, \ldots, h_{T_x}^{\text{enc}}\}$:
+
+$$
+\mathbf{c}_t = \sum_{s=1}^{T_x} \alpha_{t,s}\, h_s^{\text{enc}},
+\qquad
+\alpha_{t,s} = \frac{\exp(e_{t,s})}{\displaystyle\sum_{s'=1}^{T_x} \exp(e_{t,s'})},
+$$
+
+where $e_{t,s}$ is an **alignment score** measuring how well the decoder
+state at step $t$ matches the encoder state at position $s$. The score
+function is where Bahdanau and Luong differ.
+
+### Additive attention — Bahdanau et al. [@bahdanau2015]
+
+**Bahdanau, Cho & Bengio** score alignment with a learned MLP:
+
+$$
+e_{t,s} = \mathbf{v}_a^\top \tanh\!\bigl(
+  \mathbf{W}_a\, h_{t-1}^{\text{dec}} + \mathbf{U}_a\, h_s^{\text{enc}}
+\bigr).
+$$
+
+- $\mathbf{W}_a$ and $\mathbf{U}_a$ project decoder and encoder states to a
+  common space; $\mathbf{v}_a$ collapses to a scalar score.
+- The two states are combined by **addition** (hence "additive") before the
+  non-linearity — this handles the case where decoder and encoder hidden
+  dimensions differ.
+- Parameters $\mathbf{W}_a$, $\mathbf{U}_a$, $\mathbf{v}_a$ are learned
+  jointly with the entire model.
+
+The decoder update at step $t$ uses the dynamic context:
+
+$$
+h_t^{\text{dec}} = \text{LSTM}\!\bigl(
+  h_{t-1}^{\text{dec}},\; [y_{t-1};\, \mathbf{c}_t]
+\bigr).
+$$
+
+### Multiplicative attention — Luong et al. [@luong2015]
+
+**Luong, Pham & Manning** replace the MLP with score functions that
+exploit the dot product directly. Three variants in the paper:
+
+| Variant | Score $e_{t,s}$ | Notes |
+|---|---|---|
+| **dot** | $(h_{t-1}^{\text{dec}})^\top h_s^{\text{enc}}$ | Requires equal hidden dims; $O(1)$ to compute |
+| **general** | $(h_{t-1}^{\text{dec}})^\top \mathbf{W}_a\, h_s^{\text{enc}}$ | Learned projection; handles dim mismatch |
+| **concat** | $\mathbf{v}_a^\top \tanh(\mathbf{W}_a [h_{t-1}^{\text{dec}}; h_s^{\text{enc}}])$ | Equivalent to Bahdanau |
+
+The **dot** variant is the one that matters historically: it is exactly the
+Transformer's attention score before scaling.
+
+### Alignment heatmap
+
+Plotting $\alpha_{t,s}$ for all $(t, s)$ pairs produces an alignment
+matrix. High weights fall on the diagonal for monotone language pairs
+(e.g. en→de); they cross diagonally for pairs with reordering.
+This was the first interpretable internals visualisation in neural MT.
+
+```{=html}
+<svg viewBox="0 0 380 320" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:380px;display:block;margin:1.5rem auto">
+
+  <!-- Title -->
+  <text x="190" y="18" text-anchor="middle" font-size="12" font-weight="600" fill="#374151">Alignment matrix  α_{t,s}</text>
+
+  <!-- Axis labels -->
+  <text x="190" y="290" text-anchor="middle" font-size="11" fill="#6b7280">source position  s</text>
+  <text x="14" y="160" text-anchor="middle" font-size="11" fill="#6b7280" transform="rotate(-90,14,160)">target position  t</text>
+
+  <!-- Grid cells (4×4 example, varying opacity) -->
+  <!-- Row t=1 (bottom): attending mostly to s=1 -->
+  <rect x="60" y="230" width="55" height="44" fill="#1d4ed8" opacity="0.85"/>
+  <rect x="115" y="230" width="55" height="44" fill="#1d4ed8" opacity="0.10"/>
+  <rect x="170" y="230" width="55" height="44" fill="#1d4ed8" opacity="0.04"/>
+  <rect x="225" y="230" width="55" height="44" fill="#1d4ed8" opacity="0.01"/>
+
+  <!-- Row t=2: attending mostly to s=2 -->
+  <rect x="60" y="186" width="55" height="44" fill="#1d4ed8" opacity="0.08"/>
+  <rect x="115" y="186" width="55" height="44" fill="#1d4ed8" opacity="0.82"/>
+  <rect x="170" y="186" width="55" height="44" fill="#1d4ed8" opacity="0.08"/>
+  <rect x="225" y="186" width="55" height="44" fill="#1d4ed8" opacity="0.02"/>
+
+  <!-- Row t=3: split between s=2 and s=3 (reordering) -->
+  <rect x="60" y="142" width="55" height="44" fill="#1d4ed8" opacity="0.03"/>
+  <rect x="115" y="142" width="55" height="44" fill="#1d4ed8" opacity="0.35"/>
+  <rect x="170" y="142" width="55" height="44" fill="#1d4ed8" opacity="0.55"/>
+  <rect x="225" y="142" width="55" height="44" fill="#1d4ed8" opacity="0.07"/>
+
+  <!-- Row t=4: attending mostly to s=4 -->
+  <rect x="60" y="98" width="55" height="44" fill="#1d4ed8" opacity="0.02"/>
+  <rect x="115" y="98" width="55" height="44" fill="#1d4ed8" opacity="0.05"/>
+  <rect x="170" y="98" width="55" height="44" fill="#1d4ed8" opacity="0.12"/>
+  <rect x="225" y="98" width="55" height="44" fill="#1d4ed8" opacity="0.81"/>
+
+  <!-- Grid lines -->
+  <rect x="60" y="98" width="220" height="176" fill="none" stroke="#e5e7eb" stroke-width="0.8"/>
+  <line x1="115" y1="98" x2="115" y2="274" stroke="#e5e7eb" stroke-width="0.8"/>
+  <line x1="170" y1="98" x2="170" y2="274" stroke="#e5e7eb" stroke-width="0.8"/>
+  <line x1="225" y1="98" x2="225" y2="274" stroke="#e5e7eb" stroke-width="0.8"/>
+  <line x1="60" y1="142" x2="280" y2="142" stroke="#e5e7eb" stroke-width="0.8"/>
+  <line x1="60" y1="186" x2="280" y2="186" stroke="#e5e7eb" stroke-width="0.8"/>
+  <line x1="60" y1="230" x2="280" y2="230" stroke="#e5e7eb" stroke-width="0.8"/>
+
+  <!-- Source labels (x-axis) -->
+  <text x="87"  y="285" text-anchor="middle" font-size="11" fill="#374151">x₁</text>
+  <text x="142" y="285" text-anchor="middle" font-size="11" fill="#374151">x₂</text>
+  <text x="197" y="285" text-anchor="middle" font-size="11" fill="#374151">x₃</text>
+  <text x="252" y="285" text-anchor="middle" font-size="11" fill="#374151">x₄</text>
+
+  <!-- Target labels (y-axis) -->
+  <text x="52" y="278" text-anchor="end" font-size="11" fill="#374151">y₁</text>
+  <text x="52" y="214" text-anchor="end" font-size="11" fill="#374151">y₂</text>
+  <text x="52" y="170" text-anchor="end" font-size="11" fill="#374151">y₃</text>
+  <text x="52" y="126" text-anchor="end" font-size="11" fill="#374151">y₄</text>
+
+  <!-- Legend -->
+  <defs>
+    <linearGradient id="att-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1d4ed8" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.90"/>
+    </linearGradient>
+  </defs>
+  <rect x="285" y="120" width="80" height="12" fill="url(#att-grad)" stroke="#e5e7eb" stroke-width="0.5"/>
+  <text x="285" y="148" font-size="10" fill="#6b7280">0</text>
+  <text x="345" y="148" text-anchor="end" font-size="10" fill="#6b7280">1</text>
+  <text x="325" y="115" text-anchor="middle" font-size="10" fill="#6b7280">α_{t,s}</text>
+</svg>
+```
+
+### Minimal sketch
+
+The sketch computes additive and dot-product attention weights for a toy
+encoder-decoder pair, then prints the alignment matrix and context vector.
+
+```{python}
+import numpy as np
+
+rng = np.random.default_rng(3)
+T_x, T_y, d_h, d_a = 5, 4, 8, 16   # src len, tgt len, hidden dim, attn dim
+
+# Toy encoder and decoder states
+H_enc = rng.normal(size=(T_x, d_h))   # (T_x, d_h)
+H_dec = rng.normal(size=(T_y, d_h))   # (T_y, d_h) — one state per target step
+
+def softmax(x):
+    e = np.exp(x - x.max())
+    return e / e.sum()
+
+# ── Additive attention (Bahdanau) ──────────────────────────────────────────
+Wa = rng.normal(scale=0.1, size=(d_a, d_h))   # project decoder state
+Ua = rng.normal(scale=0.1, size=(d_a, d_h))   # project encoder state
+va = rng.normal(scale=0.1, size=d_a)           # collapse to scalar
+
+def additive_score(dec_h, enc_h):
+    return va @ np.tanh(Wa @ dec_h + Ua @ enc_h)
+
+# ── Multiplicative attention (Luong dot) ───────────────────────────────────
+def dot_score(dec_h, enc_h):
+    return dec_h @ enc_h                        # plain dot product
+
+# ── Compute context vectors for each target step ──────────────────────────
+print("Alignment weights (additive):")
+for t in range(T_y):
+    scores = np.array([additive_score(H_dec[t], H_enc[s]) for s in range(T_x)])
+    alpha  = softmax(scores)
+    ctx    = alpha @ H_enc                      # (d_h,) context vector
+    print(f"  t={t+1}: α = {np.round(alpha, 2)}  ‖c_t‖ = {np.linalg.norm(ctx):.3f}")
+```
+
+::: {.callout-tip title="Going deeper — the step to self-attention" icon="false"}
+In encoder-decoder attention, the query comes from the **decoder** and the
+keys/values from the **encoder**. Self-attention asks: what if query, key,
+and value all come from the **same** sequence? That single change — covering
+in [Self-Attention & Multi-Head Attention](../02_transformer/01_self_attention.qmd) —
+produces the Transformer's core mechanism.
 :::
+
+## Application & impact
+
+| Concept here | What it becomes | Where |
+|---|---|---|
+| Dynamic context $\mathbf{c}_t$ | Cross-attention | Transformer encoder-decoder |
+| Alignment weights $\alpha_{t,s}$ | Attention map / head visualisation | Interpretability tools, BERTViz |
+| Additive score | Rarely used post-Transformer | Some efficient-attention variants |
+| Dot-product score | Scaled dot-product attention ($/ \sqrt{d_k}$) | Every Transformer, every LLM |
+| Soft alignment | Hard alignment (argmax) | CTC, monotonic attention |
+
+- **Machine translation** (2015–2017): additive attention became the standard
+  component in RNN-based NMT systems, enabling competitive quality on long
+  sentences.
+- **The dot-product step:** Luong's dot score needs only one change to become
+  the Transformer — divide by $\sqrt{d_k}$ to prevent softmax saturation in
+  high dimensions. Vaswani et al. (2017) note this explicitly.
+- **Beyond MT:** attention was quickly adopted in summarisation, reading
+  comprehension (Bahdanau-style alignment over a document), and speech
+  recognition (CTC + attention hybrid systems).
+
+::: {.callout-note title="Key takeaway" icon="false"}
+Attention breaks the fixed-context bottleneck by making the decoder's
+query a first-class citizen: at each step, it asks which encoder states
+are relevant and receives a weighted answer. The score function is the
+only architectural choice — MLP (additive) vs. dot product (multiplicative).
+The dot product wins on speed and scales directly to the Transformer.
+The Transformer's novelty is not inventing attention but asking: *what if
+everything attends to everything, with no recurrence at all?*
+:::
+
+→ Next: [Self-Attention & Multi-Head Attention](../02_transformer/01_self_attention.qmd)
