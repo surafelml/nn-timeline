@@ -125,7 +125,7 @@ Common choices: 128–512 for task-specific models, 768–4096 for large LMs.
 
 - **Word2Vec** and **GloVe** were the dominant input representation for RNN-based MT (2014–2016).
 - The Transformer later learned its own embeddings end-to-end, but the lookup-table interface — token id → dense vector — is unchanged.
-- Positional embeddings extend this to encode *position* alongside identity — covered in [Positional Encoding](../02_transformer/04_positional_encoding.qmd).
+- Positional embeddings extend this to encode *position* alongside identity — covered in [Positional Encoding](../02_transformer/03_positional_encoding.qmd).
 
 ::: {.callout-note title="Key takeaway" icon="false"}
 The embedding layer converts discrete tokens into continuous geometry.

@@ -1,0 +1,180 @@
+---
+title: "The Transformer Era — A Map"
+format: html
+---
+
+<!-- Code: none — orientation chapter -->
+<!-- Next: 01_self_attention.qmd -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+**Vaswani et al. (2017)** replaces recurrence with self-attention and
+triggers three parallel lines of development:
+**encoder-decoder** models (T5, BART) for structured generation;
+**encoder-only** models (BERT, ViT) for understanding and representation;
+and **decoder-only** models (GPT family, LLaMA) that scale to become the
+dominant paradigm by 2022. Almost every modern system traces to one of
+these three branches.
+:::
+
+**Depends on:** [Additive and Multiplicative Attention](../01_rnn/05_attention.qmd)
+
+## Three families from one paper
+
+```{=html}
+<svg viewBox="0 0 980 310" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:980px;display:block;margin:1.5rem auto">
+
+  <defs>
+    <marker id="lnd-arr" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0,0 7,2.5 0,5" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- Year labels (top) -->
+  <text x="130" y="14" text-anchor="middle" font-size="10" fill="#64748b">2017</text>
+  <text x="247" y="14" text-anchor="middle" font-size="10" fill="#64748b">2018</text>
+  <text x="364" y="14" text-anchor="middle" font-size="10" fill="#64748b">2019</text>
+  <text x="481" y="14" text-anchor="middle" font-size="10" fill="#64748b">2020</text>
+  <text x="598" y="14" text-anchor="middle" font-size="10" fill="#64748b">2021</text>
+  <text x="715" y="14" text-anchor="middle" font-size="10" fill="#64748b">2022</text>
+  <text x="832" y="14" text-anchor="middle" font-size="10" fill="#64748b">2023</text>
+  <text x="949" y="14" text-anchor="middle" font-size="10" fill="#64748b">2024</text>
+
+  <!-- Vertical year guides -->
+  <line x1="247" y1="22" x2="247" y2="280" stroke="#f1f5f9" stroke-width="1"/>
+  <line x1="364" y1="22" x2="364" y2="280" stroke="#f1f5f9" stroke-width="1"/>
+  <line x1="481" y1="22" x2="481" y2="280" stroke="#f1f5f9" stroke-width="1"/>
+  <line x1="598" y1="22" x2="598" y2="280" stroke="#f1f5f9" stroke-width="1"/>
+  <line x1="715" y1="22" x2="715" y2="280" stroke="#f1f5f9" stroke-width="1"/>
+  <line x1="832" y1="22" x2="832" y2="280" stroke="#f1f5f9" stroke-width="1"/>
+  <line x1="949" y1="22" x2="949" y2="280" stroke="#f1f5f9" stroke-width="1"/>
+
+  <!-- Lane lines -->
+  <line x1="90" y1="80"  x2="970" y2="80"  stroke="#d1fae5" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <line x1="90" y1="160" x2="970" y2="160" stroke="#dbeafe" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <line x1="90" y1="240" x2="970" y2="240" stroke="#ede9fe" stroke-width="1.2" stroke-dasharray="4,3"/>
+
+  <!-- Lane labels -->
+  <text x="82" y="80"  text-anchor="end" font-size="10" font-weight="600" fill="#059669">Enc-Dec</text>
+  <text x="82" y="160" text-anchor="end" font-size="10" font-weight="600" fill="#2563eb">Enc-only</text>
+  <text x="82" y="240" text-anchor="end" font-size="10" font-weight="600" fill="#7c3aed">Dec-only</text>
+
+  <!-- ── Encoder-Decoder lane (y=80) ── -->
+
+  <!-- Transformer 2017 -->
+  <circle cx="130" cy="80" r="8" fill="#059669"/>
+  <text x="130" y="58" text-anchor="middle" font-size="10" font-weight="700" fill="#059669">Transformer</text>
+  <text x="130" y="70" text-anchor="middle" font-size="9"  fill="#6b7280">Vaswani 2017</text>
+
+  <!-- T5 2019 -->
+  <circle cx="364" cy="80" r="7" fill="#059669"/>
+  <text x="364" y="58" text-anchor="middle" font-size="10" font-weight="600" fill="#059669">T5</text>
+  <text x="364" y="70" text-anchor="middle" font-size="9"  fill="#6b7280">Raffel 2019</text>
+
+  <!-- ── Encoder-only lane (y=160) ── -->
+
+  <!-- BERT 2018 -->
+  <circle cx="247" cy="160" r="8" fill="#2563eb"/>
+  <text x="247" y="138" text-anchor="middle" font-size="10" font-weight="700" fill="#2563eb">BERT</text>
+  <text x="247" y="150" text-anchor="middle" font-size="9"  fill="#6b7280">Devlin 2018</text>
+
+  <!-- ViT 2020 -->
+  <circle cx="481" cy="160" r="7" fill="#2563eb"/>
+  <text x="481" y="138" text-anchor="middle" font-size="10" font-weight="600" fill="#2563eb">ViT</text>
+  <text x="481" y="150" text-anchor="middle" font-size="9"  fill="#6b7280">Dosovitskiy 2020</text>
+
+  <!-- CLIP 2021 (multimodal — placed in enc-only lane) -->
+  <circle cx="598" cy="160" r="7" fill="#0891b2"/>
+  <text x="598" y="138" text-anchor="middle" font-size="10" font-weight="600" fill="#0891b2">CLIP</text>
+  <text x="598" y="150" text-anchor="middle" font-size="9"  fill="#6b7280">Radford 2021</text>
+
+  <!-- ── Decoder-only lane (y=240) ── -->
+
+  <!-- GPT-1 2018 -->
+  <circle cx="247" cy="240" r="7" fill="#7c3aed"/>
+  <text x="247" y="260" text-anchor="middle" font-size="10" font-weight="600" fill="#7c3aed">GPT-1</text>
+  <text x="247" y="272" text-anchor="middle" font-size="9"  fill="#6b7280">Radford 2018</text>
+
+  <!-- GPT-2 2019 -->
+  <circle cx="364" cy="240" r="7" fill="#7c3aed"/>
+  <text x="364" y="260" text-anchor="middle" font-size="10" font-weight="600" fill="#7c3aed">GPT-2</text>
+  <text x="364" y="272" text-anchor="middle" font-size="9"  fill="#6b7280">Radford 2019</text>
+
+  <!-- GPT-3 2020 -->
+  <circle cx="481" cy="240" r="8" fill="#7c3aed"/>
+  <text x="481" y="260" text-anchor="middle" font-size="10" font-weight="700" fill="#7c3aed">GPT-3</text>
+  <text x="481" y="272" text-anchor="middle" font-size="9"  fill="#6b7280">Brown 2020</text>
+
+  <!-- InstructGPT / ChatGPT 2022 -->
+  <circle cx="715" cy="240" r="8" fill="#7c3aed"/>
+  <text x="715" y="260" text-anchor="middle" font-size="10" font-weight="700" fill="#7c3aed">InstructGPT</text>
+  <text x="715" y="272" text-anchor="middle" font-size="9"  fill="#6b7280">Ouyang 2022</text>
+
+  <!-- LLaMA 2023 -->
+  <circle cx="820" cy="240" r="7" fill="#7c3aed"/>
+  <text x="820" y="260" text-anchor="middle" font-size="10" font-weight="600" fill="#7c3aed">LLaMA</text>
+  <text x="820" y="272" text-anchor="middle" font-size="9"  fill="#6b7280">Touvron 2023</text>
+
+  <!-- o1 2024 -->
+  <circle cx="949" cy="240" r="7" fill="#6d28d9"/>
+  <text x="949" y="260" text-anchor="middle" font-size="10" font-weight="600" fill="#6d28d9">o1</text>
+  <text x="949" y="272" text-anchor="middle" font-size="9"  fill="#6b7280">OpenAI 2024</text>
+
+  <!-- Connecting flow arrows along dec-only lane -->
+  <line x1="255" y1="240" x2="354" y2="240" stroke="#c4b5fd" stroke-width="1.5" marker-end="url(#lnd-arr)"/>
+  <line x1="372" y1="240" x2="471" y2="240" stroke="#c4b5fd" stroke-width="1.5" marker-end="url(#lnd-arr)"/>
+  <line x1="489" y1="240" x2="598" y2="240" stroke="#c4b5fd" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#lnd-arr)"/>
+  <line x1="640" y1="240" x2="705" y2="240" stroke="#c4b5fd" stroke-width="1.5" marker-end="url(#lnd-arr)"/>
+  <line x1="723" y1="240" x2="810" y2="240" stroke="#c4b5fd" stroke-width="1.5" marker-end="url(#lnd-arr)"/>
+  <line x1="828" y1="240" x2="939" y2="240" stroke="#c4b5fd" stroke-width="1.5" marker-end="url(#lnd-arr)"/>
+
+  <!-- Dashed skip label 2021 dec-only -->
+  <text x="563" y="254" text-anchor="middle" font-size="9" fill="#94a3b8">Codex, …</text>
+
+  <!-- Legend -->
+  <circle cx="90" cy="296" r="5" fill="#059669"/>
+  <text x="100" y="300" font-size="10" fill="#374151">Encoder-Decoder</text>
+  <circle cx="220" cy="296" r="5" fill="#2563eb"/>
+  <text x="230" y="300" font-size="10" fill="#374151">Encoder-only</text>
+  <circle cx="340" cy="296" r="5" fill="#0891b2"/>
+  <text x="350" y="300" font-size="10" fill="#374151">Multimodal</text>
+  <circle cx="440" cy="296" r="5" fill="#7c3aed"/>
+  <text x="450" y="300" font-size="10" fill="#374151">Decoder-only</text>
+</svg>
+```
+
+## Chapters in this section
+
+| Chapter | What it covers |
+|---|---|
+| [Self-Attention & Multi-Head Attention](01_self_attention.qmd) | QKV projections, scaled dot-product, multi-head; the core mechanism |
+| [The Transformer Architecture](02_transformer.qmd) | Encoder block, decoder block, residuals, layer norm; full forward pass |
+| [Positional Encoding](03_positional_encoding.qmd) | Sinusoidal, learned, RoPE, ALiBi — from fixed frequencies to rotation |
+| [BERT & GPT](04_bert_gpt.qmd) | Encoder-only vs decoder-only pretraining; the fine-tuning paradigm |
+| [Scaling Laws & Emergence](05_scaling_laws.qmd) | Kaplan 2020, Chinchilla — optimal compute allocation; capability jumps |
+| [Instruction Tuning & Alignment](06_alignment.qmd) | RLHF, InstructGPT, DPO — making large models follow instructions |
+
+## Key ideas to track across chapters
+
+Three tensions run through the entire Transformer era; each chapter adds a
+layer:
+
+1. **Parallelism vs. position.** Self-attention sees all positions at once
+   but has no built-in notion of order. Positional encoding is the fix, and
+   every architectural generation has improved it.
+
+2. **Pretraining objective.** Masked LM (BERT) learns bidirectional
+   representations; causal LM (GPT) learns to generate. Both are trained on
+   the same data at the same scale but produce models with very different
+   inductive biases.
+
+3. **Scale vs. alignment.** Scaling laws show that bigger models are
+   predictably better at next-token prediction. But a better next-token
+   predictor is not automatically a better assistant. Alignment techniques
+   (RLHF, DPO) are the engineering bridge between raw capability and useful
+   behaviour.
+
+For a comprehensive reference organized by year, paradigm, and application
+area, see the [Transformer Era Research Landscape](../landscape/transformer_era.qmd).
+
+→ Next: [Self-Attention & Multi-Head Attention](01_self_attention.qmd)

@@ -1,0 +1,14 @@
+---
+title: "Instruction Tuning & Alignment"
+format: html
+---
+
+<!-- Code: none — conceptual chapter -->
+<!-- Next: ../landscape/transformer_era.qmd (then Phase 2) -->
+<!-- Timeline anchor: Ouyang et al. 2022 (InstructGPT), Rafailov et al. 2023 (DPO). -->
+
+::: {.callout-note title="Coming soon" icon="false"}
+This chapter is in progress and will be published shortly.
+Return to the [book index](../index.qmd) or review
+[Scaling Laws & Emergence](05_scaling_laws.qmd).
+:::

@@ -28,16 +28,22 @@ book:
         - 01_rnn/05_attention.qmd
     - part: "Transformer Era"
       chapters:
+        - 02_transformer/00_landscape.qmd
         - 02_transformer/01_self_attention.qmd
         - 02_transformer/02_transformer.qmd
-        - 02_transformer/03_bert_gpt.qmd
-        - 02_transformer/04_positional_encoding.qmd
-        - 02_transformer/05_kv_cache.qmd
+        - 02_transformer/03_positional_encoding.qmd
+        - 02_transformer/04_bert_gpt.qmd
+        - 02_transformer/05_scaling_laws.qmd
+        - 02_transformer/06_alignment.qmd
     - part: "Going Deeper (supplementary)"
       chapters:
         - supp/00_prerequisites.qmd
         - supp/01_artificial_neuron_numerical.qmd
         - supp/04_mlp_backprop_numerical.qmd
+        - supp/kv_cache.qmd
+    - part: "Research Landscape"
+      chapters:
+        - landscape/transformer_era.qmd
     - references.qmd
 
 bibliography: references.bib

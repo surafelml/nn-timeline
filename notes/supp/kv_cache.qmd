@@ -1,0 +1,12 @@
+---
+title: "KV-Cache — Autoregressive Inference Efficiency"
+format: html
+---
+
+<!-- Code: nn_timeline.generate.kv_cache -->
+<!-- Sidecar of: ../02_transformer/04_bert_gpt.qmd -->
+
+::: {.callout-note title="Coming soon" icon="false"}
+This supplementary note is in progress.
+← Back to: [BERT & GPT](../02_transformer/04_bert_gpt.qmd)
+:::

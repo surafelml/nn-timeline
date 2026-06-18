@@ -3,9 +3,9 @@ title: "nn_timeline"
 format: html
 ---
 
-*Published May 14, 2026 (updated: May 29, 2026)*
+*Published May 14, 2026 (updated: June 14, 2026)*
 
-> **Note:** Foundations chapters are available now. Later chapters are being added on a weekly basis.
+> **Status:** Foundations complete (7 chapters). RNN era complete (6 chapters: embeddings → BPTT → LSTM/GRU → Seq2Seq → ConvSeq2Seq → Attention). Transformer era in progress — chapters being added weekly.
 
 # Neural network architectures through time
 
@@ -150,7 +150,7 @@ from the perceptron to the transformer. Each chapter pairs a **science note**
     <line class="lead" x1="0" y1="-4" x2="0" y2="-115" />
     <circle class="dot-transformer" cx="0" cy="0" r="6" />
     <text class="yr" x="0" y="-123" text-anchor="middle">2018</text>
-    <a href="02_transformer/03_bert_gpt.html">
+    <a href="02_transformer/04_bert_gpt.html">
       <text x="0" y="-140" text-anchor="middle">BERT / GPT</text>
     </a>
   </g>
