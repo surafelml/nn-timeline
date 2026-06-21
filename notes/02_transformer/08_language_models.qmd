@@ -1,0 +1,237 @@
+---
+title: "Language Models — The Lineage"
+format: html
+---
+
+<!-- Code: none — synthesis chapter; per-model catalog lives in the landscape page. -->
+<!-- Next: 09_moe.qmd -->
+<!-- Timeline anchor: Shannon 1948 (n-grams) → Bengio 2003 (NPLM) → Mikolov 2010 (RNN LM) → GPT-2/3/4. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+"Language model" is older than the Transformer by half a century: a language
+model is anything that assigns probability to the next token,
+$p(x_t \mid x_{<t})$. The idea runs from **n-gram counting** (Shannon) through
+the **neural probabilistic LM** (Bengio 2003) and **recurrent LMs** (Mikolov
+2010) to the **decoder-only Transformer** line that dominates today: **GPT-2 →
+GPT-3 → GPT-4**, branching into **PaLM, LLaMA, Mistral, DeepSeek, Qwen, Gemini**.
+This chapter is the lineage — the long history first, then how the era's
+ingredients assembled into modern LLMs. The
+[Research Landscape](../landscape/transformer_era.qmd) is the full catalog.
+:::
+
+**Depends on:** [Scaling Laws & Emergence](06_scaling_laws.qmd) · [Alignment & Instruction Tuning](07_alignment.qmd)
+
+## Why this matters
+
+By now the core of a modern LLM has been built piece by piece — attention, the
+block, position, pre-training, decoding, scaling, alignment. But two things are
+still missing. First, the pieces have never been *assembled* into the story of
+how we got ChatGPT, LLaMA, or Gemini. Second, the chapters jumped straight to
+the Transformer, skipping the fifty years of language modelling that came
+before — the history that explains *why* next-token prediction is the objective
+at all.
+
+This chapter supplies both: a concise history of language models, then the
+modern lineage. It is deliberately *conceptual* — it tracks **families and their
+contributions**, not benchmark numbers or parameter counts (those go stale
+within months and live in the [landscape](../landscape/transformer_era.qmd)).
+
+## A brief history of language models
+
+Long before neural networks, a **language model** was already defined the way it
+is today: a distribution over the next symbol given the previous ones,
+$p(x_t \mid x_{<t})$. What changed across eras is *how that distribution is
+estimated*.
+
+```{=html}
+<svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:760px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="lmh-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- spine -->
+  <line x1="40" y1="120" x2="720" y2="120" stroke="#cbd5e1" stroke-width="2" marker-end="url(#lmh-ah)"/>
+
+  <!-- era 1: n-gram -->
+  <circle cx="110" cy="120" r="7" fill="#64748b"/>
+  <text x="110" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Statistical</text>
+  <text x="110" y="150" text-anchor="middle" font-size="9" fill="#6b7280">n-grams + smoothing</text>
+  <text x="110" y="163" text-anchor="middle" font-size="9" fill="#9ca3af">Shannon 1948–</text>
+
+  <!-- era 2: neural -->
+  <circle cx="300" cy="120" r="7" fill="#7c3aed"/>
+  <text x="300" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#5b21b6">Neural</text>
+  <text x="300" y="150" text-anchor="middle" font-size="9" fill="#6b7280">distributed word reps</text>
+  <text x="300" y="163" text-anchor="middle" font-size="9" fill="#9ca3af">Bengio 2003</text>
+
+  <!-- era 3: recurrent -->
+  <circle cx="490" cy="120" r="7" fill="#0891b2"/>
+  <text x="490" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#0e7490">Recurrent</text>
+  <text x="490" y="150" text-anchor="middle" font-size="9" fill="#6b7280">RNN / LSTM LMs</text>
+  <text x="490" y="163" text-anchor="middle" font-size="9" fill="#9ca3af">Mikolov 2010</text>
+
+  <!-- era 4: transformer -->
+  <circle cx="680" cy="120" r="8" fill="#059669"/>
+  <text x="680" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#047857">Transformer</text>
+  <text x="680" y="150" text-anchor="middle" font-size="9" fill="#6b7280">GPT line, scale</text>
+  <text x="680" y="163" text-anchor="middle" font-size="9" fill="#9ca3af">2017–</text>
+
+  <text x="380" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#374151">Same objective — p(next | context) — four ways to estimate it</text>
+  <text x="380" y="200" text-anchor="middle" font-size="10" fill="#6b7280">
+    Each era kept the goal and changed the estimator: counts → a feedforward net → recurrence → attention at scale.</text>
+</svg>
+```
+
+**Statistical / n-gram era (Shannon onward).** The earliest LMs estimate
+$p(x_t \mid x_{t-n+1:t-1})$ by **counting** n-gram frequencies in a corpus.
+Shannon [@shannon1948] framed text as a stochastic process and even estimated
+the entropy of English this way. The fatal weakness is *sparsity*: most n-grams
+are never observed, so the bulk of engineering went into **smoothing**
+(backoff, Kneser-Ney) to assign probability to unseen sequences. n-gram LMs
+powered speech recognition and translation for decades, but cannot generalise
+across similar words — "black car" and "dark car" share no statistics.
+
+**Neural probabilistic LM (Bengio 2003).** Bengio et al. [@bengio2003nplm]
+replaced counts with a feedforward network over **distributed word
+representations** (learned embeddings). Similar words get similar vectors, so
+the model generalises to unseen n-grams — the first crack at the sparsity wall,
+and the conceptual origin of the [word embeddings](../01_rnn/00_embeddings.qmd)
+covered in the RNN era.
+
+**Recurrent LMs (Mikolov 2010).** Fixed context windows give way to recurrence:
+an RNN [@mikolov2010rnnlm], later LSTM, carries a hidden state so the model can
+in principle condition on the *entire* history. This is the
+[RNN-era](../01_rnn/01_rnn_bptt.qmd) language model — strong until the vanishing
+gradient and the sequential bottleneck capped how far context could reach.
+
+**The Transformer turn (2017–).** Self-attention removed recurrence and let
+context scale in parallel — and once paired with the scaling laws, next-token
+prediction became a path to general capability. The rest of this chapter follows
+that line.
+
+## The modern lineage
+
+### One architecture, three scaling steps
+
+The dominant line is a single idea — a causal decoder-only Transformer trained
+on next-token prediction — scaled in three landmark steps:
+
+- **GPT-2** [@radford2019gpt2] — showed unsupervised next-token pre-training
+  alone yields surprisingly general capability; established byte-level BPE and
+  weight tying as defaults.
+- **GPT-3** [@brown2020] — scaled to 175B parameters and discovered **in-context
+  learning**: tasks specified by examples in the prompt, no fine-tuning. The
+  moment scale became the strategy.
+- **GPT-4** [@openai2023gpt4] — multimodal input, far stronger reasoning, and a
+  shift to *not* disclosing architecture/size. The frontier became a product,
+  not a paper.
+
+```{=html}
+<svg viewBox="0 0 600 260" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:600px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="lm-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <!-- main GPT spine -->
+  <rect x="40"  y="40" width="90" height="34" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.4"/><text x="85"  y="62" text-anchor="middle" font-size="10" fill="#5b21b6">GPT-2 '19</text>
+  <rect x="200" y="40" width="90" height="34" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.4"/><text x="245" y="62" text-anchor="middle" font-size="10" fill="#5b21b6">GPT-3 '20</text>
+  <rect x="360" y="40" width="90" height="34" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.4"/><text x="405" y="62" text-anchor="middle" font-size="10" fill="#5b21b6">GPT-4 '23</text>
+  <line x1="130" y1="57" x2="198" y2="57" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#lm-ah)"/>
+  <line x1="290" y1="57" x2="358" y2="57" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#lm-ah)"/>
+  <text x="245" y="30" text-anchor="middle" font-size="9" fill="#6b7280">scale + in-context learning</text>
+
+  <!-- branches -->
+  <rect x="180" y="120" width="110" height="32" rx="5" fill="#fef9c3" stroke="#eab308" stroke-width="1.2"/><text x="235" y="141" text-anchor="middle" font-size="9" fill="#854d0e">PaLM — scale</text>
+  <rect x="180" y="162" width="110" height="32" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/><text x="235" y="183" text-anchor="middle" font-size="9" fill="#166534">LLaMA — open, Chinchilla</text>
+  <rect x="320" y="120" width="120" height="32" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/><text x="380" y="141" text-anchor="middle" font-size="9" fill="#166534">Mistral / Mixtral — MoE</text>
+  <rect x="320" y="162" width="120" height="32" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/><text x="380" y="183" text-anchor="middle" font-size="9" fill="#166534">DeepSeek / Qwen</text>
+  <rect x="460" y="120" width="100" height="32" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.2"/><text x="510" y="141" text-anchor="middle" font-size="9" fill="#1e40af">Gemini — multimodal</text>
+
+  <line x1="245" y1="74" x2="240" y2="118" stroke="#9ca3af" stroke-width="1" marker-end="url(#lm-ah)"/>
+  <line x1="405" y1="74" x2="385" y2="118" stroke="#9ca3af" stroke-width="1" marker-end="url(#lm-ah)"/>
+
+  <text x="300" y="230" text-anchor="middle" font-size="10" fill="#6b7280">
+    One decoder-only spine; branches mark what each family added — open weights, compute-optimal data, MoE, multimodality.</text>
+</svg>
+```
+
+### The branches — what each family added
+
+The lineage is not a single line; each major family contributed a distinct idea
+(each detailed in its own chapter, catalogued in the landscape):
+
+- **PaLM** [@chowdhery2022palm] — pushed dense scaling to 540B and mapped
+  emergent capabilities across scale.
+- **LLaMA** [@touvron2023llama] — applied the **Chinchilla** recipe (smaller
+  model, far more tokens) and **opened the weights**, igniting the open-LLM
+  ecosystem. Brought RoPE, RMSNorm, SwiGLU into the standard recipe.
+- **Mistral / Mixtral** [@jiang2023mistral; @jiang2024mixtral] — strong small
+  dense models, then open **Mixture-of-Experts** at competitive quality.
+- **DeepSeek** [@deepseekv2team2024] / **Qwen** [@bai2023qwen] — fine-grained
+  MoE, long context, and strong multilingual/coding performance from outside the
+  original Western labs.
+- **Gemini** [@team2023gemini] — natively **multimodal** from pre-training, not
+  vision grafted on afterward.
+
+### The convergent recipe
+
+Despite different labs, modern LLMs converged on a near-identical stack — itself
+the strongest evidence that the era's chapters are the right decomposition:
+
+> decoder-only Transformer · RoPE · RMSNorm (pre-norm) · SwiGLU FFN ·
+> Chinchilla-scaled data · (increasingly) MoE · SFT + preference alignment ·
+> nucleus decoding.
+
+::: {.callout-warning title="Pitfall — open vs closed splits the evidence" icon="false"}
+Open-weight models (LLaMA, Mistral, DeepSeek, Qwen) publish architecture and
+often data; frontier closed models (GPT-4, Gemini, Claude) disclose little.
+Much of what's "known" about the largest models is inference, not fact. Treat
+parameter counts and training details for closed models as estimates — and note
+that the most-cited *methods* increasingly come from the open ecosystem, which is
+where this book can point to verifiable detail.
+:::
+
+::: {.callout-tip title="Going deeper" icon="false"}
+- The full, citation-backed catalog of every model named here —
+  [Research Landscape — Transformer Era](../landscape/transformer_era.qmd).
+- The ingredients each family combined: [Scaling Laws](06_scaling_laws.qmd),
+  [Alignment](07_alignment.qmd), [Mixture of Experts](09_moe.qmd),
+  [Multimodal](11_multimodal.qmd).
+:::
+
+## Application & impact
+
+| Family | Defining contribution | Covered in |
+|---|---|---|
+| GPT-2/3/4 | scale → in-context learning → multimodal product | [BERT & GPT](04_bert_gpt.qmd), [Scaling Laws](06_scaling_laws.qmd) |
+| PaLM | dense scaling, emergence mapping | [Scaling Laws](06_scaling_laws.qmd) |
+| LLaMA | open weights, Chinchilla recipe | [Scaling Laws](06_scaling_laws.qmd) |
+| Mistral / Mixtral | small-dense + open MoE | [Mixture of Experts](09_moe.qmd) |
+| DeepSeek / Qwen | fine-grained MoE, long context | [Mixture of Experts](09_moe.qmd) |
+| Gemini | native multimodality | [Multimodal](11_multimodal.qmd) |
+
+- **Decoder-only won.** The encoder-decoder and encoder-only branches persist
+  for translation and embeddings, but the general-purpose assistant is
+  decoder-only — the GPT bet.
+- **The open ecosystem became the research substrate.** Most reproducible
+  progress now flows through open-weight families.
+- **The recipe stabilised.** Convergence on a shared stack means innovation has
+  shifted from architecture to data, scale, alignment, and efficiency.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+The LLM era is one architecture — the decoder-only Transformer — scaled and
+refined along a few branches: bigger (GPT/PaLM), open and compute-optimal
+(LLaMA), sparse (Mixtral/DeepSeek), multimodal (Gemini). Each branch is an
+ingredient from this era's chapters, assembled — and the chapters that follow
+(MoE, sub-quadratic attention, multimodality) detail the newest of those
+branches. This chapter is the lineage; the
+[landscape](../landscape/transformer_era.qmd) is the index.
+:::
+
+→ Next: [Mixture of Experts](09_moe.qmd)

@@ -1,0 +1,206 @@
+---
+title: "Output Layer & Decoding"
+format: html
+---
+
+<!-- Code: nn_timeline.generate.decoding -->
+<!-- Next: 06_scaling_laws.qmd -->
+<!-- Timeline anchor: Press & Wolf 2017 (weight tying); Fan et al. 2018 (top-k); Holtzman et al. 2020 (nucleus). -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+A language model's final layer projects each hidden state to **logits** over the
+vocabulary; a **softmax** turns logits into a probability distribution, and the
+model is trained by **categorical cross-entropy** against the true next token:
+$$p = \operatorname{softmax}(h\,W_{\text{out}}), \qquad
+\mathcal{L} = -\log p_{\text{true}}.$$
+But a distribution is not text. **Decoding** is the separate algorithm that turns
+per-step distributions into a sequence — greedy, beam search, or sampling
+(temperature, top-k, nucleus). The decoding choice, not just the model, decides
+whether output is accurate, diverse, or degenerate.
+:::
+
+**Depends on:** [BERT & GPT](04_bert_gpt.qmd) · [Information Theory](../00_foundations/02_information_theory.qmd)
+
+## Why this matters
+
+Every generative chapter so far ends at "predict the next token" and stops. Two
+things in that phrase were deferred and are owed a home here:
+
+1. **The output layer itself** — how a hidden vector becomes a probability over
+   tens of thousands of tokens, and the softmax + cross-entropy pair that the
+   [information-theory](../00_foundations/02_information_theory.qmd) chapter
+   introduced for the binary case and promised to generalise to multi-class.
+2. **Decoding** — given the model's distribution at each step, *how do you
+   actually pick tokens?* This is assumed everywhere and explained nowhere, yet
+   it is the difference between fluent text and repetitive nonsense from the
+   *same* model.
+
+Decoding is pure inference-time algorithm: no parameters, no training. It is the
+cheapest, most overlooked lever on output quality.
+
+## The mechanism
+
+### The output head: logits → softmax → cross-entropy
+
+The final hidden state $h \in \mathbb{R}^{d_{\text{model}}}$ is projected to a
+vector of **logits** over the vocabulary $V$, then normalised:
+
+$$
+z = h\,W_{\text{out}}, \quad W_{\text{out}} \in \mathbb{R}^{d_{\text{model}}\times |V|},
+\qquad
+p_i = \frac{e^{z_i}}{\sum_{j} e^{z_j}}.
+$$
+
+This is the multi-class **softmax** — the generalisation of the sigmoid from the
+binary case. Training minimises **categorical cross-entropy**, which for a
+one-hot target reduces to the negative log-probability of the correct token:
+
+$$
+\mathcal{L} = -\sum_i y_i \log p_i = -\log p_{\text{true}}.
+$$
+
+Minimising this is exactly maximising the likelihood the
+[information-theory](../00_foundations/02_information_theory.qmd) chapter framed
+as minimising the KL divergence between the data and the model — now over $|V|$
+classes instead of two. The exponential of the per-token cross-entropy is
+**perplexity**, the standard LM metric.
+
+::: {.callout-note title="Weight tying" icon="false"}
+The output projection $W_{\text{out}}$ and the input embedding matrix have the
+same shape ($|V| \times d_{\text{model}}$) and similar roles. **Tying** them —
+using one matrix for both [@press2017tying] — saves a large block of parameters
+(the vocabulary embedding is often the single biggest tensor in a small model)
+and usually improves quality. Standard in GPT-2 onward.
+:::
+
+### Decoding: turning distributions into text
+
+At each step the model gives a distribution $p$ over the next token. A
+**decoding strategy** chooses one. The split is *deterministic* (maximise
+probability) versus *stochastic* (sample for diversity).
+
+```{=html}
+<svg viewBox="0 0 600 230" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:600px;display:block;margin:1.5rem auto">
+  <text x="150" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#5b21b6">Deterministic</text>
+  <text x="450" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#166534">Stochastic (sampling)</text>
+
+  <rect x="40" y="40" width="220" height="40" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.2"/>
+  <text x="150" y="58" text-anchor="middle" font-size="10" fill="#5b21b6">Greedy — argmax each step</text>
+  <text x="150" y="72" text-anchor="middle" font-size="8" fill="#6b7280">fast, repetitive, can dead-end</text>
+
+  <rect x="40" y="90" width="220" height="40" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.2"/>
+  <text x="150" y="108" text-anchor="middle" font-size="10" fill="#5b21b6">Beam search — keep top-b paths</text>
+  <text x="150" y="122" text-anchor="middle" font-size="8" fill="#6b7280">better for MT; bland for open-ended</text>
+
+  <rect x="340" y="40" width="220" height="40" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+  <text x="450" y="58" text-anchor="middle" font-size="10" fill="#166534">Temperature — sharpen/flatten p</text>
+  <text x="450" y="72" text-anchor="middle" font-size="8" fill="#6b7280">τ&lt;1 safer, τ&gt;1 more random</text>
+
+  <rect x="340" y="90" width="220" height="40" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+  <text x="450" y="108" text-anchor="middle" font-size="10" fill="#166534">Top-k / Top-p — truncate the tail</text>
+  <text x="450" y="122" text-anchor="middle" font-size="8" fill="#6b7280">sample from the head only</text>
+
+  <text x="300" y="170" text-anchor="middle" font-size="10" fill="#6b7280">
+    Maximising probability gives safe but dull text; sampling gives diversity — the art is truncating the tail.</text>
+  <text x="300" y="192" text-anchor="middle" font-size="10" fill="#6b7280">
+    Same model, different decoder → fluent essay or repetitive loop.</text>
+</svg>
+```
+
+- **Greedy** — take the argmax at each step. Fast and deterministic, but myopic:
+  it commits to a locally-best token and often loops ("the the the").
+- **Beam search** — keep the $b$ highest-probability *partial sequences* and
+  expand all of them, returning the best complete one. Strong for tasks with a
+  single correct answer (translation, summarisation); for open-ended generation
+  it produces bland, repetitive text because high-probability sequences are dull.
+- **Temperature** — divide logits by $\tau$ before softmax. $\tau<1$ sharpens
+  toward the mode (more conservative); $\tau>1$ flattens (more random); $\tau\to0$
+  recovers greedy.
+- **Top-k sampling** [@fan2018topk] — restrict sampling to the $k$ most likely
+  tokens, renormalise, sample. Cuts off the unreliable tail.
+- **Nucleus (top-p) sampling** [@holtzman2020nucleus] — restrict to the smallest
+  set of tokens whose cumulative probability exceeds $p$. Unlike top-k, the
+  candidate set grows and shrinks with the model's confidence.
+
+::: {.callout-warning title="Pitfall — likelihood maximisation degenerates" icon="false"}
+The most striking result here: always picking high-probability tokens produces
+*worse* text. Holtzman et al. [@holtzman2020nucleus] showed that maximisation
+(greedy/beam) drives models into bland, repetitive loops — human text is
+**not** the highest-probability continuation; it constantly takes
+lower-probability turns. This is why open-ended generation samples (nucleus) and
+only closed-ended tasks (translation) use beam search. "Most likely" and "good"
+diverge.
+:::
+
+::: {.callout-tip title="Going deeper" icon="false"}
+- The binary softmax/cross-entropy this generalises —
+  [Information Theory](../00_foundations/02_information_theory.qmd).
+- Making autoregressive decoding *faster* (KV-cache, speculative decoding) —
+  [KV-Cache](../supp/kv_cache.qmd).
+:::
+
+### Minimal sketch
+
+The output softmax with temperature, plus greedy / top-k / nucleus selection.
+
+```{python}
+import numpy as np
+
+rng = np.random.default_rng(0)
+
+def softmax(z, temp=1.0):
+    z = z / temp
+    z = z - z.max()
+    e = np.exp(z)
+    return e / e.sum()
+
+logits = rng.normal(size=8)                    # one step's logits over 8 tokens
+
+print("greedy:", int(np.argmax(logits)))
+
+def top_k(p, k):
+    idx = np.argsort(p)[-k:]
+    q = np.zeros_like(p); q[idx] = p[idx]
+    return q / q.sum()
+
+def nucleus(p, top_p):
+    order = np.argsort(p)[::-1]
+    cum = np.cumsum(p[order])
+    keep = order[:np.searchsorted(cum, top_p) + 1]
+    q = np.zeros_like(p); q[keep] = p[keep]
+    return q / q.sum()
+
+p = softmax(logits, temp=0.8)
+print("top-k=3 support :", np.flatnonzero(top_k(p, 3) > 0))
+print("nucleus p=.9 sup:", np.flatnonzero(nucleus(p, 0.9) > 0))
+```
+
+## Application & impact
+
+| Choice | Best for | Failure mode |
+|---|---|---|
+| Greedy | quick, deterministic output | repetition, dead-ends |
+| Beam search | translation, summarisation | bland in open-ended tasks |
+| Temperature | global diversity dial | too high → incoherent |
+| Top-k | simple tail-cutting | fixed k ignores confidence |
+| Nucleus (top-p) | open-ended generation | the modern default |
+| Weight tying | parameter savings | — (essentially free win) |
+
+- **Decoding is a product surface:** the `temperature` and `top_p` knobs every
+  LLM API exposes are exactly this chapter. Tuning them changes behaviour with
+  no retraining.
+- **Nucleus sampling is the de facto default** for chat and creative generation;
+  beam search survives in machine translation.
+- **The output head is also an efficiency target** — the vocabulary projection
+  is huge, motivating weight tying and (in some models) factorised softmaxes.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+The model outputs a distribution (logits → softmax, trained by cross-entropy);
+*decoding* is the separate algorithm that turns distributions into text.
+Maximising probability (greedy/beam) is right for closed-ended tasks but
+degenerates on open-ended ones, where sampling with a truncated tail (nucleus)
+wins. Same weights, different decoder, completely different output.
+:::
+
+→ Next: [Scaling Laws & Emergence](06_scaling_laws.qmd)

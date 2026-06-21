@@ -1,0 +1,168 @@
+---
+title: "Scaling Laws & Emergence"
+format: html
+---
+
+<!-- Code: none — conceptual chapter -->
+<!-- Next: 07_alignment.qmd -->
+<!-- Timeline anchor: Kaplan et al. 2020; Hoffmann et al. 2022 (Chinchilla); Brown et al. 2020 (GPT-3). -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Transformer loss falls as a **power law** in model size $N$, dataset size $D$,
+and compute $C$ — straight lines on a log-log plot over many orders of
+magnitude:
+$$L(N) \approx \left(\frac{N_c}{N}\right)^{\alpha_N}.$$
+This predictability turned model-building into planning. **Kaplan et al.** (2020)
+mapped the curves; **Chinchilla** (2022) corrected the recipe — for a fixed
+compute budget, scale *data and parameters together* (≈20 tokens/parameter),
+not just parameters. And at scale, some capabilities appear **abruptly** rather
+than smoothly: **emergence**.
+:::
+
+**Depends on:** [BERT & GPT](04_bert_gpt.qmd)
+
+## Why this matters
+
+GPT showed that one objective — next-token prediction — keeps improving as you
+add parameters and data. Scaling laws made that observation *quantitative and
+predictive*: you can fit a curve on small runs and forecast the loss of a model
+100× larger before training it. That changed the field from craft to
+engineering — you now justify a nine-figure training run with an extrapolated
+curve.
+
+The flip side is **emergence**: some abilities (arithmetic, in-context
+reasoning, instruction-following) are absent at small scale and present at large
+scale, with a sharp transition. Capability is not always a smooth function of
+loss, which makes the frontier genuinely hard to predict.
+
+## The mechanism
+
+### Power laws in N, D, C
+
+Kaplan et al. [@kaplan2020] found test loss follows clean power laws in each of
+the three resources, as long as the other two are not bottlenecks:
+
+$$
+L(N) \approx \left(\tfrac{N_c}{N}\right)^{\alpha_N}, \quad
+L(D) \approx \left(\tfrac{D_c}{D}\right)^{\alpha_D}, \quad
+L(C) \approx \left(\tfrac{C_c}{C}\right)^{\alpha_C}.
+$$
+
+The exponents are small (≈0.05–0.1), so gains are steady but expensive — each
+constant-factor drop in loss costs an order of magnitude more compute. Crucially
+the curves are *smooth and stable* across ~7 orders of magnitude, which is what
+makes extrapolation trustworthy.
+
+### The Chinchilla correction
+
+Kaplan's recipe implied "spend most of a bigger budget on more parameters."
+Hoffmann et al. [@hoffmann2022] retrained the analysis with learning-rate
+schedules matched to each run and reached the opposite conclusion: for a fixed
+compute budget $C \approx 6ND$, **parameters and tokens should scale in roughly
+equal proportion**.
+
+::: {.callout-warning title="Pitfall — GPT-3 was badly under-trained" icon="false"}
+By the Chinchilla rule, GPT-3 (175B params, ~300B tokens) had far too few tokens
+for its size. **Chinchilla** (70B params, 1.4T tokens) — *smaller* but trained
+on ~20× more data per parameter — beat it across benchmarks at the *same*
+compute. The lesson reshaped the field: data, not just parameters, is the
+binding constraint. It also explains why "small" models like LLaMA [@touvron2023llama] (7B trained
+on trillions of tokens) are so capable.
+:::
+
+```{=html}
+<svg viewBox="0 0 600 250" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:600px;display:block;margin:1.5rem auto">
+  <!-- axes -->
+  <line x1="70" y1="200" x2="540" y2="200" stroke="#374151" stroke-width="1.5"/>
+  <line x1="70" y1="40"  x2="70"  y2="200" stroke="#374151" stroke-width="1.5"/>
+  <text x="305" y="232" text-anchor="middle" font-size="11" fill="#374151">log compute (C)</text>
+  <text x="30" y="120" text-anchor="middle" font-size="11" fill="#374151" transform="rotate(-90 30 120)">log loss (L)</text>
+
+  <!-- power-law line -->
+  <line x1="90" y1="70" x2="520" y2="180" stroke="#7c3aed" stroke-width="2.5"/>
+  <text x="300" y="110" font-size="11" fill="#5b21b6" transform="rotate(14 300 110)">L ∝ C^(−α): a straight line in log-log</text>
+
+  <!-- points -->
+  <circle cx="120" cy="78"  r="4" fill="#7c3aed"/>
+  <circle cx="250" cy="111" r="4" fill="#7c3aed"/>
+  <circle cx="400" cy="149" r="4" fill="#7c3aed"/>
+  <circle cx="510" cy="177" r="4" fill="#7c3aed"/>
+
+  <text x="305" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#374151">
+    Loss is predictable across orders of magnitude — but capability isn't always.</text>
+</svg>
+```
+
+### Emergence
+
+Loss is smooth; *capabilities* sometimes are not. Wei et al. [@wei2022emergent]
+documented tasks where accuracy is at chance until a scale threshold, then rises
+sharply — **emergent abilities**. Examples: multi-digit arithmetic, word
+unscrambling, multi-step reasoning. Related is **chain-of-thought**
+[@wei2022cot]: large models solve far more reasoning problems when prompted to
+"think step by step," an ability that small models simply don't have to elicit.
+
+::: {.callout-note title="Is emergence real, or a measurement artifact?" icon="false"}
+Some emergence is partly an artifact of **discontinuous metrics**
+[@schaeffer2023mirage] (exact-match accuracy jumps even when underlying
+per-token loss improves smoothly). Under smoother metrics, several "emergent"
+curves straighten out. The debate is live:
+how much is a genuine phase transition versus how we choose to measure. Either
+way, the *practical* surprise — capabilities you didn't train for appearing at
+scale — is real.
+:::
+
+::: {.callout-tip title="Going deeper" icon="false"}
+- Scaling produces a capable but unaligned base model; turning it into a
+  helpful assistant is the [next chapter](07_alignment.qmd).
+- Scaling parameters *cheaply* by activating only some per token —
+  [Mixture of Experts](09_moe.qmd).
+:::
+
+### Minimal sketch
+
+Fit a power law to synthetic loss-vs-size points and extrapolate.
+
+```{python}
+import numpy as np
+
+N = np.array([1e6, 1e7, 1e8, 1e9])           # model sizes
+L = 0.4 + 12.0 * N ** (-0.08)                # true law + irreducible loss
+
+# fit log(L - L_inf) = log a - alpha * log N
+L_inf = 0.4
+slope, logb = np.polyfit(np.log(N), np.log(L - L_inf), 1)
+print(f"recovered exponent alpha = {-slope:.3f}")   # ~0.08
+
+N_big = 1e11
+pred = L_inf + np.exp(logb) * N_big ** slope
+print(f"extrapolated loss at N=1e11: {pred:.3f}")
+```
+
+## Application & impact
+
+| Finding | Consequence |
+|---|---|
+| Loss is a power law in N, D, C | Forecast large-run loss from small runs |
+| Compute-optimal ≈ 20 tokens/param | "Train smaller, longer" (Chinchilla, LLaMA) |
+| Data is the binding constraint | Data curation/quality becomes a frontier |
+| Emergence | Frontier capabilities are hard to predict |
+| Chain-of-thought | Prompting unlocks latent reasoning at scale |
+
+- **Scaling laws justified the LLM era**: the curves told labs that bigger,
+  trained right, would reliably be better — so the capital followed.
+- **Chinchilla reset the recipe** every subsequent open model adopted: modest
+  parameter counts, enormous token counts.
+- **Emergence reframed the goal** from "lower the loss" to "what new behaviours
+  show up next" — and motivated the alignment work that follows.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+Transformer loss is a remarkably predictable power law in size, data, and
+compute — predictable enough to plan billion-dollar runs. Chinchilla's
+correction (scale data with parameters) governs how models are trained today.
+But capability is not loss: some abilities emerge abruptly at scale, which is
+both the promise and the unpredictability of the frontier.
+:::
+
+→ Next: [Alignment & Instruction Tuning](07_alignment.qmd)

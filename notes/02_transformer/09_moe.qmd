@@ -1,0 +1,173 @@
+---
+title: "Mixture of Experts"
+format: html
+---
+
+<!-- Code: nn_timeline.layers.moe.SparseMoE, TopKRouter -->
+<!-- Next: 10_beyond_transformers.qmd -->
+<!-- Timeline anchor: Shazeer et al. 2017 (sparse MoE); Fedus et al. 2021 (Switch); Mixtral 2024; DeepSeek-V2 2024. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Scaling laws say more parameters help — but dense models pay for *every*
+parameter on *every* token. **Mixture of Experts** breaks that link: replace the
+feed-forward layer with $E$ expert FFNs and a **router** that sends each token to
+only its top-$k$ experts. The model has billions of parameters but activates
+only a small fraction per token:
+$$y = \sum_{i \in \text{top-}k} g_i(x)\, E_i(x).$$
+**Mixtral 8×7B** and **DeepSeek-V3** show this delivers the quality of a much
+larger dense model at a fraction of the inference compute.
+:::
+
+**Depends on:** [Scaling Laws & Emergence](06_scaling_laws.qmd)
+
+## Why this matters
+
+The scaling laws create a dilemma: quality tracks parameter count, but a dense
+model's compute *also* tracks parameter count, so each step toward a better
+model gets proportionally more expensive to train *and* serve. MoE decouples the
+two — **parameter count** (model capacity) from **active compute per token**
+(cost). You can grow capacity ~10× while keeping per-token FLOPs roughly flat.
+
+The FFN is the natural target: it holds most of a Transformer's parameters
+([The Transformer](02_transformer.qmd)) and runs independently per token, so
+swapping it for a sparse bank of experts is a clean substitution.
+
+## The mechanism
+
+### Sparse experts and a router
+
+Replace one FFN with $E$ expert FFNs $E_1, \dots, E_E$ plus a lightweight
+**router** (gating network) $g$. For each token $x$, the router produces scores,
+keeps the top-$k$ experts, softmaxes over those, and combines:
+
+$$
+g(x) = \operatorname{softmax}\big(\operatorname{top\text{-}k}(x W_g)\big),
+\qquad
+y = \sum_{i \in \text{top-}k} g_i(x)\, E_i(x).
+$$
+
+- **Shazeer et al.** [@shazeer2017moe] introduced the sparsely-gated MoE layer
+  (top-$k$, $k>1$) for LSTMs and early Transformers.
+- **Switch Transformer** [@fedus2021switch] simplified to **top-1** routing —
+  each token goes to exactly one expert — which maximises sparsity and
+  simplifies the implementation.
+- **Mixtral 8×7B** [@jiang2024mixtral] brought MoE to a strong open
+  decoder-only LLM: 8 experts, top-2 routing, ~47B total parameters but only
+  ~13B active per token.
+- **DeepSeek-V2/V3** [@deepseekv2team2024] pushed **fine-grained** experts plus
+  **shared** experts and large $E$, reaching frontier quality at low active cost.
+
+```{=html}
+<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:600px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="moe-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <rect x="30" y="100" width="70" height="40" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.4"/>
+  <text x="65" y="124" text-anchor="middle" font-size="11" fill="#5b21b6">token x</text>
+
+  <rect x="140" y="100" width="80" height="40" rx="5" fill="#fef9c3" stroke="#eab308" stroke-width="1.4"/>
+  <text x="180" y="120" text-anchor="middle" font-size="10" fill="#854d0e">router</text>
+  <text x="180" y="133" text-anchor="middle" font-size="8" fill="#854d0e">top-k</text>
+
+  <line x1="100" y1="120" x2="138" y2="120" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#moe-ah)"/>
+
+  <!-- experts -->
+  <g font-size="10">
+    <rect x="300" y="30"  width="90" height="34" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.4"/><text x="345" y="51" text-anchor="middle" fill="#166534">Expert 1 ✓</text>
+    <rect x="300" y="74"  width="90" height="34" rx="5" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1"/><text x="345" y="95" text-anchor="middle" fill="#9ca3af">Expert 2</text>
+    <rect x="300" y="118" width="90" height="34" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.4"/><text x="345" y="139" text-anchor="middle" fill="#166534">Expert 3 ✓</text>
+    <rect x="300" y="162" width="90" height="34" rx="5" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1"/><text x="345" y="183" text-anchor="middle" fill="#9ca3af">Expert E</text>
+  </g>
+
+  <line x1="220" y1="115" x2="298" y2="50"  stroke="#22c55e" stroke-width="1.6" marker-end="url(#moe-ah)"/>
+  <line x1="220" y1="123" x2="298" y2="135" stroke="#22c55e" stroke-width="1.6" marker-end="url(#moe-ah)"/>
+
+  <rect x="450" y="100" width="90" height="40" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.4"/>
+  <text x="495" y="120" text-anchor="middle" font-size="10" fill="#5b21b6">weighted</text>
+  <text x="495" y="133" text-anchor="middle" font-size="10" fill="#5b21b6">sum → y</text>
+  <line x1="390" y1="47"  x2="448" y2="112" stroke="#22c55e" stroke-width="1.2" marker-end="url(#moe-ah)"/>
+  <line x1="390" y1="135" x2="448" y2="124" stroke="#22c55e" stroke-width="1.2" marker-end="url(#moe-ah)"/>
+
+  <text x="300" y="222" text-anchor="middle" font-size="10" fill="#6b7280">
+    Only the top-k experts (green) run for this token; the rest (grey) are skipped. Capacity ≫ active compute.</text>
+</svg>
+```
+
+### Load balancing — the central difficulty
+
+Left alone, the router collapses: a few popular experts get all the tokens while
+the rest starve and never train. MoE training therefore adds an **auxiliary
+load-balancing loss** that penalises uneven expert usage, encouraging the router
+to spread tokens evenly across experts.
+
+::: {.callout-warning title="Pitfall — MoE saves compute, not memory" icon="false"}
+A sparse model activates few parameters per token, but **all** experts must be
+resident in memory (any token might route to any of them). Mixtral 8×7B needs
+the VRAM of a ~47B model while computing like a ~13B one. MoE trades *memory*
+(cheap, parallelisable across devices) for *compute and quality* — which is
+exactly the right trade at serving scale, but it is not a way to fit a big model
+on a small GPU.
+:::
+
+::: {.callout-tip title="Going deeper" icon="false"}
+- The dense FFN that MoE replaces — [The Transformer](02_transformer.qmd).
+- DeepSeek's shared/fine-grained variants and other MoE LLMs —
+  [Research Landscape](../landscape/transformer_era.qmd).
+:::
+
+### Minimal sketch
+
+Top-2 routing over a bank of toy experts, with per-token gate weights.
+
+```{python}
+import numpy as np
+
+rng = np.random.default_rng(0)
+d, E, k = 4, 4, 2
+experts = [rng.normal(scale=0.3, size=(d, d)) for _ in range(E)]
+W_g = rng.normal(size=(d, E))
+
+def softmax(z):
+    e = np.exp(z - z.max()); return e / e.sum()
+
+def moe(x):
+    scores = x @ W_g
+    top = np.argsort(scores)[-k:]            # indices of top-k experts
+    g = softmax(scores[top])                 # gate over chosen experts only
+    return sum(g_i * (x @ experts[i]) for g_i, i in zip(g, top)), top
+
+x = rng.normal(size=d)
+y, chosen = moe(x)
+print("experts used:", sorted(chosen), "  out of", E)   # 2 of 4 active
+print("output dim:", y.shape)
+```
+
+## Application & impact
+
+| Idea | Introduced by | Lives on as |
+|---|---|---|
+| Sparsely-gated experts | Shazeer 2017 | The MoE layer |
+| Top-1 routing | Switch | Maximal sparsity, simpler kernels |
+| Open MoE LLM | Mixtral | Quality of a big model, cost of a small one |
+| Shared + fine-grained experts | DeepSeek-V2/V3 | Frontier-quality efficient LLMs |
+
+- **MoE is how frontier models scale economically** — capacity grows without
+  per-token FLOPs growing, the dominant lever once dense scaling got too
+  expensive to serve.
+- **Routing is the new research surface** — load balancing, expert
+  specialisation, and routing stability are active problems unique to sparse
+  models.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+MoE decouples capacity from compute: many expert FFNs, but a router activates
+only top-$k$ per token, so a model can be huge yet cheap to run. The price is
+memory (all experts resident) and a new failure mode (router collapse, fought
+with load-balancing losses). It is the efficiency story that keeps the scaling
+laws affordable.
+:::
+
+→ Next: [Beyond Quadratic Attention](10_beyond_transformers.qmd)

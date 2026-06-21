@@ -1,0 +1,171 @@
+---
+title: "Beyond Quadratic Attention — SSMs and Hybrids"
+format: html
+---
+
+<!-- Code: nn_timeline.layers.ssm.SelectiveSSM, MambaBlock -->
+<!-- Next: 11_multimodal.qmd -->
+<!-- Timeline anchor: Gu & Dao 2023 (Mamba); Peng et al. 2023 (RWKV); Sun et al. 2023 (RetNet). -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Self-attention's power is also its bill: $O(n^2)$ compute and an
+ever-growing KV-cache make long sequences expensive. A new wave of
+architectures revisits the RNN idea — a fixed-size recurrent **state** — but
+made parallelisable for training. **State-space models** like **Mamba** run in
+$O(n)$ with constant memory at inference, using an **input-dependent (selective)**
+state update:
+$$h_t = \bar{A}\,h_{t-1} + \bar{B}\,x_t, \qquad y_t = C\,h_t.$$
+They rival Transformers on language while scaling linearly — though attention
+still wins at in-context recall.
+:::
+
+**Depends on:** [Self-Attention & Multi-Head Attention](01_self_attention.qmd)
+
+## Why this matters
+
+Every earlier chapter engineered *around* attention's quadratic cost (Flash
+Attention, KV-cache, GQA). This chapter asks the more radical question: do we
+need attention at all? The quadratic term comes from every token attending to
+every other; an RNN avoids it by compressing the past into a fixed-size state —
+but RNNs were abandoned because they don't parallelise over time and forget
+long-range context.
+
+The bet of this line of work: recover the RNN's $O(n)$ inference and constant
+memory *while* fixing its two flaws. If it pays off, the era's defining
+trade-off (parallelism vs quadratic cost) gets a third option.
+
+## The mechanism
+
+### State-space models
+
+An SSM maps a sequence through a continuous linear system, discretised to a
+recurrence with a hidden state $h_t$:
+
+$$
+h_t = \bar{A}\,h_{t-1} + \bar{B}\,x_t, \qquad y_t = C\,h_t.
+$$
+
+The trick that makes this competitive (S4 [@gu2022s4]): the *same* linear
+recurrence can be written as a **global convolution** over the sequence, so
+training runs in parallel (like a CNN/Transformer) while **inference** runs as a
+step-by-step recurrence in constant memory (like an RNN). You get both modes
+from one model.
+
+### Selectivity — Mamba's key idea
+
+Classic SSMs have *fixed* $\bar{A}, \bar{B}, C$ — the same dynamics regardless of
+input — so they can't selectively remember or ignore tokens the way attention
+can. **Mamba** [@gu2023mamba] makes these matrices **input-dependent**
+(selective): the state update is conditioned on the current token, letting the
+model choose what to keep and what to forget. This closes much of the gap to
+attention. Because selectivity breaks the convolution form, Mamba ships a
+hardware-aware **parallel scan** to keep training fast.
+
+```{=html}
+<svg viewBox="0 0 600 230" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:600px;display:block;margin:1.5rem auto">
+  <text x="150" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#5b21b6">Attention: all-pairs</text>
+  <text x="450" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#166534">SSM: rolling state</text>
+
+  <!-- attention all-pairs -->
+  <g fill="#7c3aed">
+    <circle cx="60"  cy="80" r="6"/><circle cx="120" cy="80" r="6"/><circle cx="180" cy="80" r="6"/><circle cx="240" cy="80" r="6"/>
+  </g>
+  <g stroke="#a78bfa" stroke-width="0.8">
+    <line x1="60" y1="80" x2="120" y2="80"/><line x1="60" y1="80" x2="180" y2="80"/><line x1="60" y1="80" x2="240" y2="80"/>
+    <line x1="120" y1="80" x2="180" y2="80"/><line x1="120" y1="80" x2="240" y2="80"/><line x1="180" y1="80" x2="240" y2="80"/>
+  </g>
+  <text x="150" y="120" text-anchor="middle" font-size="10" fill="#6b7280">O(n²) — every token sees every token</text>
+
+  <!-- ssm chain -->
+  <g fill="#22c55e">
+    <circle cx="360" cy="80" r="6"/><circle cx="420" cy="80" r="6"/><circle cx="480" cy="80" r="6"/><circle cx="540" cy="80" r="6"/>
+  </g>
+  <g stroke="#86efac" stroke-width="1.4">
+    <line x1="360" y1="80" x2="420" y2="80"/><line x1="420" y1="80" x2="480" y2="80"/><line x1="480" y1="80" x2="540" y2="80"/>
+  </g>
+  <text x="450" y="120" text-anchor="middle" font-size="10" fill="#6b7280">O(n) — past compressed into fixed state h</text>
+
+  <text x="300" y="175" text-anchor="middle" font-size="10" fill="#6b7280">
+    Attention pays for direct access to all positions; SSMs pay with a bottlenecked state.</text>
+  <text x="300" y="197" text-anchor="middle" font-size="10" fill="#6b7280">
+    Selectivity (Mamba) lets the state decide what to keep — recovering much of attention's flexibility.</text>
+</svg>
+```
+
+### The other contenders, and hybrids
+
+- **RWKV** [@peng2023rwkv] — reformulates attention as a linear recurrence with
+  a WKV mechanism; trains like a Transformer, runs like an RNN.
+- **RetNet** [@sun2023retnet] — a "retention" mechanism with three computation
+  modes (parallel for training, recurrent for inference, chunkwise for long
+  sequences).
+- **Hybrids** — pure SSMs lag attention on tasks needing precise recall from
+  context (copying, in-context lookup). The pragmatic winners **interleave** a
+  few attention layers among many Mamba layers (e.g. Jamba, Zamba), getting
+  linear scaling for most of the depth and exact recall where it matters.
+
+::: {.callout-warning title="Pitfall — a fixed state is a finite memory" icon="false"}
+An SSM compresses the entire past into a constant-size state, so it cannot
+losslessly recall arbitrary earlier tokens the way attention reads its full KV-
+cache. On "needle-in-a-haystack" retrieval and exact copying, attention still
+wins. The fixed state is what buys $O(n)$ — and also what limits it. This is why
+hybrids, not pure SSMs, are the practical frontier.
+:::
+
+::: {.callout-tip title="Going deeper" icon="false"}
+- The quadratic cost these models escape, and the KV-cache they replace —
+  [Self-Attention](01_self_attention.qmd), [KV-Cache](../supp/kv_cache.qmd).
+- RWKV / RetNet / Griffin details and benchmarks —
+  [Research Landscape](../landscape/transformer_era.qmd).
+:::
+
+### Minimal sketch
+
+A linear SSM run as a recurrence — constant memory, one state vector.
+
+```{python}
+import numpy as np
+
+rng = np.random.default_rng(0)
+d_state = 3
+A = np.diag(rng.uniform(0.5, 0.95, d_state))   # stable decay
+B = rng.normal(size=(d_state, 1)) * 0.5
+C = rng.normal(size=(1, d_state)) * 0.5
+
+def ssm(xs):
+    h = np.zeros((d_state, 1))
+    ys = []
+    for x in xs:                               # O(n), state h is fixed-size
+        h = A @ h + B * x
+        ys.append((C @ h).item())
+    return ys
+
+print("outputs:", np.round(ssm([1.0, 0.0, 0.0, 0.0]), 3))  # impulse response decays
+```
+
+## Application & impact
+
+| Model | Core idea | Wins | Loses |
+|---|---|---|---|
+| S4 [@gu2022s4] / Mamba | selective state-space recurrence | O(n), constant-mem inference | exact long-range recall |
+| RWKV | attention as linear recurrence | RNN inference, TF training | ecosystem maturity |
+| RetNet | retention, three compute modes | flexible train/infer | adoption |
+| Hybrids (Jamba…) | interleave attention + SSM | linear + recall | added complexity |
+
+- **The first credible challenge to attention's monopoly** since 2017 — not by
+  out-attending it, but by reviving recurrence with modern training.
+- **Long-context economics** favour linear models: constant-memory inference is
+  decisive when contexts reach hundreds of thousands of tokens.
+- **Hybrids are the likely synthesis** — most depth in linear SSM layers, a few
+  attention layers for precise recall.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+SSMs answer the era's defining cost problem by returning to a fixed-size
+recurrent state — but trainable in parallel and, with Mamba's selectivity, able
+to choose what to remember. They scale linearly and run in constant memory,
+rivalling Transformers on language while still trailing on exact recall. The
+practical future looks hybrid, not a clean replacement.
+:::
+
+→ Next: [Multimodal Transformers](11_multimodal.qmd)
