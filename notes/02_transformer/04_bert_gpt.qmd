@@ -4,17 +4,193 @@ format: html
 ---
 
 <!-- Code: nn_timeline.archs.tnn.BERT, GPT -->
-<!-- Next: 05_scaling_laws.qmd -->
-<!-- PLANNED SECTIONS (draft scope):
-     1. Tokenization sub-section — BPE (Sennrich 2016), WordPiece (BERT),
-        SentencePiece (T5/LLaMA). Assumed everywhere, covered nowhere; this is
-        its home. Subword units, vocab-size tradeoffs, byte-level BPE (GPT-2).
-     2. BERT — encoder-only, masked LM + NSP, fine-tuning paradigm.
-     3. GPT — decoder-only, causal LM, in-context learning.
-     4. Comparison: bidirectional vs autoregressive; when to use which. -->
+<!-- Next: 05_decoding.qmd -->
+<!-- Timeline anchor: Radford et al. 2018 (GPT); Devlin et al. 2018/2019 (BERT). -->
 
-
-::: {.callout-note title="Coming soon" icon="false"}
-This chapter is in progress and will be published shortly.
-Return to the [book index](../index.qmd) or start from [Foundations](../00_foundations/00_historical.qmd).
+::: {.callout-tip title="TL;DR" icon="false"}
+The Transformer was an encoder-decoder built for translation. Its two halves
+split into the families that define modern NLP. **BERT** keeps the encoder:
+bidirectional, trained by **masked language modelling**, fine-tuned for
+understanding. **GPT** keeps the decoder: causal, trained by **next-token
+prediction**, and increasingly used *without* fine-tuning via in-context
+learning. Both rest on **subword tokenisation** — the unglamorous layer that
+turns text into the integer sequences everything else operates on.
 :::
+
+**Depends on:** [The Transformer](02_transformer.qmd) · [Positional Encoding](03_positional_encoding.qmd)
+
+## Why this matters
+
+The original Transformer was a single supervised model trained end-to-end on
+translation pairs. BERT and GPT made the move that created the modern paradigm:
+**self-supervised pre-training on raw text**, then adapt. Language itself
+becomes the training signal — no labels required — so the data ceiling jumps
+from curated pairs to the entire web.
+
+The two papers also forked the architecture by *objective*: predict a masked
+word from both sides (BERT, understanding) versus predict the next word from the
+left (GPT, generation). That fork still organises the field.
+
+## The mechanism
+
+### Tokenisation — the layer underneath everything
+
+Before any embedding, text must become a sequence of integer IDs. Word-level
+vocabularies explode and can't handle unseen words; character-level sequences
+are too long. **Subword tokenisation** splits the difference: frequent words
+stay whole, rare words break into reusable pieces, and nothing is ever
+out-of-vocabulary.
+
+- **Byte-Pair Encoding (BPE)** [@sennrich2016bpe] — start from characters,
+  greedily merge the most frequent adjacent pair, repeat to a target vocab
+  size. GPT-2 [@radford2019gpt2] uses **byte-level** BPE: it operates on raw
+  bytes, so *any* string is representable with a fixed 256-symbol base.
+- **WordPiece** (BERT) — like BPE but merges by likelihood gain rather than raw
+  frequency. Marks word continuations (`##ing`).
+- **SentencePiece** [@kudo2018sentencepiece] — trains directly on raw text with
+  no pre-tokenisation (treats space as a symbol), so it is language-agnostic.
+  Used by T5 and LLaMA.
+
+::: {.callout-warning title="Pitfall — tokenisation leaks into everything" icon="false"}
+Token boundaries are not neutral. They explain why models miscount letters in a
+word, why arithmetic on long numbers is brittle, and why some languages cost
+several times more tokens (and money) per sentence than English. Context length,
+pricing, and many "reasoning" failures are downstream of the tokenizer. It is a
+modelling choice, not a preprocessing detail.
+:::
+
+### BERT — bidirectional encoder
+
+BERT [@devlin2019] is an encoder-only stack. Because it has no causal mask,
+every token attends to the **full** sentence — left and right context at once.
+That bidirectionality is powerful for understanding but rules out
+left-to-right generation, so BERT needs a pre-training task that isn't "predict
+the next word":
+
+- **Masked Language Modelling (MLM)** — randomly mask ~15% of tokens; predict
+  them from both-side context. This forces deep bidirectional representations.
+- **Next-Sentence Prediction (NSP)** — classify whether sentence B follows
+  sentence A. Later work (RoBERTa [@liu2019roberta]) showed NSP is largely
+  unnecessary and that BERT was badly under-trained.
+
+You then **fine-tune**: bolt a small head on top and train on a labelled task
+(classification, NER, QA). One pre-trained model, many fine-tuned descendants.
+
+### GPT — causal decoder
+
+GPT [@radford2018gpt] keeps the decoder half (minus cross-attention, since
+there's no encoder): a stack with a **causal mask** trained on plain next-token
+prediction,
+$$\mathcal{L} = -\sum_t \log p(x_t \mid x_{<t}).$$
+This objective is "weaker" per token than MLM but unboundedly scalable, and it
+yields a model that can *generate*. The GPT line's defining discovery was that
+scaling this single objective produces **in-context learning** — GPT-3
+[@brown2020] performs tasks from a few examples in the prompt, no gradient
+updates — covered in [Scaling Laws](06_scaling_laws.qmd).
+
+### Bidirectional vs autoregressive
+
+```{=html}
+<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:600px;display:block;margin:1.5rem auto">
+  <text x="150" y="22" text-anchor="middle" font-size="12" font-weight="700" fill="#5b21b6">BERT — encoder-only</text>
+  <text x="450" y="22" text-anchor="middle" font-size="12" font-weight="700" fill="#166534">GPT — decoder-only</text>
+
+  <!-- BERT tokens, full attention -->
+  <g font-size="11" fill="#5b21b6">
+    <rect x="40"  y="60" width="50" height="30" rx="4" fill="#ede9fe" stroke="#7c3aed"/><text x="65"  y="80" text-anchor="middle">the</text>
+    <rect x="100" y="60" width="50" height="30" rx="4" fill="#ede9fe" stroke="#7c3aed"/><text x="125" y="80" text-anchor="middle">[MASK]</text>
+    <rect x="160" y="60" width="50" height="30" rx="4" fill="#ede9fe" stroke="#7c3aed"/><text x="185" y="80" text-anchor="middle">sat</text>
+  </g>
+  <text x="125" y="120" text-anchor="middle" font-size="9" fill="#6b7280">attends both directions</text>
+  <text x="125" y="138" text-anchor="middle" font-size="9" fill="#6b7280">objective: fill the mask (MLM)</text>
+
+  <!-- GPT tokens, causal -->
+  <g font-size="11" fill="#166534">
+    <rect x="340" y="60" width="50" height="30" rx="4" fill="#dcfce7" stroke="#22c55e"/><text x="365" y="80" text-anchor="middle">the</text>
+    <rect x="400" y="60" width="50" height="30" rx="4" fill="#dcfce7" stroke="#22c55e"/><text x="425" y="80" text-anchor="middle">cat</text>
+    <rect x="460" y="60" width="50" height="30" rx="4" fill="#dcfce7" stroke="#22c55e"/><text x="485" y="80" text-anchor="middle">→ ?</text>
+  </g>
+  <text x="425" y="120" text-anchor="middle" font-size="9" fill="#6b7280">attends left only (causal)</text>
+  <text x="425" y="138" text-anchor="middle" font-size="9" fill="#6b7280">objective: predict next token</text>
+
+  <text x="300" y="178" text-anchor="middle" font-size="10" fill="#6b7280">
+    Same block; the mask and the objective decide whether you get an understander or a generator.</text>
+</svg>
+```
+
+| | BERT (encoder) | GPT (decoder) |
+|---|---|---|
+| Attention | bidirectional | causal (left-only) |
+| Pre-training | masked LM | next-token LM |
+| Natural at | understanding / classification | generation |
+| Adapted by | fine-tuning a head | prompting / in-context |
+
+A third option keeps **both** halves: T5 [@raffel2020] casts every task as
+text-to-text with the full encoder-decoder, and BART [@lewis2019bart] pre-trains
+the encoder-decoder as a denoiser.
+
+::: {.callout-tip title="Going deeper" icon="false"}
+- What happens when you scale the GPT objective — emergence and in-context
+  learning: [Scaling Laws & Emergence](06_scaling_laws.qmd).
+- Turning a raw next-token model into a helpful assistant:
+  [Alignment & Instruction Tuning](07_alignment.qmd).
+:::
+
+### Minimal sketch
+
+A tiny BPE merge loop — the core of every subword tokenizer.
+
+```{python}
+from collections import Counter
+
+def merge(word, pair):                       # collapse every occurrence of pair
+    out, i = [], 0
+    while i < len(word):
+        if i < len(word) - 1 and (word[i], word[i + 1]) == pair:
+            out.append(word[i] + word[i + 1]); i += 2
+        else:
+            out.append(word[i]); i += 1
+    return tuple(out)
+
+def bpe_merges(words, num_merges):
+    vocab = [tuple(w) for w in words]        # start from characters
+    merges = []
+    for _ in range(num_merges):
+        pairs = Counter(p for w in vocab for p in zip(w, w[1:]))
+        if not pairs:
+            break
+        best = pairs.most_common(1)[0][0]
+        merges.append(best)
+        vocab = [merge(w, best) for w in vocab]
+    return merges
+
+print(bpe_merges(["low", "lower", "lowest"], 3))  # learns 'l'+'o', 'lo'+'w', ...
+```
+
+## Application & impact
+
+| Idea | Introduced by | Lives on as |
+|---|---|---|
+| Self-supervised pre-train → adapt | BERT, GPT | The entire foundation-model paradigm |
+| Masked LM (bidirectional) | BERT | Encoder backbones for retrieval, classification |
+| Next-token LM (causal) | GPT | Every generative LLM |
+| Byte-level BPE | GPT-2 | Open-vocabulary tokenisation everywhere |
+| Text-to-text framing | T5 | Unified task interfaces, instruction tuning |
+
+- **BERT** dominated NLP benchmarks 2018–2020 and remains the default for
+  embedding/understanding tasks where generation isn't needed.
+- **GPT** won the longer game: next-token prediction at scale turned out to be a
+  path to general capability, making decoder-only the architecture of the LLM
+  era.
+- **Tokenisation**, chosen here, silently constrains every model that follows —
+  context budgets, multilingual cost, and a recurring class of failure modes.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+One Transformer block, split by objective: mask-and-fill gives BERT (understand
+from both sides), next-token gives GPT (generate from the left). Both replaced
+task-specific architectures with pre-train-then-adapt — and both stand on
+subword tokenisation, the layer that quietly shapes everything above it.
+:::
+
+→ Next: [Output Layer & Decoding](05_decoding.qmd)

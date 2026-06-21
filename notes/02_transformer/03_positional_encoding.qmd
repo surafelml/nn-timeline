@@ -4,8 +4,187 @@ format: html
 ---
 
 <!-- Code: nn_timeline.layers.embeddings.SinusoidalPE, RoPE -->
+<!-- Next: 04_bert_gpt.qmd -->
+<!-- Timeline anchor: Vaswani et al. 2017 (sinusoidal); Su et al. 2021/2024 (RoPE). -->
 
-::: {.callout-note title="Coming soon" icon="false"}
-This chapter is in progress and will be published shortly.
-Return to the [book index](../index.qmd) or start from [Foundations](../00_foundations/00_historical.qmd).
+::: {.callout-tip title="TL;DR" icon="false"}
+Self-attention is **permutation-equivariant** — shuffle the input tokens and
+the output shuffles identically; it has no notion of order. Position must be
+injected. The original Transformer **adds** a fixed sinusoidal signal to the
+embeddings; modern LLMs instead **rotate** queries and keys by a
+position-dependent angle (**RoPE**), so attention scores depend only on the
+*relative* offset $m-n$:
+$$\langle R_m q,\; R_n k \rangle = g(q, k, m-n).$$
+This relative-position property is why RoPE generalises to longer contexts and
+now dominates.
 :::
+
+**Depends on:** [The Transformer](02_transformer.qmd)
+
+## Why this matters
+
+Attention computes $\operatorname{softmax}(QK^\top/\sqrt{d_k})V$ over a *set* of
+tokens. Nothing in that expression references position — "the cat sat" and "sat
+cat the" produce the same set of attention scores, just permuted. For language,
+where order *is* meaning, this is fatal.
+
+RNNs got order for free: they consumed tokens one at a time, so position was
+implicit in the recurrence. The Transformer threw out recurrence for
+parallelism (the previous chapter) — and threw out the free position signal with
+it. Positional encoding buys order back without reintroducing sequential
+computation.
+
+How you inject position turns out to matter enormously for **length
+generalisation** — whether a model trained on 2K tokens can run at 32K — which
+is why this is its own chapter, not a footnote.
+
+## The mechanism
+
+### Sinusoidal (absolute) encoding
+
+The original Transformer [@vaswani2017] adds a fixed vector $PE_{pos} \in
+\mathbb{R}^{d_{\text{model}}}$ to each token embedding, defined by sines and
+cosines at geometrically spaced frequencies:
+
+$$
+PE_{(pos,\,2i)} = \sin\!\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right),
+\qquad
+PE_{(pos,\,2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right).
+$$
+
+Each dimension is a sinusoid of a different wavelength (short wavelengths encode
+fine position, long wavelengths encode coarse position) — a positional
+"binary clock". It is parameter-free and, because $PE_{pos+k}$ is a linear
+function of $PE_{pos}$, in principle lets the model attend by relative offset.
+
+### Learned absolute encoding
+
+BERT and GPT-2 instead make the position vectors **learned** parameters, one
+per position up to a maximum length. Simple and effective, but with a hard
+ceiling: there is no embedding for positions beyond the training length, so the
+model cannot run on longer sequences at all.
+
+::: {.callout-warning title="Pitfall — absolute encodings don't extrapolate" icon="false"}
+Both sinusoidal and learned *absolute* schemes tie the signal to an absolute
+index. A model trained to position 2048 has never seen the position-4096 signal;
+attention degrades sharply past the training length. What attention actually
+needs is *relative* distance — "how far is this token from that one" — not
+absolute index. This realisation drove the shift to RoPE and ALiBi.
+:::
+
+### Rotary Position Embedding (RoPE)
+
+RoPE [@su2024rope] encodes position by **rotating** the query and key vectors,
+in 2-D subspace pairs, by an angle proportional to their position. For a token
+at position $m$, apply a block-diagonal rotation $R_m$:
+
+$$
+q_m = R_m\, W_Q x_m, \qquad k_n = R_n\, W_K x_n.
+$$
+
+The key property: the dot product of a rotated query and rotated key depends
+only on the **relative** offset $m-n$,
+
+$$
+\langle R_m q,\; R_n k \rangle = g(q, k,\, m-n),
+$$
+
+because rotations compose: $R_m^\top R_n = R_{n-m}$. Position is folded directly
+into the attention score rather than added to the embedding. RoPE is now the
+default in LLaMA, Mistral, DeepSeek, and most open LLMs.
+
+### ALiBi — bias instead of embedding
+
+ALiBi [@press2022alibi] takes an even simpler route: add nothing to the
+embeddings, but subtract a linear penalty $-\lambda\,|m-n|$ from each attention
+score, with a per-head slope $\lambda$. Distant tokens are penalised; the bias is purely relative and
+unbounded, so it extrapolates to far longer sequences than seen in training.
+
+```{=html}
+<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:600px;display:block;margin:1.5rem auto">
+  <text x="100" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#374151">Absolute (add)</text>
+  <rect x="40" y="40" width="120" height="40" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.2"/>
+  <text x="100" y="58" text-anchor="middle" font-size="10" fill="#5b21b6">embedding + PE_pos</text>
+  <text x="100" y="72" text-anchor="middle" font-size="9" fill="#6b7280">ties to index</text>
+  <text x="100" y="110" text-anchor="middle" font-size="9" fill="#9ca3af">sinusoidal, learned</text>
+
+  <text x="300" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#374151">Rotary (rotate q,k)</text>
+  <rect x="240" y="40" width="120" height="40" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+  <text x="300" y="58" text-anchor="middle" font-size="10" fill="#166534">R_m·q , R_n·k</text>
+  <text x="300" y="72" text-anchor="middle" font-size="9" fill="#6b7280">score ∝ (m−n)</text>
+  <text x="300" y="110" text-anchor="middle" font-size="9" fill="#9ca3af">RoPE — LLaMA, Mistral</text>
+
+  <text x="500" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#374151">Bias (penalise dist.)</text>
+  <rect x="440" y="40" width="120" height="40" rx="5" fill="#fef9c3" stroke="#eab308" stroke-width="1.2"/>
+  <text x="500" y="58" text-anchor="middle" font-size="10" fill="#854d0e">score − λ·|m−n|</text>
+  <text x="500" y="72" text-anchor="middle" font-size="9" fill="#6b7280">relative, unbounded</text>
+  <text x="500" y="110" text-anchor="middle" font-size="9" fill="#9ca3af">ALiBi</text>
+
+  <text x="300" y="160" text-anchor="middle" font-size="10" fill="#6b7280">
+    The arc of the field: absolute index → relative offset. Relative schemes extrapolate to longer contexts.</text>
+  <text x="300" y="182" text-anchor="middle" font-size="10" fill="#6b7280">
+    RoPE wins by making the attention score itself a function of distance, at no extra parameters.</text>
+</svg>
+```
+
+::: {.callout-tip title="Going deeper" icon="false"}
+- Long-context inference and how position interacts with the KV-cache —
+  [KV-Cache](../supp/kv_cache.qmd).
+- The models that first standardised learned vs sinusoidal choices —
+  [BERT & GPT](04_bert_gpt.qmd).
+:::
+
+### Minimal sketch
+
+Sinusoidal table and a 2-D RoPE rotation, showing that RoPE attention scores
+depend on the offset.
+
+```{python}
+import numpy as np
+
+def sinusoidal(n, d, base=10000.0):
+    pos = np.arange(n)[:, None]
+    i = np.arange(0, d, 2)[None, :]
+    ang = pos / base ** (i / d)
+    pe = np.zeros((n, d))
+    pe[:, 0::2], pe[:, 1::2] = np.sin(ang), np.cos(ang)
+    return pe
+
+print("sinusoidal PE[2]:", np.round(sinusoidal(4, 4)[2], 2))
+
+def rope_2d(x, m, base=10000.0):          # x: (2,) one rotation pair
+    theta = m / base ** 0
+    c, s = np.cos(theta), np.sin(theta)
+    return np.array([c * x[0] - s * x[1], s * x[0] + c * x[1]])
+
+q, k = np.array([1.0, 0.0]), np.array([0.0, 1.0])
+for (m, n) in [(1, 3), (4, 6), (0, 2)]:    # all have offset m-n = -2
+    score = rope_2d(q, m) @ rope_2d(k, n)
+    print(f"m={m}, n={n}, offset={m-n}: score={score:.3f}")  # identical
+```
+
+## Application & impact
+
+| Scheme | Position is… | Extrapolates? | Used by |
+|---|---|---|---|
+| Sinusoidal | added, fixed, absolute | weakly | original Transformer |
+| Learned absolute | added, learned, absolute | no (hard cap) | BERT, GPT-2 |
+| **RoPE** | rotation of q/k, relative | yes (with tricks) | LLaMA, Mistral, DeepSeek |
+| ALiBi | score bias, relative | strongly | some long-context models |
+
+- **The era's quiet trend line** is absolute → relative. Early models bolted
+  position onto embeddings; modern ones fold *relative* distance into the
+  attention score, which is what lets a model trained short run long.
+- **Long-context engineering** (position interpolation, NTK-aware scaling, YaRN)
+  is almost entirely about stretching RoPE past its training length — a major
+  practical frontier for current LLMs.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+Attention is order-blind by construction; position is a separate signal you
+choose how to inject. Adding an absolute signal (sinusoidal/learned) works but
+caps the usable length. Encoding *relative* distance — rotating q/k (RoPE) or
+biasing scores (ALiBi) — is what unlocked long context and is now standard.
+:::
+
+→ Next: [BERT & GPT](04_bert_gpt.qmd)

@@ -31,7 +31,8 @@ which is why it sits here, early in the timeline.
 
 The treatment here focuses on **binary classification** (the perceptron's own domain).
 The multi-class generalization (softmax + categorical cross-entropy) is
-introduced later, where multi-output models first appear.
+introduced later, where multi-output models first appear — the language-model
+output head in [Output Layer & Decoding](../02_transformer/05_decoding.qmd).
 
 ## The mechanism
 

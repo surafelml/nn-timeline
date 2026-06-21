@@ -4,8 +4,216 @@ format: html
 ---
 
 <!-- Code: nn_timeline.archs.tnn.Transformer -->
+<!-- Next: 03_positional_encoding.qmd -->
+<!-- Timeline anchor: Vaswani et al. 2017 (Attention Is All You Need). -->
 
-::: {.callout-note title="Coming soon" icon="false"}
-This chapter is in progress and will be published shortly.
-Return to the [book index](../index.qmd) or start from [Foundations](../00_foundations/00_historical.qmd).
+::: {.callout-tip title="TL;DR" icon="false"}
+The Transformer wraps self-attention in a repeatable **block**: attention to
+mix information across positions, a position-wise **feed-forward network** to
+process each position, with **residual connections** and **layer
+normalisation** around both. Stacking $N$ such blocks gives an encoder; adding
+a second attention that queries the encoder gives a decoder. A block's update is
+$$x \leftarrow x + \text{Sublayer}\big(\text{LayerNorm}(x)\big),$$
+applied first to attention, then to the FFN. **Vaswani et al.** (2017) showed
+this stack — no recurrence, no convolution — sets a new state of the art on
+translation while training in a fraction of the time.
 :::
+
+**Depends on:** [Self-Attention & Multi-Head Attention](01_self_attention.qmd)
+
+## Why this matters
+
+The previous chapter gave us one operation: multi-head self-attention. But one
+attention layer is not a model. Three problems remain before it becomes a
+trainable architecture:
+
+1. **Attention only mixes; it does not transform.** Its output is a weighted
+   average of value vectors — a convex combination. On its own it cannot apply
+   a non-linear per-token computation.
+2. **Deep stacks do not train.** Stacking attention layers naively reproduces
+   the vanishing/exploding-gradient problem from the RNN era.
+3. **Attention is permutation-equivariant.** It has no built-in sense of order
+   (handled in the [next chapter](03_positional_encoding.qmd)).
+
+The Transformer block solves (1) with a feed-forward network and (2) with
+residuals + normalisation. The result is the most copied architecture in
+machine learning: the same block, restacked and rescaled, is GPT, BERT, T5,
+ViT, and every LLM since.
+
+## The mechanism
+
+### The block: four ingredients
+
+Each Transformer layer composes two **sublayers**, each wrapped identically:
+
+$$
+\text{Sublayer output} = \text{LayerNorm}\big(x + \text{Sublayer}(x)\big).
+$$
+
+- **Multi-head self-attention** — mixes information across positions.
+- **Position-wise feed-forward network (FFN)** — transforms each position
+  independently and identically:
+  $$\text{FFN}(x) = \max(0,\, xW_1 + b_1)\,W_2 + b_2,$$
+  typically expanding to an inner dimension $d_{\text{ff}} = 4\,d_{\text{model}}$
+  then projecting back. This is where most of a Transformer's parameters live.
+- **Residual connection** — the $x +$ term gives gradients a direct path to
+  every layer, the same identity-shortcut idea that let ResNets [@he2016resnet]
+  go deep.
+- **Layer normalisation** — normalises across the feature dimension per token,
+  stabilising the scale of activations regardless of sequence content.
+
+::: {.callout-note title="Post-LN vs Pre-LN" icon="false"}
+The original paper applies LayerNorm *after* the residual add (**post-LN**):
+$\text{LayerNorm}(x + \text{Sublayer}(x))$. Modern LLMs almost universally use
+**pre-LN** — $x + \text{Sublayer}(\text{LayerNorm}(x))$ — which keeps a clean
+residual highway and trains stably without learning-rate warmup. The TL;DR
+formula above is the pre-LN form; the difference is purely where the norm sits.
+:::
+
+### Encoder and decoder
+
+```{=html}
+<svg viewBox="0 0 560 360" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:560px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="tf-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <!-- Encoder column -->
+  <rect x="40" y="40" width="180" height="280" rx="8" fill="#f5f3ff" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="130" y="30" text-anchor="middle" font-size="12" font-weight="700" fill="#5b21b6">Encoder ×N</text>
+
+  <rect x="65" y="70" width="130" height="38" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.2"/>
+  <text x="130" y="93" text-anchor="middle" font-size="10" fill="#5b21b6">Multi-head self-attn</text>
+
+  <rect x="65" y="130" width="130" height="38" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.2"/>
+  <text x="130" y="153" text-anchor="middle" font-size="10" fill="#5b21b6">Feed-forward</text>
+
+  <text x="130" y="200" text-anchor="middle" font-size="9" fill="#6b7280">+ residual &amp; LayerNorm</text>
+  <text x="130" y="216" text-anchor="middle" font-size="9" fill="#6b7280">around each sublayer</text>
+
+  <!-- Decoder column -->
+  <rect x="340" y="40" width="180" height="280" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <text x="430" y="30" text-anchor="middle" font-size="12" font-weight="700" fill="#166534">Decoder ×N</text>
+
+  <rect x="365" y="70" width="130" height="38" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+  <text x="430" y="88" text-anchor="middle" font-size="10" fill="#166534">Masked self-attn</text>
+  <text x="430" y="101" text-anchor="middle" font-size="8" fill="#166534">(causal)</text>
+
+  <rect x="365" y="130" width="130" height="38" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+  <text x="430" y="148" text-anchor="middle" font-size="10" fill="#166534">Cross-attn</text>
+  <text x="430" y="161" text-anchor="middle" font-size="8" fill="#166534">(Q=dec, K,V=enc)</text>
+
+  <rect x="365" y="190" width="130" height="38" rx="5" fill="#dcfce7" stroke="#22c55e" stroke-width="1.2"/>
+  <text x="430" y="213" text-anchor="middle" font-size="10" fill="#166534">Feed-forward</text>
+
+  <!-- Encoder -> decoder cross-attention arrow -->
+  <line x1="220" y1="149" x2="363" y2="149" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#tf-ah)"/>
+  <text x="290" y="142" text-anchor="middle" font-size="8" fill="#6b7280">K, V</text>
+
+  <!-- Output head -->
+  <rect x="365" y="252" width="130" height="36" rx="5" fill="#fef9c3" stroke="#eab308" stroke-width="1.2"/>
+  <text x="430" y="274" text-anchor="middle" font-size="10" fill="#854d0e">Linear → softmax</text>
+  <line x1="430" y1="228" x2="430" y2="250" stroke="#22c55e" stroke-width="1.2" marker-end="url(#tf-ah)"/>
+
+  <text x="280" y="345" text-anchor="middle" font-size="9" fill="#6b7280">
+    Encoder reads the source in parallel; decoder generates left-to-right, attending to itself and the encoder.</text>
+</svg>
+```
+
+- **Encoder** — $N$ identical blocks (self-attention + FFN). Sees the whole
+  input at once, no masking. Produces a contextual representation per token.
+- **Decoder** — $N$ blocks with *three* sublayers: **masked** self-attention
+  (causal, so generation stays autoregressive), **cross-attention** (queries
+  from the decoder, keys/values from the encoder output — the same
+  encoder-decoder bridge inherited from RNN attention), then the FFN.
+
+The three later families simply keep one half: **encoder-only** (BERT),
+**decoder-only** (GPT), or both (T5). All covered in [BERT & GPT](04_bert_gpt.qmd).
+
+### The full forward pass
+
+Tokens → embeddings → add positional encoding → $N$ encoder blocks. On the
+decoder side: shifted-right target embeddings → $N$ decoder blocks → a final
+linear projection to vocabulary logits → softmax. The output embedding matrix
+is often **tied** to the input embedding to save parameters.
+
+::: {.callout-warning title="Pitfall — the residual sets the width" icon="false"}
+Every sublayer's input and output must share dimension $d_{\text{model}}$,
+because the residual adds them. This is why attention concatenates its heads
+back to $d_{\text{model}}$ and the FFN expands *then* contracts. The residual
+stream is a fixed-width "bus" running the depth of the network; every block
+reads from and writes to it.
+:::
+
+::: {.callout-tip title="Going deeper" icon="false"}
+- Self-attention has no order; the embeddings step needs a position signal —
+  [Positional Encoding](03_positional_encoding.qmd).
+- The encoder-only / decoder-only split and pre-training objectives —
+  [BERT & GPT](04_bert_gpt.qmd).
+:::
+
+### Minimal sketch
+
+A single pre-LN encoder block in NumPy — attention placeholder plus FFN,
+residuals, and layer norm — to show the wiring.
+
+```{python}
+import numpy as np
+
+rng = np.random.default_rng(0)
+n, d_model, d_ff = 4, 8, 32
+
+def layer_norm(x, eps=1e-5):
+    mu = x.mean(-1, keepdims=True)
+    var = x.var(-1, keepdims=True)
+    return (x - mu) / np.sqrt(var + eps)
+
+def ffn(x, W1, b1, W2, b2):
+    return np.maximum(0, x @ W1 + b1) @ W2 + b2
+
+W1 = rng.normal(scale=0.1, size=(d_model, d_ff)); b1 = np.zeros(d_ff)
+W2 = rng.normal(scale=0.1, size=(d_ff, d_model)); b2 = np.zeros(d_model)
+
+def attn(x):                      # stand-in for multi-head self-attention
+    return x
+
+def encoder_block(x):
+    x = x + attn(layer_norm(x))               # sublayer 1: attention
+    x = x + ffn(layer_norm(x), W1, b1, W2, b2) # sublayer 2: position-wise FFN
+    return x
+
+X = rng.normal(size=(n, d_model))
+print("block output shape:", encoder_block(X).shape)  # (n, d_model) — width preserved
+```
+
+## Application & impact
+
+| Component | Role | Lives on as |
+|---|---|---|
+| Self-attention sublayer | Cross-position mixing | The defining op of every Transformer |
+| Position-wise FFN | Per-token non-linear transform | ~2/3 of LLM parameters; the MoE target |
+| Residual stream | Gradient highway, fixed-width bus | Interpretability's "residual stream" view |
+| LayerNorm (→ pre-LN, RMSNorm) | Activation scaling | Every modern LLM (RMSNorm in LLaMA [@touvron2023llama]) |
+| Encoder / decoder split | Bidirectional vs autoregressive | BERT / GPT / T5 families |
+
+- **The result that ended the RNN era:** Vaswani et al. [@vaswani2017] reached a
+  new SOTA on WMT translation, training in ~12 hours on 8 GPUs where comparable
+  recurrent models took days — parallelism over sequence length was the unlock.
+- **The block is the unit of scaling.** "Make the model bigger" almost always
+  means *more blocks and wider blocks* of exactly this design — the premise of
+  the [scaling laws](06_scaling_laws.qmd).
+- **The FFN became the efficiency frontier:** because it holds most parameters
+  and runs per-token, it is what [Mixture of Experts](09_moe.qmd) makes sparse.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+The Transformer is not one idea but a *recipe*: attention to mix, FFN to
+transform, residual + norm to make it trainable at depth, stacked $N$ times.
+Self-attention is the engine; this chapter is the chassis. Every model in the
+rest of this era is this block — kept whole, split in half, scaled up, or made
+sparse.
+:::
+
+→ Next: [Positional Encoding](03_positional_encoding.qmd)
