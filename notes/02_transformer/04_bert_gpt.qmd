@@ -4,6 +4,15 @@ format: html
 ---
 
 <!-- Code: nn_timeline.archs.tnn.BERT, GPT -->
+<!-- Next: 05_scaling_laws.qmd -->
+<!-- PLANNED SECTIONS (draft scope):
+     1. Tokenization sub-section — BPE (Sennrich 2016), WordPiece (BERT),
+        SentencePiece (T5/LLaMA). Assumed everywhere, covered nowhere; this is
+        its home. Subword units, vocab-size tradeoffs, byte-level BPE (GPT-2).
+     2. BERT — encoder-only, masked LM + NSP, fine-tuning paradigm.
+     3. GPT — decoder-only, causal LM, in-context learning.
+     4. Comparison: bidirectional vs autoregressive; when to use which. -->
+
 
 ::: {.callout-note title="Coming soon" icon="false"}
 This chapter is in progress and will be published shortly.

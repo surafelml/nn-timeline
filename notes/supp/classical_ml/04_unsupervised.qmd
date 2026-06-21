@@ -1,0 +1,20 @@
+---
+title: "Unsupervised Methods"
+format: html
+---
+
+← Back to: [Classical ML Overview](00_overview.qmd)
+
+<!-- Code: none — context/reference supplementary. -->
+<!-- PLANNED SCOPE:
+     1. k-means clustering — Lloyd's algorithm; the unsupervised baseline;
+        contrast with learned representations / embeddings (01_rnn/00_embeddings).
+     2. PCA — eigen-decomposition of covariance; linear dimensionality reduction.
+        Links to distributed representations (hinton1986) and the embedding
+        geometry discussion. Reuse linear-algebra refresher from supp/00.
+     3. (Optional) GMM / spectral clustering as brief mentions.
+     Each: intuition + one formula + where it still wins (EDA, compression). -->
+
+::: {.callout-note title="Coming soon" icon="false"}
+This supplementary context note is in progress.
+:::

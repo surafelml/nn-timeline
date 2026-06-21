@@ -1,0 +1,14 @@
+---
+title: "Multimodal Transformers"
+format: html
+---
+
+<!-- Code: nn_timeline.archs.multimodal.VisionLanguageModel -->
+<!-- Next: ../landscape/transformer_era.qmd -->
+<!-- Timeline anchor: ViT 2020, CLIP 2021, Gemini 2023, GPT-4V 2023. -->
+
+::: {.callout-note title="Coming soon" icon="false"}
+This chapter is in progress and will be published shortly.
+Return to the [book index](../index.qmd) or continue from
+[Beyond Quadratic Attention](08_beyond_transformers.qmd).
+:::

@@ -1,0 +1,14 @@
+---
+title: "Mixture of Experts"
+format: html
+---
+
+<!-- Code: nn_timeline.layers.moe.SparseMoE, TopKRouter -->
+<!-- Next: ../landscape/transformer_era.qmd -->
+<!-- Timeline anchor: Shazeer et al. 2017, Fedus et al. 2021 (Switch), Mixtral 2024. -->
+
+::: {.callout-note title="Coming soon" icon="false"}
+This chapter is in progress and will be published shortly.
+Return to the [book index](../index.qmd) or continue from
+[Alignment & Instruction Tuning](06_alignment.qmd).
+:::

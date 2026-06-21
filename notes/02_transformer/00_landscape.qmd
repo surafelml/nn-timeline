@@ -1,6 +1,8 @@
 ---
 title: "The Transformer Era — A Map"
-format: html
+format:
+  html:
+    page-layout: full
 ---
 
 <!-- Code: none — orientation chapter -->
@@ -21,6 +23,7 @@ these three branches.
 ## Three families from one paper
 
 ```{=html}
+<figure style="margin:1.5rem 0">
 <svg viewBox="0 0 980 310" xmlns="http://www.w3.org/2000/svg"
      style="font-family:system-ui,sans-serif;max-width:980px;display:block;margin:1.5rem auto">
 
@@ -141,6 +144,15 @@ these three branches.
   <circle cx="440" cy="296" r="5" fill="#7c3aed"/>
   <text x="450" y="300" font-size="10" fill="#374151">Decoder-only</text>
 </svg>
+<figcaption style="text-align:center;font-size:0.82rem;color:#6b7280;margin-top:0.5rem">
+  <strong>Figure 1.</strong> Transformer family genealogy, 2017–2024.
+  Three branches emerge from the original encoder-decoder Transformer (Vaswani 2017):
+  encoder-only (BERT lineage, strong for understanding/retrieval),
+  decoder-only (GPT lineage, now dominant at scale), and
+  multimodal (CLIP, ViT — vision and cross-modal).
+  Sparse MoE runs across all families as a scaling technique, not a separate branch.
+</figcaption>
+</figure>
 ```
 
 ## Chapters in this section
@@ -152,7 +164,10 @@ these three branches.
 | [Positional Encoding](03_positional_encoding.qmd) | Sinusoidal, learned, RoPE, ALiBi — from fixed frequencies to rotation |
 | [BERT & GPT](04_bert_gpt.qmd) | Encoder-only vs decoder-only pretraining; the fine-tuning paradigm |
 | [Scaling Laws & Emergence](05_scaling_laws.qmd) | Kaplan 2020, Chinchilla — optimal compute allocation; capability jumps |
-| [Instruction Tuning & Alignment](06_alignment.qmd) | RLHF, InstructGPT, DPO — making large models follow instructions |
+| [Alignment & Instruction Tuning](06_alignment.qmd) | RLHF, InstructGPT, DPO — making large models follow instructions |
+| [Mixture of Experts](07_moe.qmd) | Sparse routing, Switch Transformer, Mixtral — scaling compute efficiently |
+| [Beyond Quadratic Attention](08_beyond_transformers.qmd) | Mamba, RWKV, RetNet, hybrids — sub-linear alternatives to attention |
+| [Multimodal Transformers](09_multimodal.qmd) | ViT + CLIP → GPT-4V, Gemini — unifying vision, language, audio |
 
 ## Key ideas to track across chapters
 

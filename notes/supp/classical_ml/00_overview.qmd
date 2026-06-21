@@ -1,0 +1,29 @@
+---
+title: "Classical ML — Context for the Neural Timeline"
+format: html
+---
+
+← Back to: [Home](../../index.qmd)
+
+<!-- Code: none — context/reference supplementary. -->
+<!-- PLANNED SCOPE (overview page):
+     The book's spine is neural architectures; this section supplies the
+     classical-ML background the main notes assume or contrast against.
+     Referenced from foundations (SVM displacement by AlexNet, cortes1995)
+     and RNN era (Seq2Seq vs phrase-based statistical pipelines).
+     Overview page covers:
+       - Why classical ML belongs as context (not spine)
+       - The supervised / unsupervised split
+       - A "where each still wins" table (tabular, low-data, interpretability)
+       - Map of the 4 content pages below -->
+
+::: {.callout-note title="Coming soon" icon="false"}
+This supplementary context section is in progress.
+
+Pages in this section:
+
+- [Linear & Probabilistic Models](01_linear_probabilistic.qmd) — logistic regression, naive Bayes
+- [SVM & Kernels](02_svm_kernels.qmd) — margins, the kernel trick
+- [Trees & Ensembles](03_trees_ensembles.qmd) — decision trees, random forests, gradient boosting
+- [Unsupervised Methods](04_unsupervised.qmd) — k-means, PCA
+:::

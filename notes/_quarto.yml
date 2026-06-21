@@ -35,15 +35,25 @@ book:
         - 02_transformer/04_bert_gpt.qmd
         - 02_transformer/05_scaling_laws.qmd
         - 02_transformer/06_alignment.qmd
-    - part: "Going Deeper (supplementary)"
+        - 02_transformer/07_moe.qmd
+        - 02_transformer/08_beyond_transformers.qmd
+        - 02_transformer/09_multimodal.qmd
+    - part: "Supplementary (Mathematical)"
       chapters:
         - supp/00_prerequisites.qmd
         - supp/01_artificial_neuron_numerical.qmd
         - supp/04_mlp_backprop_numerical.qmd
-        - supp/kv_cache.qmd
-    - part: "Research Landscape"
+    - part: "Supplementary (Transformer)"
       chapters:
+        - supp/kv_cache.qmd
         - landscape/transformer_era.qmd
+    - part: "Supplementary (Classical ML)"
+      chapters:
+        - supp/classical_ml/00_overview.qmd
+        - supp/classical_ml/01_linear_probabilistic.qmd
+        - supp/classical_ml/02_svm_kernels.qmd
+        - supp/classical_ml/03_trees_ensembles.qmd
+        - supp/classical_ml/04_unsupervised.qmd
     - references.qmd
 
 bibliography: references.bib

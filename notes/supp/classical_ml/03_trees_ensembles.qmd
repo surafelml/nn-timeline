@@ -1,0 +1,20 @@
+---
+title: "Trees & Ensembles"
+format: html
+---
+
+← Back to: [Classical ML Overview](00_overview.qmd)
+
+<!-- Code: none — context/reference supplementary. -->
+<!-- PLANNED SCOPE:
+     1. Decision trees — recursive splits; Gini / entropy criteria; interpretable.
+     2. Random forests — bagging + feature subsampling; variance reduction.
+     3. Gradient boosting — sequential residual fitting; XGBoost / LightGBM.
+     4. Timeline context — the honest "neural nets didn't win everything":
+        gradient-boosted trees remain SOTA on tabular data in 2026. Contrast
+        with the deep-learning narrative of the main spine.
+     Each: intuition + one formula + where it still wins (tabular, structured). -->
+
+::: {.callout-note title="Coming soon" icon="false"}
+This supplementary context note is in progress.
+:::

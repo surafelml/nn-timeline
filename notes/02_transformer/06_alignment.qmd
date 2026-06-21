@@ -1,11 +1,20 @@
 ---
-title: "Instruction Tuning & Alignment"
+title: "Alignment & Instruction Tuning"
 format: html
 ---
 
 <!-- Code: none — conceptual chapter -->
-<!-- Next: ../landscape/transformer_era.qmd (then Phase 2) -->
+<!-- Next: 07_moe.qmd -->
 <!-- Timeline anchor: Ouyang et al. 2022 (InstructGPT), Rafailov et al. 2023 (DPO). -->
+<!-- PLANNED SECTIONS (draft scope):
+     1. Instruction tuning (SFT) — from completion to instruction-following
+     2. RLHF — reward model + PPO (Ouyang 2022 [@ouyang2022])
+     3. DPO — alignment without RL (Rafailov 2023 [@rafailov2023])
+     4. STRONG SECTION — Retrieval-Augmented Generation (Lewis 2020 [@lewis2020rag]):
+        non-parametric memory; retrieve-then-generate; grounding/hallucination
+        reduction; bridge from "aligned behaviour" to "factual grounding".
+        This is main-part content, not supplementary. -->
+
 
 ::: {.callout-note title="Coming soon" icon="false"}
 This chapter is in progress and will be published shortly.

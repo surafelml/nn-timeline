@@ -1,0 +1,21 @@
+---
+title: "SVM & Kernels"
+format: html
+---
+
+← Back to: [Classical ML Overview](00_overview.qmd)
+
+<!-- Code: none — context/reference supplementary. -->
+<!-- PLANNED SCOPE:
+     1. Max-margin classifier — geometric intuition; the optimal separating
+        hyperplane (Cortes & Vapnik 1995 [@cortes1995]).
+     2. The kernel trick — implicit high-dimensional feature maps without
+        computing them; RBF/polynomial kernels.
+     3. Timeline context — SVMs were the dominant classifier 1995–2012, the
+        approach AlexNet (2012) displaced on vision. Link to 00_foundations/00
+        historical (the 2012 inflection point callout).
+     Each: intuition + one formula + where it still wins (small/medium data). -->
+
+::: {.callout-note title="Coming soon" icon="false"}
+This supplementary context note is in progress.
+:::

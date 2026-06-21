@@ -1,365 +1,579 @@
 ---
 title: "Transformer Era — Research Landscape"
-format: html
+format:
+  html:
+    page-layout: full
+    toc: false
 ---
+
+← Back to: [The Transformer Era — A Map](../02_transformer/00_landscape.qmd)
 
 <!-- Supplementary reference chapter. No Code tag. -->
 
 ::: {.callout-tip title="About this page" icon="false"}
-A structured reference map of the Transformer era (2017 — present).
-Organized three ways: chronological, by architecture family, and by
-application area. Each entry cites the primary paper, names the key
-formalization, and notes why it mattered. Use it as a reading guide or
-as a lookup when a chapter references a work without full derivation.
+A structured reference map of the Transformer era (2017 — present),
+organized three ways: chronological, by architecture family, and by
+application area. Each entry states the primary contribution, the key
+formalization where one exists, and why it mattered. Use it as a reading
+guide or as a lookup when a chapter references a work without full derivation.
+
+Years reflect first public availability (arXiv or blog post). Citation links
+point to the peer-reviewed venue, which may differ by up to one year.
 :::
 
 ---
 
 ## Chronological timeline
 
-Years reflect first public availability (arXiv or blog post). Citation links
-point to the peer-reviewed venue, which may differ by up to one year.
-
 ```{=html}
 <style>
-.landscape-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-.landscape-table th { background:#f8fafc; font-weight:700; text-align:left;
-  padding:6px 10px; border-bottom:2px solid #e2e8f0; }
-.landscape-table td { padding:5px 10px; border-bottom:1px solid #f1f5f9;
-  vertical-align:top; }
-.landscape-table tr:hover td { background:#fafafa; }
-.tag-encdec  { background:#d1fae5; color:#065f46; border-radius:3px;
-  padding:1px 5px; font-size:0.78rem; font-weight:600; white-space:nowrap; }
-.tag-enconly { background:#dbeafe; color:#1e40af; border-radius:3px;
-  padding:1px 5px; font-size:0.78rem; font-weight:600; white-space:nowrap; }
-.tag-deconly { background:#ede9fe; color:#5b21b6; border-radius:3px;
-  padding:1px 5px; font-size:0.78rem; font-weight:600; white-space:nowrap; }
-.tag-multi   { background:#e0f2fe; color:#0c4a6e; border-radius:3px;
-  padding:1px 5px; font-size:0.78rem; font-weight:600; white-space:nowrap; }
-.tag-infra   { background:#fef9c3; color:#713f12; border-radius:3px;
-  padding:1px 5px; font-size:0.78rem; font-weight:600; white-space:nowrap; }
+.ls-wrap { overflow-x:auto; }
+.ls-t { width:100%; border-collapse:collapse; font-size:0.83rem; }
+.ls-t th { background:#f8fafc; font-weight:700; text-align:left;
+  padding:7px 10px; border-bottom:2px solid #e2e8f0; white-space:nowrap; }
+.ls-t td { padding:6px 10px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
+.ls-t tr:hover td { background:#fafafa; }
+.ls-t ul { margin:0; padding-left:1.1rem; }
+.ls-t li { margin-bottom:3px; }
+.ls-t li:last-child { margin-bottom:0; }
+.tag { border-radius:3px; padding:1px 6px; font-size:0.77rem; font-weight:600;
+  white-space:nowrap; display:inline-block; }
+.t-ed  { background:#d1fae5; color:#065f46; }
+.t-eo  { background:#dbeafe; color:#1e40af; }
+.t-do  { background:#ede9fe; color:#5b21b6; }
+.t-mm  { background:#e0f2fe; color:#0c4a6e; }
+.t-inf { background:#fef9c3; color:#713f12; }
+.t-aln { background:#fce7f3; color:#831843; }
+.t-alt { background:#fff7ed; color:#9a3412; }
 </style>
 
-<table class="landscape-table">
+<div class="ls-wrap">
+<table class="ls-t">
 <thead>
-<tr>
-  <th>Year</th><th>Work</th><th>Family</th>
-  <th>Key contribution</th><th>Core formalization</th><th>Impact</th>
-</tr>
+<tr><th>Year</th><th>Work</th><th>Family</th><th>Notes</th></tr>
 </thead>
 <tbody>
 
 <tr>
   <td>2017</td>
-  <td><strong>Transformer</strong><br/><em>Vaswani et al.</em></td>
-  <td><span class="tag-encdec">Enc-Dec</span></td>
-  <td>Self-attention replaces recurrence entirely; full encoder-decoder for MT</td>
-  <td><code>Attn(Q,K,V) = softmax(QKᵀ/√d_k)V</code></td>
-  <td>Foundation of everything that follows; 2017 WMT SOTA</td>
+  <td><strong>Sparse MoE</strong><br/><small>Shazeer et al.</small></td>
+  <td><span class="tag t-inf">Arch</span></td>
+  <td><ul>
+    <li>Token-level routing: each token activates top-<em>k</em> of <em>N</em> expert FFNs; rest are skipped</li>
+    <li><code>y = Σ G(x)_i · E_i(x)</code> where <code>G</code> is a sparse gate</li>
+    <li>First demonstration that MoE can scale Transformers without proportional compute; foundation of GPT-4, Gemini, DeepSeek</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2017</td>
+  <td><strong>Transformer</strong> [@vaswani2017]<br/><small>Vaswani et al.</small></td>
+  <td><span class="tag t-ed">Enc-Dec</span></td>
+  <td><ul>
+    <li>Self-attention replaces recurrence entirely; full encoder-decoder for MT</li>
+    <li><code>Attn(Q,K,V) = softmax(QKᵀ/√d_k)V</code></li>
+    <li>Foundation of every model in this table; 2017 WMT SOTA</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2018</td>
-  <td><strong>GPT-1</strong><br/><em>Radford et al. (OpenAI)</em></td>
-  <td><span class="tag-deconly">Dec-only</span></td>
-  <td>Decoder-only causal LM pretraining on BooksCorpus; task-specific fine-tuning</td>
-  <td>Causal mask: <code>M_{ij} = -∞ if j > i</code></td>
-  <td>Established the pretraining + fine-tuning paradigm for generation</td>
+  <td><strong>GPT-1</strong> [@radford2018gpt]<br/><small>Radford et al. (OpenAI)</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>Decoder-only causal LM pretrained on BooksCorpus; fine-tuned per task</li>
+    <li>Causal mask: upper-triangular <code>-∞</code> prevents attending to future tokens</li>
+    <li>Established pretraining + fine-tuning for generation; direct ancestor of GPT-4</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2018</td>
-  <td><strong>BERT</strong><br/><em>Devlin et al. (Google)</em></td>
-  <td><span class="tag-enconly">Enc-only</span></td>
-  <td>Masked LM + NSP; bidirectional representations; fine-tune for 11 NLP tasks</td>
-  <td>MLM: predict <code>[MASK]</code> tokens; NSP: binary next-sentence task</td>
-  <td>Dominated GLUE and SQuAD; introduced fine-tuning paradigm for understanding</td>
+  <td><strong>BERT</strong> [@devlin2019]<br/><small>Devlin et al. (Google)</small></td>
+  <td><span class="tag t-eo">Enc-only</span></td>
+  <td><ul>
+    <li>Masked LM + Next Sentence Prediction; bidirectional representations</li>
+    <li>15% of tokens replaced with <code>[MASK]</code>; model predicts them from full context</li>
+    <li>Dominated GLUE / SQuAD; defined the encoder fine-tuning paradigm used through 2022</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2019</td>
-  <td><strong>GPT-2</strong><br/><em>Radford et al. (OpenAI)</em></td>
-  <td><span class="tag-deconly">Dec-only</span></td>
-  <td>Scale to 1.5B; zero-shot task transfer; "too dangerous to release" moment</td>
-  <td>Same causal LM; Pre-LN variant; larger BPE vocab (50K)</td>
-  <td>First model to show quality zero-shot generation; sparked safety discourse</td>
+  <td><strong>GPT-2</strong> [@radford2019gpt2]<br/><small>Radford et al. (OpenAI)</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>Scale to 1.5B params on WebText; zero-shot task transfer without any fine-tuning</li>
+    <li>Pre-LN architecture; larger BPE vocabulary (50 257 tokens)</li>
+    <li>First convincingly human-quality prose; sparked public AI safety debate</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2019</td>
-  <td><strong>RoBERTa</strong><br/><em>Liu et al. (Facebook)</em></td>
-  <td><span class="tag-enconly">Enc-only</span></td>
-  <td>BERT with better training: no NSP, longer training, dynamic masking</td>
-  <td>Training recipe change, not architectural</td>
-  <td>Showed pretraining details matter more than model changes; new BERT baseline</td>
+  <td><strong>RoBERTa</strong> [@liu2019roberta]<br/><small>Liu et al. (Facebook)</small></td>
+  <td><span class="tag t-eo">Enc-only</span></td>
+  <td><ul>
+    <li>BERT replication with better training: no NSP, dynamic masking, longer runs</li>
+    <li>No architecture change — training recipe is the difference</li>
+    <li>Set a new BERT baseline; showed that pretraining details dominate architecture choice</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2019</td>
-  <td><strong>T5</strong><br/><em>Raffel et al. (Google)</em></td>
-  <td><span class="tag-encdec">Enc-Dec</span></td>
-  <td>Text-to-text unification: every task is sequence-to-sequence generation</td>
-  <td>Unified format: input = "translate: …", output = target text</td>
-  <td>Systematic scaling study; text-to-text framing still dominant (FLAN, etc.)</td>
+  <td><strong>T5</strong> [@raffel2020]<br/><small>Raffel et al. (Google)</small></td>
+  <td><span class="tag t-ed">Enc-Dec</span></td>
+  <td><ul>
+    <li>Every NLP task recast as text-to-text: input and output are always strings</li>
+    <li>Unified format: <code>"translate English to German: ..."</code> → target string</li>
+    <li>Systematic scaling study on C4; text-to-text framing adopted by FLAN, mT5, UL2</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2019</td>
+  <td><strong>BART</strong> [@lewis2019bart]<br/><small>Lewis et al. (Facebook)</small></td>
+  <td><span class="tag t-ed">Enc-Dec</span></td>
+  <td><ul>
+    <li>Denoising pretraining: corrupt input text (masking, deletion, permutation), train encoder-decoder to reconstruct</li>
+    <li>Corruption functions include token masking, text infilling, document rotation, sentence permutation</li>
+    <li>SOTA on CNN/DailyMail summarisation; strong baseline for conditional generation; widely used in multilingual settings</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2020</td>
-  <td><strong>Scaling laws</strong><br/><em>Kaplan et al. (OpenAI)</em></td>
-  <td><span class="tag-infra">Research</span></td>
-  <td>Loss scales as power law in N (params) and D (tokens); compute-optimal frontier</td>
-  <td><code>L(N) ∝ N^{-α}</code>; optimal: <code>N ∝ C^{0.73}</code></td>
-  <td>Changed how every subsequent model was planned; predicted GPT-3 before training</td>
+  <td><strong>Scaling laws</strong> [@kaplan2020]<br/><small>Kaplan et al. (OpenAI)</small></td>
+  <td><span class="tag t-inf">Research</span></td>
+  <td><ul>
+    <li>Loss follows power laws in N (params), D (tokens), C (compute) independently</li>
+    <li><code>L(N) ∝ N^{-α_N}</code>; optimal allocation: <code>N ∝ C^{0.73}</code></li>
+    <li>Changed how every subsequent model was budgeted; predicted GPT-3 performance before training</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2020</td>
-  <td><strong>GPT-3</strong><br/><em>Brown et al. (OpenAI)</em></td>
-  <td><span class="tag-deconly">Dec-only</span></td>
-  <td>175B params; in-context learning (few-shot without weight updates)</td>
-  <td>Prompt: <code>[example 1]\n[example 2]\n[query]</code> → completion</td>
-  <td>Emergence of reasoning at scale; API business model; LLM as product</td>
+  <td><strong>GPT-3</strong> [@brown2020]<br/><small>Brown et al. (OpenAI)</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>175B params; in-context few-shot learning without any weight updates</li>
+    <li>Prompt: <code>[example₁] [example₂] [query] →</code> completion (no gradient)</li>
+    <li>Emergence of reasoning at scale; API-as-product model; opened the LLM era</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2020</td>
-  <td><strong>ViT</strong><br/><em>Dosovitskiy et al. (Google)</em></td>
-  <td><span class="tag-enconly">Enc-only</span></td>
-  <td>Split image into 16×16 patches; flatten + positional embed; standard Transformer</td>
-  <td>Patch embedding: <code>z₀ = [x_cls; x¹E; …; x^N E] + E_pos</code></td>
-  <td>Proved Transformers competitive with CNNs on vision; spawned entire vision family</td>
+  <td><strong>ViT</strong> [@dosovitskiy2021]<br/><small>Dosovitskiy et al. (Google)</small></td>
+  <td><span class="tag t-eo">Enc-only</span></td>
+  <td><ul>
+    <li>Images split into 16×16 pixel patches; each patch linearly projected and treated as a token</li>
+    <li><code>z₀ = [x_cls; x¹E; …; x^N E] + E_pos</code></li>
+    <li>Proved Transformers competitive with CNNs at scale; spawned DeiT, Swin, DINO, SAM</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2021</td>
-  <td><strong>CLIP</strong><br/><em>Radford et al. (OpenAI)</em></td>
-  <td><span class="tag-multi">Multimodal</span></td>
-  <td>Contrastive image-text pretraining on 400M web pairs; zero-shot image classification</td>
-  <td>Maximize <code>cos(f_I, f_T)</code> for matched pairs; minimize for unmatched</td>
-  <td>Universal vision-language backbone; powers DALL-E 2, Stable Diffusion guidance</td>
+  <td><strong>Switch Transformer</strong> [@fedus2021switch]<br/><small>Fedus et al. (Google)</small></td>
+  <td><span class="tag t-inf">Arch</span></td>
+  <td><ul>
+    <li>Simplifies MoE to top-1 routing (one expert per token); billion-to-trillion params with controlled compute</li>
+    <li>Auxiliary load-balancing loss: <code>L_aux = α · Σ f_i · p_i</code></li>
+    <li>Demonstrated trillion-parameter models are trainable; foundation of Mixtral and DeepSeek MoE</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2021</td>
-  <td><strong>Codex</strong><br/><em>Chen et al. (OpenAI)</em></td>
-  <td><span class="tag-deconly">Dec-only</span></td>
-  <td>GPT fine-tuned on 54M GitHub files; code completion and synthesis</td>
-  <td>Pass@k evaluation: probability at least one of k samples passes unit tests</td>
-  <td>GitHub Copilot (2022); established code as a first-class LLM domain</td>
+  <td><strong>CLIP</strong> [@radford2021clip]<br/><small>Radford et al. (OpenAI)</small></td>
+  <td><span class="tag t-mm">Multimodal</span></td>
+  <td><ul>
+    <li>Contrastive pretraining on 400M image-text pairs; separate image and text encoders</li>
+    <li>Maximize <code>cos(f_I, f_T)</code> for matching pairs; InfoNCE loss</li>
+    <li>Universal vision-language backbone; powers DALL-E 2, Stable Diffusion conditioning</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2021</td>
-  <td><strong>AlphaFold 2</strong> [@jumper2021]<br/><em>Jumper et al. (DeepMind)</em></td>
-  <td><span class="tag-multi">Science</span></td>
-  <td>Evoformer (attention over multiple sequence alignment) → protein structure</td>
-  <td>Triangle attention updates: pair representation via geometry constraints</td>
-  <td>Solved 50-year protein folding problem; opened structural biology era</td>
+  <td><strong>AlphaFold 2</strong> [@jumper2021]<br/><small>Jumper et al. (DeepMind)</small></td>
+  <td><span class="tag t-mm">Science</span></td>
+  <td><ul>
+    <li>Evoformer applies attention over multiple sequence alignments; geometry-aware pair representations</li>
+    <li>Triangle attention: <code>a_{ij} = softmax(b_{ij} + Σ_k b_{ik} + b_{kj})</code></li>
+    <li>Solved 50-year protein structure prediction problem; directly accelerated drug discovery</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2021</td>
+  <td><strong>Codex</strong> [@chen2021codex]<br/><small>Chen et al. (OpenAI)</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>GPT fine-tuned on 54M public GitHub repos; generates, completes, and explains code</li>
+    <li>pass@k metric: probability at least 1 of k samples passes all unit tests</li>
+    <li>Ships as GitHub Copilot (2022); established code as a first-class LLM domain</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2022</td>
-  <td><strong>Chinchilla</strong><br/><em>Hoffmann et al. (DeepMind)</em></td>
-  <td><span class="tag-infra">Research</span></td>
-  <td>Optimal: equal scaling of params and tokens; GPT-3 was under-trained by 4×</td>
-  <td>Optimal tokens: <code>D* = 20 × N</code>; revised Kaplan exponents</td>
-  <td>Invalidated GPT-3 era scaling strategy; every post-2022 model follows Chinchilla</td>
+  <td><strong>Chinchilla</strong> [@hoffmann2022]<br/><small>Hoffmann et al. (DeepMind)</small></td>
+  <td><span class="tag t-inf">Research</span></td>
+  <td><ul>
+    <li>Kaplan exponents were wrong: params and tokens should scale equally for compute-optimal training</li>
+    <li><code>N* ≈ D* ≈ (C / 6)^{0.5}</code>; GPT-3 was under-trained by ~4×</li>
+    <li>Invalidated the GPT-3 era strategy; every post-2022 model (LLaMA, Gemini, Mistral) follows this</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2022</td>
-  <td><strong>Flash Attention</strong><br/><em>Dao et al. (Stanford)</em></td>
-  <td><span class="tag-infra">Efficiency</span></td>
-  <td>IO-aware exact attention: tile, fuse, avoid HBM reads of O(N²) matrices</td>
-  <td>Online softmax; recompute activations in backward rather than store</td>
-  <td>2–4× speedup; enabled long contexts (8K→128K+); adopted universally</td>
+  <td><strong>LoRA</strong> [@hu2022lora]<br/><small>Hu et al. (Microsoft)</small></td>
+  <td><span class="tag t-inf">PEFT</span></td>
+  <td><ul>
+    <li>Freeze pretrained weights; inject low-rank decomposition <code>ΔW = BA</code> (rank r ≪ d)</li>
+    <li><code>W' = W₀ + BA</code>, only A,B trained; reduces trainable params by 10 000×</li>
+    <li>Made fine-tuning accessible on consumer hardware; used in almost every open fine-tune</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2022</td>
-  <td><strong>InstructGPT</strong><br/><em>Ouyang et al. (OpenAI)</em></td>
-  <td><span class="tag-deconly">Dec-only</span></td>
-  <td>RLHF on GPT-3: SFT → reward model → PPO; makes LLMs follow instructions</td>
-  <td>PPO objective: <code>r(x,y) − β log[π_RL(y|x) / π_SFT(y|x)]</code></td>
-  <td>Direct precursor to ChatGPT; established RLHF as the alignment method</td>
+  <td><strong>Chain-of-Thought</strong> [@wei2022cot]<br/><small>Wei et al. (Google)</small></td>
+  <td><span class="tag t-inf">Prompting</span></td>
+  <td><ul>
+    <li>Adding intermediate reasoning steps to few-shot examples dramatically improves multi-step reasoning</li>
+    <li>Prompt: <code>"Let's think step by step..."</code> before the answer</li>
+    <li>Revealed emergent reasoning in large models; direct precursor to o1 and test-time scaling</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2022</td>
-  <td><strong>Whisper</strong><br/><em>Radford et al. (OpenAI)</em></td>
-  <td><span class="tag-encdec">Enc-Dec</span></td>
-  <td>Transformer trained on 680K hours of web audio; multilingual ASR + translation</td>
-  <td>Mel spectrogram encoder → text decoder; multitask via special tokens</td>
-  <td>First robust open-weights ASR; standard baseline for speech processing</td>
+  <td><strong>Flash Attention</strong> [@dao2022flashattn]<br/><small>Dao et al. (Stanford)</small></td>
+  <td><span class="tag t-inf">Efficiency</span></td>
+  <td><ul>
+    <li>IO-aware exact attention: tile softmax computation, fuse kernels, avoid materialising O(N²) attention matrix in HBM</li>
+    <li>Online softmax; recompute activations in backward pass rather than store</li>
+    <li>2–4× speedup; enabled contexts beyond 8K; universally adopted from 2023 onward</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2022</td>
-  <td><strong>ChatGPT</strong><br/><em>OpenAI</em></td>
-  <td><span class="tag-deconly">Dec-only</span></td>
-  <td>RLHF + instruction tuning at product scale; conversational interface</td>
-  <td>—</td>
-  <td>100M users in 2 months; redefined public understanding of AI</td>
+  <td><strong>InstructGPT</strong> [@ouyang2022]<br/><small>Ouyang et al. (OpenAI)</small></td>
+  <td><span class="tag t-aln">Alignment</span></td>
+  <td><ul>
+    <li>RLHF pipeline: supervised fine-tuning → reward model → PPO policy optimisation</li>
+    <li><code>r(x,y) − β log[π_RL(y|x) / π_SFT(y|x)]</code></li>
+    <li>Direct precursor to ChatGPT; established RLHF as the default alignment method</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2022</td>
+  <td><strong>Whisper</strong> [@radford2022whisper]<br/><small>Radford et al. (OpenAI)</small></td>
+  <td><span class="tag t-ed">Enc-Dec</span></td>
+  <td><ul>
+    <li>Encoder-decoder Transformer trained on 680K hours of web audio in 96 languages</li>
+    <li>Mel spectrogram encoder → text decoder; multitask via special tokens (<code>&lt;|translate|&gt;</code>, etc.)</li>
+    <li>First robust open-weights ASR; standard baseline; Whisper large v3 still used in 2026</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2022</td>
+  <td><strong>ChatGPT</strong><br/><small>OpenAI</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>GPT-3.5 + RLHF + instruction tuning deployed as a conversational product</li>
+    <li>100M users in 2 months; redefined public understanding of AI</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2023</td>
-  <td><strong>LLaMA</strong><br/><em>Touvron et al. (Meta)</em></td>
-  <td><span class="tag-deconly">Dec-only</span></td>
-  <td>Open weights; RoPE + RMSNorm + SwiGLU + GQA; Chinchilla-optimal training</td>
-  <td>RoPE: rotate Q,K by position angle; RMSNorm: <code>x / RMS(x) · γ</code></td>
-  <td>Open research baseline; spawned Alpaca, Vicuna, Mistral, Llama 2/3</td>
+  <td><strong>QLoRA</strong> [@dettmers2023qlora]<br/><small>Dettmers et al. (UW)</small></td>
+  <td><span class="tag t-inf">PEFT</span></td>
+  <td><ul>
+    <li>Quantise frozen base model to 4-bit NF4; inject trainable LoRA adapters; backpropagate through quantised weights</li>
+    <li>NF4 format: <code>4-bit normal float</code> quantisation preserving gradient signal; paged optimisers for memory spikes</li>
+    <li>Fine-tune a 65B model on a single 48 GB GPU; democratised instruction tuning; basis of Guanaco and most open fine-tunes</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2023</td>
-  <td><strong>GPT-4</strong><br/><em>OpenAI</em></td>
-  <td><span class="tag-deconly">Dec-only</span></td>
-  <td>Multimodal (image input); RLHF; significant capability jump over GPT-3</td>
-  <td>Architecture not disclosed; evaluated with a system card</td>
-  <td>Bar passage, medical licensing, advanced reasoning — benchmark SOTA</td>
+  <td><strong>Speculative decoding</strong> [@chen2023speculative]<br/><small>Chen et al. (Google)</small></td>
+  <td><span class="tag t-inf">Efficiency</span></td>
+  <td><ul>
+    <li>Small draft model proposes <em>k</em> tokens; target model verifies all in a single forward pass; accept or reject via sampling</li>
+    <li>Acceptance criterion preserves exact target distribution: <code>p_accept = min(1, p_target / p_draft)</code></li>
+    <li>2–3× inference speedup with zero quality loss; now standard in production (TGI, vLLM, TensorRT-LLM)</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2023</td>
-  <td><strong>DPO</strong><br/><em>Rafailov et al. (Stanford)</em></td>
-  <td><span class="tag-infra">Alignment</span></td>
-  <td>Alignment without RL: direct closed-form loss from preference pairs</td>
-  <td><code>L_DPO = -log σ[β log(π(y_w)/π_ref(y_w)) - β log(π(y_l)/π_ref(y_l))]</code></td>
-  <td>Simpler than RLHF; widely adopted in open-source fine-tuning (LLaMA 2 chat)</td>
+  <td><strong>LLaMA</strong> [@touvron2023llama]<br/><small>Touvron et al. (Meta)</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>Open weights with Chinchilla-optimal training; modern SLM stack: RoPE + RMSNorm + SwiGLU + GQA</li>
+    <li>RoPE: <code>q_m · k_n → Re[(q_m e^{imθ})(k_n e^{inθ})^*]</code></li>
+    <li>Baseline for all open-source research; spawned Alpaca, Vicuna, Mistral, Llama 2/3</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2023</td>
-  <td><strong>Mistral 7B</strong> [@jiang2023mistral]<br/><em>Jiang et al. (Mistral AI)</em></td>
-  <td><span class="tag-deconly">Dec-only</span></td>
-  <td>GQA + sliding window attention; outperforms LLaMA-13B at 7B params</td>
-  <td>GQA: fewer KV heads than Q heads; sliding window: attend only last w tokens</td>
-  <td>Showed architecture efficiency matters at 7B; Mistral family → Mixtral MoE</td>
+  <td><strong>GPT-4</strong><br/><small>OpenAI</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>Multimodal (image + text input); large-scale RLHF; architecture undisclosed but widely assumed MoE</li>
+    <li>Bar exam top-10%, medical licensing, coding competitions — benchmark SOTA across domains</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2023</td>
+  <td><strong>DPO</strong> [@rafailov2023]<br/><small>Rafailov et al. (Stanford)</small></td>
+  <td><span class="tag t-aln">Alignment</span></td>
+  <td><ul>
+    <li>Alignment without RL: directly optimises a closed-form loss derived from the RLHF reward</li>
+    <li><code>L_DPO = −log σ[β log(π(y_w)/π_ref) − β log(π(y_l)/π_ref)]</code></li>
+    <li>Simpler and more stable than PPO; default fine-tuning method for most open-source models</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2023</td>
+  <td><strong>Mistral 7B</strong> [@jiang2023mistral]<br/><small>Jiang et al. (Mistral AI)</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>GQA + sliding window attention; outperforms LLaMA-2 13B on most benchmarks at 7B params</li>
+    <li>GQA: fewer KV heads than Q heads; sliding window: attend only to last <em>w</em> tokens per layer</li>
+    <li>Demonstrated architecture efficiency matters at 7B; led to Mixtral (sparse MoE, Dec 2023)</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2023</td>
+  <td><strong>Mamba</strong> [@gu2023mamba]<br/><small>Gu &amp; Dao (CMU / Stanford)</small></td>
+  <td><span class="tag t-alt">Alt-Arch</span></td>
+  <td><ul>
+    <li>Selective state space model: input-dependent SSM parameters let the model filter or remember content selectively</li>
+    <li>Hidden state: <code>h_t = A_t h_{t-1} + B_t x_t</code>; output: <code>y_t = C_t h_t</code> — A,B,C are functions of input</li>
+    <li>Linear-time inference; matches Transformer quality at language modelling; opened serious competition to quadratic attention</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2023</td>
+  <td><strong>Gemini</strong> [@team2023gemini]<br/><small>Google DeepMind</small></td>
+  <td><span class="tag t-mm">Multimodal</span></td>
+  <td><ul>
+    <li>Natively multimodal decoder (text, image, audio, video, code); three sizes (Ultra, Pro, Nano); MoE-based</li>
+    <li>Trained on interleaved multimodal sequences end-to-end rather than late-fusion of separate encoders</li>
+    <li>First model to match or exceed GPT-4 on key benchmarks at release; Gemini 1.5 introduced 1M-token context window</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2024</td>
-  <td><strong>o1</strong><br/><em>OpenAI</em></td>
-  <td><span class="tag-deconly">Dec-only</span></td>
-  <td>Test-time compute scaling: chain-of-thought as extended inference, not training</td>
-  <td>Scale inference tokens, not just training FLOPs; RL on verifiable reasoning tasks</td>
-  <td>Opened test-time compute as a new scaling axis; reasoning model paradigm</td>
+  <td><strong>o1</strong><br/><small>OpenAI</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>Test-time compute scaling: extended chain-of-thought as inference, not training</li>
+    <li>RL on verifiable reasoning tasks; more inference tokens → better answers</li>
+    <li>Opened a second scaling axis (inference FLOPs); reasoning model paradigm now widespread</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2024</td>
+  <td><strong>Sora</strong><br/><small>OpenAI</small></td>
+  <td><span class="tag t-mm">Video</span></td>
+  <td><ul>
+    <li>Diffusion Transformer (DiT): patches spacetime video into tokens; Transformer denoising backbone replaces UNet</li>
+    <li>Unified representation of images, video, audio as sequences of spacetime patches at variable resolution and length</li>
+    <li>First model to generate coherent minute-long videos with object permanence; "GPT-1 moment" for video generation</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2024</td>
+  <td><strong>DeepSeek-V2 / MLA</strong> [@deepseekv2team2024]<br/><small>DeepSeek AI</small></td>
+  <td><span class="tag t-inf">Efficiency</span></td>
+  <td><ul>
+    <li>Multi-head Latent Attention (MLA): compress K,V into a low-rank latent vector <code>c_t^{KV}</code>, reconstruct via up-projection at inference</li>
+    <li><code>KV cache per token: d_c ≪ n_h × d_h</code> (e.g., 5× compression vs standard MHA)</li>
+    <li>Reduces KV cache by up to 93%; enables longer context at lower memory cost; adopted in DeepSeek-V3/R1</li>
+  </ul></td>
 </tr>
 
 <tr>
   <td>2025</td>
-  <td><strong>DeepSeek-R1</strong><br/><em>DeepSeek AI</em></td>
-  <td><span class="tag-deconly">Dec-only</span></td>
-  <td>Open reasoning model; RL-only alignment (GRPO); o1-level at ~1/30 cost</td>
-  <td>GRPO: group relative policy optimization without a value model</td>
-  <td>Demonstrated open-source reasoning at frontier quality; cost disruption</td>
+  <td><strong>DeepSeek-R1</strong><br/><small>DeepSeek AI</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>Open reasoning model trained with RL only (GRPO — no value model); 671B sparse MoE</li>
+    <li>GRPO: group relative policy optimisation using outcome rewards only</li>
+    <li>o1-level reasoning at ~1/30 cost; largest open-weights frontier model as of early 2026</li>
+  </ul></td>
 </tr>
 
 </tbody>
 </table>
+</div>
 ```
 
 ---
 
 ## By architecture family
 
-### Encoder-Decoder
+### Encoder-Decoder {.unnumbered}
 
-The original Transformer family. Two stacks: an encoder that processes the
-full source, a decoder that generates the target one token at a time with
-cross-attention to encoder states.
+Two stacks: encoder reads the full source bidirectionally; decoder generates
+target tokens autoregressively with cross-attention to all encoder states.
+The original Transformer family, and still dominant for structured generation
+(MT, summarisation, speech).
 
-| Work | Year | Specialization |
+| Work | Year | Key specialisation |
 |---|---|---|
-| Transformer [@vaswani2017] | 2017 | Machine translation |
-| T5 [@raffel2020] | 2019 | Text-to-text unification |
-| BART (Lewis et al.) | 2019 | Denoising autoencoder for summarisation |
-| Whisper [@radford2022whisper] | 2022 | Multilingual speech recognition |
-| mT5 (Xue et al.) | 2021 | Multilingual T5 |
+| Transformer [@vaswani2017] | 2017 | Machine translation; established the architecture |
+| T5 [@raffel2020] | 2019 | Text-to-text unification; systematic scaling study |
+| BART (Lewis et al., 2019) | 2019 | Denoising pretraining; strong summarisation |
+| Whisper [@radford2022whisper] | 2022 | Multilingual speech; weak-supervision at scale |
+| mT5 (Xue et al., 2021) | 2021 | Multilingual T5 across 101 languages |
 
-The family peaked around 2020–2022. Decoder-only models at sufficient scale
-can perform the same tasks, reducing the incentive to maintain a separate
-encoder stack.
+Encoder-decoder peaked around 2020–2022. Decoder-only models at sufficient
+scale can perform the same tasks, reducing incentive to maintain the split.
 
-### Encoder-only
+### Encoder-only {.unnumbered}
 
-Pretrain a bidirectional Transformer on a self-supervised objective; then
-fine-tune the encoder representations for downstream tasks. Strong for
-classification, extraction, and retrieval; cannot generate fluently.
+A bidirectional Transformer pretrained on a self-supervised objective;
+fine-tuned representations for downstream tasks. Strong for classification,
+extraction, and retrieval; cannot generate fluently.
 
 | Work | Year | Objective | Key strength |
 |---|---|---|---|
-| BERT [@devlin2019] | 2018 | MLM + NSP | Bidirectional; fine-tuning paradigm |
-| RoBERTa [@liu2019roberta] | 2019 | MLM only | Better training recipe |
-| ViT [@dosovitskiy2021] | 2020 | Image patch classification | Vision Transformers |
-| CLIP [@radford2021clip] | 2021 | Contrastive image-text | Multimodal alignment |
-| DeBERTa (He et al.) | 2020 | MLM + disentangled attention | Position-aware representations |
+| BERT [@devlin2019] | 2018 | MLM + NSP | Bidirectional; defined fine-tuning paradigm |
+| RoBERTa [@liu2019roberta] | 2019 | MLM only | Better training recipe; new BERT baseline |
+| ViT [@dosovitskiy2021] | 2020 | Patch classification | Transformers for vision |
+| CLIP [@radford2021clip] | 2021 | Contrastive image-text | Universal multimodal backbone |
+| DeBERTa (He et al., 2021) | 2021 | MLM + disentangled attn | Disentangled position representations |
 
-The family is now used primarily for embeddings and retrieval (bi-encoders,
-dense passage retrieval) rather than generation.
+Now used primarily for embeddings, retrieval (dense passage retrieval,
+bi-encoders), and cross-modal alignment rather than generation.
 
-### Decoder-only
+### Decoder-only {.unnumbered}
 
-Pretrain a causal (left-to-right) Transformer as a language model; scale the
-model and the data. By 2022, this family dominates benchmarks and products.
+A causal (left-to-right) Transformer pretrained as a language model.
+By 2022 this family dominates every benchmark and every major product.
 
-| Work | Year | Params (approx.) | Key advance |
+| Work | Year | Scale | Key advance |
 |---|---|---|---|
-| GPT-1 [@radford2018gpt] | 2018 | 117M | Pretraining + fine-tuning |
-| GPT-2 [@radford2019gpt2] | 2019 | 1.5B | Zero-shot transfer |
-| GPT-3 [@brown2020] | 2020 | 175B | In-context learning; emergence |
-| Codex [@chen2021codex] | 2021 | 12B | Code domain |
+| GPT-1 [@radford2018gpt] | 2018 | 117M | Pretraining + fine-tuning paradigm |
+| GPT-2 [@radford2019gpt2] | 2019 | 1.5B | Zero-shot task transfer |
+| GPT-3 [@brown2020] | 2020 | 175B | In-context few-shot learning; emergence |
+| Codex [@chen2021codex] | 2021 | 12B | Code generation; GitHub Copilot |
 | InstructGPT [@ouyang2022] | 2022 | 175B | RLHF alignment |
-| LLaMA [@touvron2023llama] | 2023 | 7–65B | Open weights; efficient arch |
-| GPT-4 | 2023 | undisclosed | Multimodal; SOTA across benchmarks |
+| LLaMA [@touvron2023llama] | 2023 | 7–65B | Open weights; modern SLM architecture stack |
+| GPT-4 | 2023 | undisclosed | Multimodal; SOTA across all benchmarks |
 | o1 | 2024 | undisclosed | Test-time compute scaling |
-| DeepSeek-R1 | 2025 | 671B (MoE) | Open reasoning model |
+| DeepSeek-R1 | 2025 | 671B (MoE) | Open frontier reasoning model |
 
-### Infrastructure and methods (non-architectural)
+### Mixture of Experts (MoE) {.unnumbered}
 
-Works that changed how models are trained, aligned, or deployed — without
-introducing a new architecture.
+A routing mechanism layered on top of any Transformer: each token activates
+only a subset of FFN experts, keeping active compute constant while total
+parameters grow.
 
-| Work | Year | Contribution |
-|---|---|---|
-| Scaling laws [@kaplan2020] | 2020 | Power-law training budgets |
-| Chinchilla [@hoffmann2022] | 2022 | Optimal token/param ratio |
-| Flash Attention [@dao2022flashattn] | 2022 | IO-aware exact attention |
-| InstructGPT RLHF [@ouyang2022] | 2022 | PPO from human preferences |
-| DPO [@rafailov2023] | 2023 | Preference alignment without RL |
-| GQA (Ainslie et al.) | 2023 | Grouped-query attention for inference |
-| RoPE [@su2024rope] | 2021/2023 | Rotary position encoding (arXiv 2021; adopted widely via LLaMA 2023) |
-| AlphaFold 2 [@jumper2021] | 2021 | Evoformer — attention applied to protein structure |
+| Work | Year | Routing | Notable use |
+|---|---|---|---|
+| Sparse MoE [@shazeer2017moe] | 2017 | Top-k soft gate | Founding paper; 137B params |
+| Switch Transformer [@fedus2021switch] | 2021 | Top-1 hard | Trillion-param training |
+| Mixtral 8×7B (Jiang et al., 2024) | 2024 | Top-2 of 8 | First competitive open MoE |
+| DeepSeek-V3 (2024) | 2024 | Top-2 of 256 | 671B sparse; frontier quality at open cost |
+
+MoE is the dominant architecture at frontier scale. GPT-4, Gemini 1.5, and
+almost every post-2023 flagship model is believed to use sparse MoE.
+
+### Methods — training, alignment, efficiency {.unnumbered}
+
+Works that changed how models are trained, aligned, or deployed without
+introducing a new architecture family.
+
+| Work | Year | Type | Core contribution |
+|---|---|---|---|
+| Scaling laws [@kaplan2020] | 2020 | Training | Power-law training budgets |
+| Chinchilla [@hoffmann2022] | 2022 | Training | Optimal token/param ratio; equal scaling |
+| LoRA [@hu2022lora] | 2022 | PEFT | Low-rank weight injection; 10 000× fewer trainable params |
+| Chain-of-Thought [@wei2022cot] | 2022 | Prompting | Intermediate reasoning steps unlock multi-step tasks |
+| Flash Attention [@dao2022flashattn] | 2022 | Efficiency | IO-aware exact attention; 2–4× speedup |
+| InstructGPT RLHF [@ouyang2022] | 2022 | Alignment | PPO from human preferences |
+| DPO [@rafailov2023] | 2023 | Alignment | Closed-form preference loss; replaces PPO |
+| RAG [@lewis2020rag] | 2020 | Retrieval | Non-parametric memory: retrieve passages, condition generation on them |
+| RoPE [@su2024rope] | 2021 | PE | Rotary position encoding; adopted by LLaMA family |
+| MQA (Shazeer, 2019) | 2019 | Efficiency | Multi-query attention: all Q heads share one K,V head |
+| GQA [@ainslie2023gqa] | 2023 | Efficiency | Grouped-query: G shared KV groups; interpolates MHA↔MQA |
+| MLA [@deepseekv2team2024] | 2024 | Efficiency | Low-rank KV compression; up to 93% KV cache reduction |
+| QLoRA [@dettmers2023qlora] | 2023 | PEFT | 4-bit NF4 quantisation + LoRA adapters; single-GPU fine-tuning |
+| Speculative decoding [@chen2023speculative] | 2023 | Efficiency | Draft-verify pipeline; 2–3× throughput, exact distribution |
+
+### Alternative architectures — beyond quadratic attention {.unnumbered}
+
+The Transformer's $O(N^2)$ attention cost motivates research into sub-linear
+alternatives. None has displaced Transformers at scale, but Mamba and hybrids
+are serious contenders for 2025–2026.
+
+| Work | Year | Mechanism | Status |
+|---|---|---|---|
+| Mamba [@gu2023mamba] | 2023 | Selective SSM — input-dependent state transitions | Competitive at small scale; Mamba-2 unifies SSM ↔ attention |
+| RWKV (Peng et al., 2023) | 2023 | Linear attention via token-shift recurrence | LLM-scale open model (14B); constant inference memory |
+| RetNet (Sun et al., 2023) | 2023 | Retention: parallel train, sequential infer | "Training Parallelism + Inference Efficiency + Performance" triangle |
+| Griffin (DeepMind, 2024) | 2024 | Gated linear recurrence + local attention hybrid | Matches Llama at 14B; inference-efficient |
+
+The most likely outcome is **hybrid architectures** that mix attention layers (for long-range global context) with SSM or linear recurrence layers (for local computation efficiency).
 
 ---
 
 ## By application area
 
-| Domain | Key papers | First viable | Current state |
+| Domain | Landmark work | Available | Current state |
 |---|---|---|---|
-| Machine translation | Transformer 2017 | 2017 | Transformer-based MT standard |
-| NLU / QA / classification | BERT 2018 | 2018 | Fine-tuned encoders or few-shot LLMs |
-| Text generation | GPT-2 2019 | 2019 | GPT-4, Claude, Gemini family |
-| Code generation | Codex 2021 | 2022 (Copilot) | DeepSeek Coder, Claude, GPT-4o |
-| Image classification | ViT 2020 | 2021 | ViT, DeiT, Swin Transformer |
-| Image generation | CLIP + DDPM 2021 | 2022 (DALL-E 2) | Stable Diffusion, Midjourney, Flux |
-| Speech recognition | Whisper 2022 | 2022 | Whisper large v3 |
-| Protein structure | AlphaFold 2 2021 | 2021 | AF3, ESM3 |
-| Reasoning | o1 2024 | 2024 | o1, o3, DeepSeek-R1 |
-| Agents & tool use | GPT-4 + function calls 2023 | 2023 | Ongoing |
+| Machine translation | Transformer 2017 | 2017 | Transformer MT is the industry standard |
+| NLU / QA / classification | BERT 2018 | 2019 | Fine-tuned encoders or few-shot LLMs |
+| Text generation | GPT-2 2019 | 2019 | GPT-4o, Claude 4, Gemini 2.x, LLaMA 3 |
+| Code generation | Codex 2021 | 2022 (Copilot) | Claude, DeepSeek-Coder, GPT-4o |
+| Image classification | ViT 2020 | 2021 | ViT, DeiT, Swin, DINO v2 |
+| Image generation | CLIP + diffusion 2021 | 2022 | Stable Diffusion, DALL-E 3, Flux, Midjourney |
+| Video generation | Sora (DiT) 2024 | 2024 | Sora 2, Veo 2, Kling, Wan |
+| Speech recognition | Whisper 2022 | 2022 | Whisper v3, Distil-Whisper |
+| Protein structure | AlphaFold 2 [@jumper2021] 2021 | 2021 | AlphaFold 3, ESMFold, ESM3 |
+| Reasoning | CoT [@wei2022cot] + o1 2024 | 2024 | o3, DeepSeek-R1, Gemini Thinking |
+| Agents and tool use | GPT-4 function calls 2023 | 2023 | Multi-agent frameworks, Claude tool use |
+| Long-context understanding | Flash Attn + LLaMA 2023 | 2023 | 1M+ context windows (Gemini 1.5 Pro) |
+| Efficient fine-tuning | LoRA 2022 | 2022 | QLoRA, DoRA, widely used open-source |
 
 ---
 
 ## Reading order
 
-For a first pass through the era:
+**Core architecture sequence** (read the chapters in this order):
 
-1. [Self-Attention & Multi-Head Attention](../02_transformer/01_self_attention.qmd) — the core mechanism
-2. [The Transformer Architecture](../02_transformer/02_transformer.qmd) — the full model
-3. [BERT & GPT](../02_transformer/04_bert_gpt.qmd) — the pretraining split
-4. [Scaling Laws & Emergence](../02_transformer/05_scaling_laws.qmd) — why bigger works
-5. [Instruction Tuning & Alignment](../02_transformer/06_alignment.qmd) — why it's useful
+1. [Self-Attention & Multi-Head Attention](../02_transformer/01_self_attention.qmd)
+2. [The Transformer Architecture](../02_transformer/02_transformer.qmd)
+3. [Positional Encoding](../02_transformer/03_positional_encoding.qmd)
+4. [BERT & GPT](../02_transformer/04_bert_gpt.qmd)
+5. [Scaling Laws & Emergence](../02_transformer/05_scaling_laws.qmd)
+6. [Alignment & Instruction Tuning](../02_transformer/06_alignment.qmd)
+7. [Mixture of Experts](../02_transformer/07_moe.qmd)
+8. [Beyond Quadratic Attention — SSMs and Hybrids](../02_transformer/08_beyond_transformers.qmd)
+9. [Multimodal Transformers](../02_transformer/09_multimodal.qmd)
 
-For a deep dive into position encoding: [Positional Encoding](../02_transformer/03_positional_encoding.qmd).
-
+**If you want the deployment angle first:** start with [Scaling Laws](../02_transformer/05_scaling_laws.qmd) → [Alignment](../02_transformer/06_alignment.qmd) → [MoE](../02_transformer/07_moe.qmd), then work backward through the architecture chapters.

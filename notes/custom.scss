@@ -18,9 +18,32 @@ h1, h2, h3, h4, h5, h6 {
 h2 { margin-top: 1.8rem; }
 h3 { margin-top: 1.3rem; }
 
-// Sidebar part headers bold.
+// Sidebar navigation: tighter font to reduce wrapping of long chapter titles.
+.sidebar-navigation .sidebar-item-text {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+// Sidebar part headers: bold + uppercased, can wrap on two lines.
 .sidebar-item-section > .sidebar-item-text {
   font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #718096;
+}
+
+// Right-side on-page TOC: smaller to reclaim content column width.
+#TOC {
+  font-size: 0.79rem;
+  max-width: 190px;
+  min-width: 0;
+}
+#TOC .toc-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #a0aec0;
 }
 
 // Per-page reference lists: smaller, muted, subtle separator above.

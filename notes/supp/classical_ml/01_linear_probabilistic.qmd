@@ -1,0 +1,20 @@
+---
+title: "Linear & Probabilistic Models"
+format: html
+---
+
+← Back to: [Classical ML Overview](00_overview.qmd)
+
+<!-- Code: none — context/reference supplementary. -->
+<!-- PLANNED SCOPE:
+     1. Logistic regression — sigmoid, log-loss; the linear classifier that
+        the artificial neuron generalises. Link to 00_foundations/01.
+     2. Naive Bayes — conditional independence assumption; the statistical-NLP
+        text-classification baseline (spam, sentiment) Seq2Seq/LLMs displaced.
+     3. Maximum likelihood framing — ties to 02_information_theory (cross-entropy
+        = NLL). Reuse the MLE refresher from supp/00_prerequisites.
+     Each: intuition + one formula + where it still wins (low-data, interpretable). -->
+
+::: {.callout-note title="Coming soon" icon="false"}
+This supplementary context note is in progress.
+:::

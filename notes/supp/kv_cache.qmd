@@ -3,8 +3,18 @@ title: "KV-Cache — Autoregressive Inference Efficiency"
 format: html
 ---
 
+← Back to: [BERT & GPT](../02_transformer/04_bert_gpt.qmd)
+
 <!-- Code: nn_timeline.generate.kv_cache -->
 <!-- Sidecar of: ../02_transformer/04_bert_gpt.qmd -->
+<!-- PLANNED SECTIONS (draft scope):
+     1. KV-cache mechanics — why autoregressive decoding recomputes; caching K,V.
+     2. The KV-cache memory bottleneck — scales with batch × layers × heads × seq.
+     3. Attention-head reduction lineage (folded in here, not the main part):
+        - MQA (Shazeer 2019) — all Q heads share one K,V head.
+        - GQA (Ainslie 2023 [@ainslie2023gqa]) — G shared KV groups; MHA↔MQA.
+        - MLA (DeepSeek-V2 2024 [@deepseekv2team2024]) — low-rank KV compression.
+     4. Related inference tricks — speculative decoding [@chen2023speculative]. -->
 
 ::: {.callout-note title="Coming soon" icon="false"}
 This supplementary note is in progress.
