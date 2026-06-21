@@ -163,11 +163,13 @@ these three branches.
 | [The Transformer Architecture](02_transformer.qmd) | Encoder block, decoder block, residuals, layer norm; full forward pass |
 | [Positional Encoding](03_positional_encoding.qmd) | Sinusoidal, learned, RoPE, ALiBi — from fixed frequencies to rotation |
 | [BERT & GPT](04_bert_gpt.qmd) | Encoder-only vs decoder-only pretraining; the fine-tuning paradigm |
-| [Scaling Laws & Emergence](05_scaling_laws.qmd) | Kaplan 2020, Chinchilla — optimal compute allocation; capability jumps |
-| [Alignment & Instruction Tuning](06_alignment.qmd) | RLHF, InstructGPT, DPO — making large models follow instructions |
-| [Mixture of Experts](07_moe.qmd) | Sparse routing, Switch Transformer, Mixtral — scaling compute efficiently |
-| [Beyond Quadratic Attention](08_beyond_transformers.qmd) | Mamba, RWKV, RetNet, hybrids — sub-linear alternatives to attention |
-| [Multimodal Transformers](09_multimodal.qmd) | ViT + CLIP → GPT-4V, Gemini — unifying vision, language, audio |
+| [Output Layer & Decoding](05_decoding.qmd) | Logits, softmax/cross-entropy, weight tying; greedy, beam, top-k, nucleus |
+| [Scaling Laws & Emergence](06_scaling_laws.qmd) | Kaplan 2020, Chinchilla — optimal compute allocation; capability jumps |
+| [Alignment & Instruction Tuning](07_alignment.qmd) | RLHF, InstructGPT, DPO — making large models follow instructions |
+| [Language Models — The Lineage](08_language_models.qmd) | n-grams → Bengio → RNN LMs → GPT→LLaMA→Gemini; the convergent recipe |
+| [Mixture of Experts](09_moe.qmd) | Sparse routing, Switch Transformer, Mixtral — scaling compute efficiently |
+| [Beyond Quadratic Attention](10_beyond_transformers.qmd) | Mamba, RWKV, RetNet, hybrids — sub-linear alternatives to attention |
+| [Multimodal Transformers](11_multimodal.qmd) | ViT + CLIP → GPT-4V, Gemini — unifying vision, language, audio |
 
 ## Key ideas to track across chapters
 

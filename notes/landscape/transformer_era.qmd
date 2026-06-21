@@ -570,10 +570,12 @@ The most likely outcome is **hybrid architectures** that mix attention layers (f
 2. [The Transformer Architecture](../02_transformer/02_transformer.qmd)
 3. [Positional Encoding](../02_transformer/03_positional_encoding.qmd)
 4. [BERT & GPT](../02_transformer/04_bert_gpt.qmd)
-5. [Scaling Laws & Emergence](../02_transformer/05_scaling_laws.qmd)
-6. [Alignment & Instruction Tuning](../02_transformer/06_alignment.qmd)
-7. [Mixture of Experts](../02_transformer/07_moe.qmd)
-8. [Beyond Quadratic Attention — SSMs and Hybrids](../02_transformer/08_beyond_transformers.qmd)
-9. [Multimodal Transformers](../02_transformer/09_multimodal.qmd)
+5. [Output Layer & Decoding](../02_transformer/05_decoding.qmd)
+6. [Scaling Laws & Emergence](../02_transformer/06_scaling_laws.qmd)
+7. [Alignment & Instruction Tuning](../02_transformer/07_alignment.qmd)
+8. [Language Models — The Lineage](../02_transformer/08_language_models.qmd)
+9. [Mixture of Experts](../02_transformer/09_moe.qmd)
+10. [Beyond Quadratic Attention — SSMs and Hybrids](../02_transformer/10_beyond_transformers.qmd)
+11. [Multimodal Transformers](../02_transformer/11_multimodal.qmd)
 
-**If you want the deployment angle first:** start with [Scaling Laws](../02_transformer/05_scaling_laws.qmd) → [Alignment](../02_transformer/06_alignment.qmd) → [MoE](../02_transformer/07_moe.qmd), then work backward through the architecture chapters.
+**If you want the deployment angle first:** start with [Scaling Laws](../02_transformer/06_scaling_laws.qmd) → [Alignment](../02_transformer/07_alignment.qmd) → [MoE](../02_transformer/09_moe.qmd), then work backward through the architecture chapters.

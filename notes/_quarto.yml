@@ -33,11 +33,13 @@ book:
         - 02_transformer/02_transformer.qmd
         - 02_transformer/03_positional_encoding.qmd
         - 02_transformer/04_bert_gpt.qmd
-        - 02_transformer/05_scaling_laws.qmd
-        - 02_transformer/06_alignment.qmd
-        - 02_transformer/07_moe.qmd
-        - 02_transformer/08_beyond_transformers.qmd
-        - 02_transformer/09_multimodal.qmd
+        - 02_transformer/05_decoding.qmd
+        - 02_transformer/06_scaling_laws.qmd
+        - 02_transformer/07_alignment.qmd
+        - 02_transformer/08_language_models.qmd
+        - 02_transformer/09_moe.qmd
+        - 02_transformer/10_beyond_transformers.qmd
+        - 02_transformer/11_multimodal.qmd
     - part: "Supplementary (Mathematical)"
       chapters:
         - supp/00_prerequisites.qmd
