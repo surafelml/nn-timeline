@@ -1,0 +1,36 @@
+---
+title: "Diffusion Transformers"
+format: html
+---
+
+<!-- Next: 13_embodied.qmd -->
+<!-- Timeline anchor: DDPM (Ho 2020), DiT (Peebles 2022), SD3/FLUX (2024). -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+**Diffusion models** learn to reverse a noise process — iteratively denoising a signal toward data.
+Replacing the U-Net backbone with a **Transformer block (DiT)** unified the denoising architecture
+with the LLM stack, enabling image, video, and audio generation at scale.
+:::
+
+**Depends on:** [The Transformer](02_transformer.qmd) · [Multimodal](11_multimodal.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### Score matching and the denoising objective
+
+### The Diffusion Transformer block (DiT)
+
+### From images to video: Sora and beyond
+
+## Application & impact
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+→ Next: [Embodied AI & VLA](13_embodied.qmd)
+
+## References {.unnumbered}
+::: {#refs}
+:::

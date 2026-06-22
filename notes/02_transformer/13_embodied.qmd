@@ -1,0 +1,36 @@
+---
+title: "Embodied AI & Vision-Language-Action Models"
+format: html
+---
+
+<!-- Next: (end of Transformer Era) -->
+<!-- Timeline anchor: RT-2 (Brohan 2023), OpenVLA (Kim 2024). -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+**Vision-Language-Action (VLA) models** extend the multimodal transformer into physical control:
+the same architecture that reads text and images now outputs robot actions, grounding language
+instructions in perception and continuous motor commands.
+:::
+
+**Depends on:** [Multimodal](11_multimodal.qmd) · [BERT & GPT](04_bert_gpt.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### The perceive-reason-act loop
+
+### Tokenizing actions: from language tokens to motor commands
+
+### RT-2 and OpenVLA: architecture and training
+
+### Sim-to-real and data challenges
+
+## Application & impact
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+## References {.unnumbered}
+::: {#refs}
+:::
