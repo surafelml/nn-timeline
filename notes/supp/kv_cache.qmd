@@ -6,17 +6,93 @@ format: html
 ← Back to: [BERT & GPT](../02_transformer/04_bert_gpt.qmd)
 
 <!-- Code: nn_timeline.generate.kv_cache -->
-<!-- Sidecar of: ../02_transformer/04_bert_gpt.qmd -->
-<!-- PLANNED SECTIONS (draft scope):
-     1. KV-cache mechanics — why autoregressive decoding recomputes; caching K,V.
-     2. The KV-cache memory bottleneck — scales with batch × layers × heads × seq.
-     3. Attention-head reduction lineage (folded in here, not the main part):
-        - MQA (Shazeer 2019) — all Q heads share one K,V head.
-        - GQA (Ainslie 2023 [@ainslie2023gqa]) — G shared KV groups; MHA↔MQA.
-        - MLA (DeepSeek-V2 2024 [@deepseekv2team2024]) — low-rank KV compression.
-     4. Related inference tricks — speculative decoding [@chen2023speculative]. -->
+<!-- Sidecar of: ../02_transformer/04_bert_gpt.qmd and ../02_transformer/05_decoding.qmd -->
 
-::: {.callout-note title="Coming soon" icon="false"}
-This supplementary note is in progress.
-← Back to: [BERT & GPT](../02_transformer/04_bert_gpt.qmd)
+::: {.callout-tip title="TL;DR" icon="false"}
+A decoder generates one token at a time, and each new token attends to *every*
+previous one. Recomputing all past keys and values at every step is quadratic
+waste; the **KV-cache** stores them once so each step is linear in context
+length. Its memory cost — batch × layers × heads × seq × $d_k$ — then becomes
+the inference bottleneck, which **MQA**, **GQA**, and **MLA** attack by
+shrinking the K/V footprint.
 :::
+
+## Why decoding recomputes
+
+In [autoregressive decoding](../02_transformer/05_decoding.qmd) the model
+appends one token per step and re-runs attention. Naively, generating token
+$t$ recomputes $K$ and $V$ for all positions $1..t$ — but those projections
+*never change* for tokens already produced. Only the new token's query needs
+the fresh past. Caching $K,V$ turns each step from $O(t)$ recompute into
+$O(1)$ projection plus an $O(t)$ attention read.
+
+$$
+\text{step } t:\quad q_t = x_t W_Q,\quad
+K_{1:t} = [\,K_{1:t-1}\,;\, x_t W_K\,],\quad
+V_{1:t} = [\,V_{1:t-1}\,;\, x_t W_V\,].
+$$
+
+The bracketed history is read from cache; only the last row is computed.
+
+## The memory bottleneck
+
+The cache size grows with everything at once:
+
+$$
+\text{KV memory} = 2 \times b \times L \times h \times n \times d_k \times \text{(bytes)},
+$$
+
+for batch $b$, layers $L$, heads $h$, sequence $n$. For a long-context LLM
+this dwarfs the parameter memory and caps batch size — inference becomes
+**memory-bandwidth bound**, not compute bound. Reducing the K/V term is
+therefore the highest-leverage inference optimization.
+
+## Attention-head reduction lineage
+
+All three methods keep full query heads but share or compress K/V:
+
+```{=html}
+<svg viewBox="0 0 560 170" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:560px;display:block;margin:1.5rem auto">
+  <text x="90" y="20" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">MHA</text>
+  <g fill="#7c3aed"><circle cx="50" cy="50" r="6"/><circle cx="75" cy="50" r="6"/><circle cx="100" cy="50" r="6"/><circle cx="125" cy="50" r="6"/></g>
+  <g fill="#059669"><circle cx="50" cy="90" r="6"/><circle cx="75" cy="90" r="6"/><circle cx="100" cy="90" r="6"/><circle cx="125" cy="90" r="6"/></g>
+  <text x="90" y="120" text-anchor="middle" font-size="9" fill="#6b7280">h Q · h KV</text>
+  <text x="280" y="20" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">GQA</text>
+  <g fill="#7c3aed"><circle cx="240" cy="50" r="6"/><circle cx="265" cy="50" r="6"/><circle cx="290" cy="50" r="6"/><circle cx="315" cy="50" r="6"/></g>
+  <g fill="#059669"><circle cx="252" cy="90" r="6"/><circle cx="303" cy="90" r="6"/></g>
+  <text x="280" y="120" text-anchor="middle" font-size="9" fill="#6b7280">h Q · G KV groups</text>
+  <text x="480" y="20" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">MQA</text>
+  <g fill="#7c3aed"><circle cx="440" cy="50" r="6"/><circle cx="465" cy="50" r="6"/><circle cx="490" cy="50" r="6"/><circle cx="515" cy="50" r="6"/></g>
+  <g fill="#059669"><circle cx="477" cy="90" r="6"/></g>
+  <text x="480" y="120" text-anchor="middle" font-size="9" fill="#6b7280">h Q · 1 KV</text>
+  <text x="280" y="150" text-anchor="middle" font-size="9" fill="#94a3b8">purple = query heads · green = key/value heads</text>
+</svg>
+```
+
+- **MQA** (Shazeer 2019 [@shazeer2019mqa]) — all query heads share a **single**
+  K/V head. Shrinks the cache by a factor of $h$, at some quality cost.
+- **GQA** (Ainslie 2023 [@ainslie2023gqa]) — query heads share $G$ K/V groups,
+  interpolating between MHA ($G{=}h$) and MQA ($G{=}1$). The pragmatic default
+  in LLaMA-2/3 and most open models — most of the savings, little quality loss.
+- **MLA** (DeepSeek-V2 2024 [@deepseekv2team2024]) — **low-rank** joint
+  compression of K and V into a small latent that is cached and re-expanded per
+  head, cutting cache further while retaining multi-head expressivity.
+
+## Related inference trick — speculative decoding
+
+Orthogonal to cache size: **speculative decoding** [@chen2023speculative] uses
+a small draft model to propose several tokens, which the large model then
+*verifies* in one parallel forward pass. Accepted tokens are kept, so multiple
+tokens can be produced per expensive step without changing the output
+distribution.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+The KV-cache makes autoregressive decoding linear instead of quadratic by
+storing past keys/values; its memory footprint then becomes the dominant
+inference constraint. MQA → GQA → MLA progressively shrink that footprint, and
+speculative decoding attacks the per-step latency from a different angle.
+:::
+
+← Back to: [BERT & GPT](../02_transformer/04_bert_gpt.qmd) ·
+[Output Layer & Decoding](../02_transformer/05_decoding.qmd)
