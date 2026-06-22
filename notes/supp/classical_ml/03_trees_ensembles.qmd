@@ -6,15 +6,86 @@ format: html
 ← Back to: [Classical ML Overview](00_overview.qmd)
 
 <!-- Code: none — context/reference supplementary. -->
-<!-- PLANNED SCOPE:
-     1. Decision trees — recursive splits; Gini / entropy criteria; interpretable.
-     2. Random forests — bagging + feature subsampling; variance reduction.
-     3. Gradient boosting — sequential residual fitting; XGBoost / LightGBM.
-     4. Timeline context — the honest "neural nets didn't win everything":
-        gradient-boosted trees remain SOTA on tabular data in 2026. Contrast
-        with the deep-learning narrative of the main spine.
-     Each: intuition + one formula + where it still wins (tabular, structured). -->
 
-::: {.callout-note title="Coming soon" icon="false"}
-This supplementary context note is in progress.
+::: {.callout-tip title="TL;DR" icon="false"}
+A **decision tree** splits the feature space with axis-aligned rules; it is
+interpretable but high-variance. **Random forests** [@breiman2001rf] average
+many decorrelated trees to cut variance, and **gradient boosting**
+[@friedman2001gbm] fits trees sequentially to the residual error. Boosted-tree
+libraries (XGBoost [@chen2016xgboost]) remain the **state of the art on tabular
+data in 2026** — the clearest place neural nets did not win.
 :::
+
+## Decision trees
+
+A tree recursively partitions the data, choosing at each node the split that
+most reduces impurity — **Gini** or entropy for classification, variance for
+regression:
+
+$$
+\text{Gini}(S) = 1 - \sum_c p_c^2.
+$$
+
+Trees are interpretable (a path is a rule list), handle mixed feature types
+natively, and need no scaling. Their weakness is **variance**: a deep tree
+memorizes the training set and a small data change reshapes it entirely. The
+two ensemble families below both exist to tame that variance.
+
+## Random forests — bagging decorrelated trees
+
+Train many trees, each on a bootstrap sample of the rows and a random subset of
+features at each split, then average their predictions:
+
+$$
+\hat y = \frac{1}{T}\sum_{t=1}^{T} f_t(x).
+$$
+
+Bootstrapping + feature subsampling **decorrelates** the trees, so averaging
+collapses variance without inflating bias. Robust, hard to overfit, and almost
+parameter-free — a strong default.
+
+## Gradient boosting — sequential residual fitting
+
+Boosting builds the ensemble **additively**: each new tree fits the gradient of
+the loss left over by the current model:
+
+$$
+F_m(x) = F_{m-1}(x) + \nu\, h_m(x), \qquad
+h_m \approx -\nabla_F \mathcal{L}\big(y, F_{m-1}(x)\big),
+$$
+
+with learning rate $\nu$. This is gradient descent in *function space* — the
+same optimization logic as neural training, but the "step" is a small tree
+rather than a parameter update. XGBoost/LightGBM add regularization, second-order
+information, and engineering that make them the production tabular workhorse.
+
+```{=html}
+<svg viewBox="0 0 420 130" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:420px;display:block;margin:1.5rem auto">
+  <defs><marker id="tb-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0,0 8,3 0,6" fill="#94a3b8"/></marker></defs>
+  <rect x="20" y="50" width="70" height="34" rx="5" fill="#dcfce7" stroke="#22c55e"/><text x="55" y="71" text-anchor="middle" font-size="9" fill="#166534">tree 1</text>
+  <rect x="130" y="50" width="70" height="34" rx="5" fill="#dcfce7" stroke="#22c55e"/><text x="165" y="71" text-anchor="middle" font-size="9" fill="#166534">+ tree 2</text>
+  <rect x="240" y="50" width="70" height="34" rx="5" fill="#dcfce7" stroke="#22c55e"/><text x="275" y="71" text-anchor="middle" font-size="9" fill="#166534">+ tree 3</text>
+  <text x="360" y="71" font-size="11" fill="#6b7280">→ …</text>
+  <line x1="90" y1="67" x2="128" y2="67" stroke="#94a3b8" marker-end="url(#tb-ah)"/>
+  <line x1="200" y1="67" x2="238" y2="67" stroke="#94a3b8" marker-end="url(#tb-ah)"/>
+  <text x="165" y="30" text-anchor="middle" font-size="9" fill="#6b7280">each tree fits the previous model's residual error</text>
+</svg>
+```
+
+## Timeline context
+
+This is the honest counterweight to the deep-learning narrative: on tabular,
+heterogeneous, structured data — most of enterprise ML — gradient-boosted trees
+still beat neural nets in accuracy, training cost, and ease of tuning. Deep
+learning won perception and language; trees still own the spreadsheet.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+Trees split, ensembles average or boost away their variance. Random forests
+decorrelate-and-average; gradient boosting does gradient descent in function
+space one tree at a time. Their continued dominance on tabular data is the
+sharpest reminder that "deep learning won everything" is a perception/language
+story, not a universal one.
+:::
+
+← Back to: [Classical ML Overview](00_overview.qmd)

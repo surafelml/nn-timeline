@@ -6,24 +6,64 @@ format: html
 ← Back to: [Home](../../index.qmd)
 
 <!-- Code: none — context/reference supplementary. -->
-<!-- PLANNED SCOPE (overview page):
-     The book's spine is neural architectures; this section supplies the
-     classical-ML background the main notes assume or contrast against.
-     Referenced from foundations (SVM displacement by AlexNet, cortes1995)
-     and RNN era (Seq2Seq vs phrase-based statistical pipelines).
-     Overview page covers:
-       - Why classical ML belongs as context (not spine)
-       - The supervised / unsupervised split
-       - A "where each still wins" table (tabular, low-data, interpretability)
-       - Map of the 4 content pages below -->
 
-::: {.callout-note title="Coming soon" icon="false"}
-This supplementary context section is in progress.
-
-Pages in this section:
-
-- [Linear & Probabilistic Models](01_linear_probabilistic.qmd) — logistic regression, naive Bayes
-- [SVM & Kernels](02_svm_kernels.qmd) — margins, the kernel trick
-- [Trees & Ensembles](03_trees_ensembles.qmd) — decision trees, random forests, gradient boosting
-- [Unsupervised Methods](04_unsupervised.qmd) — k-means, PCA
+::: {.callout-tip title="TL;DR" icon="false"}
+This book's spine is neural architectures, but they did not arrive into a
+vacuum — they *displaced* a mature classical-ML stack, and on some problems
+have not displaced it at all. This section is the background the main notes
+assume or contrast against: the linear/probabilistic models the artificial
+neuron generalizes, the **SVMs** that ruled 1995–2012, the **tree ensembles**
+still SOTA on tabular data in 2026, and the unsupervised methods behind
+"representation learning."
 :::
+
+## Why classical ML belongs as context, not spine
+
+The neural narrative is cleaner than the history. Three honest reasons to keep
+classical ML in view:
+
+1. **Continuity.** Logistic regression *is* a single artificial neuron with a
+   sigmoid; cross-entropy training of a net is maximum likelihood, the same
+   principle behind naive Bayes. The foundations chapters are classical ML
+   wearing neural notation.
+2. **The 2012 inflection.** SVMs with hand-engineered features were the vision
+   champion until AlexNet [@krizhevsky2012alexnet]. Knowing what was displaced
+   is what makes the deep-learning turn legible — see the
+   [historical chapter](../../00_foundations/00_historical.qmd).
+3. **Where neural nets still lose.** Gradient-boosted trees remain the default
+   for tabular/structured data. "Deep learning won" is true for perception and
+   language, not universally.
+
+## The supervised / unsupervised split
+
+| | Learns from | Goal | This section |
+|---|---|---|---|
+| **Supervised** | labelled $(x, y)$ | predict $y$ | [linear/probabilistic](01_linear_probabilistic.qmd), [SVM](02_svm_kernels.qmd), [trees](03_trees_ensembles.qmd) |
+| **Unsupervised** | unlabelled $x$ | find structure | [k-means, PCA](04_unsupervised.qmd) |
+
+The neural era blurs this line — self-supervised pre-training (BERT, GPT)
+manufactures labels from raw text — but the classical split is the right
+starting frame.
+
+## Where each approach still wins
+
+| Method | Still the right tool when… |
+|---|---|
+| Logistic regression / naive Bayes | data is scarce, interpretability is required, baseline needed fast |
+| SVM + kernel | small/medium data, clear margin, non-linear but low-dimensional |
+| Gradient-boosted trees | **tabular/structured** features, mixed types, the production default |
+| k-means / PCA | exploratory analysis, compression, visualization, preprocessing |
+
+## Map of this section
+
+- [Linear & Probabilistic Models](01_linear_probabilistic.qmd) — logistic
+  regression, naive Bayes; the MLE thread that ties to
+  [information theory](../../00_foundations/02_information_theory.qmd).
+- [SVM & Kernels](02_svm_kernels.qmd) — max-margin classifiers and the kernel
+  trick; the pre-2012 champion.
+- [Trees & Ensembles](03_trees_ensembles.qmd) — decision trees, random
+  forests, gradient boosting; the tabular SOTA.
+- [Unsupervised Methods](04_unsupervised.qmd) — k-means and PCA; the classical
+  ancestors of representation learning.
+
+← Back to: [Home](../../index.qmd)

@@ -6,16 +6,72 @@ format: html
 ← Back to: [Classical ML Overview](00_overview.qmd)
 
 <!-- Code: none — context/reference supplementary. -->
-<!-- PLANNED SCOPE:
-     1. Max-margin classifier — geometric intuition; the optimal separating
-        hyperplane (Cortes & Vapnik 1995 [@cortes1995]).
-     2. The kernel trick — implicit high-dimensional feature maps without
-        computing them; RBF/polynomial kernels.
-     3. Timeline context — SVMs were the dominant classifier 1995–2012, the
-        approach AlexNet (2012) displaced on vision. Link to 00_foundations/00
-        historical (the 2012 inflection point callout).
-     Each: intuition + one formula + where it still wins (small/medium data). -->
 
-::: {.callout-note title="Coming soon" icon="false"}
-This supplementary context note is in progress.
+::: {.callout-tip title="TL;DR" icon="false"}
+The **support vector machine** [@cortes1995] classifies by finding the
+hyperplane with the **largest margin** to the nearest points, and the **kernel
+trick** lets it draw non-linear boundaries by working in an implicit
+high-dimensional space without ever computing the coordinates. SVMs were the
+dominant classifier from 1995 until deep learning displaced them on perception
+around 2012.
 :::
+
+## The max-margin idea
+
+Many hyperplanes separate two classes; the SVM picks the one that maximizes the
+**margin** — the distance to the closest training points (the *support
+vectors*). For separable data this is:
+
+$$
+\min_{w,b}\ \tfrac{1}{2}\|w\|^2 \quad\text{s.t.}\quad y_i(w^\top x_i + b)\ge 1\ \forall i.
+$$
+
+A wide margin is a strong inductive bias toward generalization — only the
+support vectors matter, so the solution is sparse in the data. A soft-margin
+slack variant tolerates a few violations for non-separable data.
+
+```{=html}
+<svg viewBox="0 0 360 200" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:360px;display:block;margin:1.5rem auto">
+  <line x1="40" y1="170" x2="320" y2="40" stroke="#334155" stroke-width="2"/>
+  <line x1="40" y1="190" x2="320" y2="60" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="40" y1="150" x2="320" y2="20" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3"/>
+  <g fill="#7c3aed"><circle cx="90" cy="60" r="6"/><circle cx="140" cy="50" r="6"/><circle cx="120" cy="90" r="6"/></g>
+  <g fill="#059669"><circle cx="230" cy="150" r="6"/><circle cx="270" cy="130" r="6"/><circle cx="200" cy="160" r="6"/></g>
+  <text x="180" y="195" text-anchor="middle" font-size="9" fill="#6b7280">solid = decision boundary · dashed = margin (support vectors on it)</text>
+</svg>
+```
+
+## The kernel trick
+
+Linear boundaries are limiting. The trick: the SVM only ever needs **inner
+products** $x_i^\top x_j$, so replace them with a **kernel** $K(x_i, x_j) =
+\phi(x_i)^\top \phi(x_j)$ that computes the inner product in a richer feature
+space $\phi$ — without ever forming $\phi(x)$:
+
+$$
+K_{\text{RBF}}(x, x') = \exp\!\big(-\gamma \|x - x'\|^2\big), \qquad
+K_{\text{poly}}(x, x') = (x^\top x' + c)^d.
+$$
+
+The RBF kernel maps into an infinite-dimensional space, giving the SVM flexible
+non-linear boundaries at the cost of just a kernel evaluation per pair.
+
+## Timeline context
+
+With good hand-engineered features (SIFT, HOG) plus an RBF SVM, this was the
+champion recipe for vision and many classification tasks for ~17 years. The
+[2012 AlexNet result](../../00_foundations/00_historical.qmd) ended that era:
+learned features beat engineered ones, and the SVM-on-top pipeline gave way to
+end-to-end deep nets. SVMs remain excellent on small/medium, low-dimensional
+problems where data is too scarce to train a deep model.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+The SVM combines a principled objective (max margin → good generalization) with
+the kernel trick (non-linearity for free via inner products). It was the
+pre-deep-learning default and is still strong when data is limited — but it
+relies on features supplied to it, which is exactly what deep learning learned
+to supply for itself.
+:::
+
+← Back to: [Classical ML Overview](00_overview.qmd)

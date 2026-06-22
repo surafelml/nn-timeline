@@ -6,15 +6,63 @@ format: html
 ← Back to: [Classical ML Overview](00_overview.qmd)
 
 <!-- Code: none — context/reference supplementary. -->
-<!-- PLANNED SCOPE:
-     1. k-means clustering — Lloyd's algorithm; the unsupervised baseline;
-        contrast with learned representations / embeddings (01_rnn/00_embeddings).
-     2. PCA — eigen-decomposition of covariance; linear dimensionality reduction.
-        Links to distributed representations (hinton1986) and the embedding
-        geometry discussion. Reuse linear-algebra refresher from supp/00.
-     3. (Optional) GMM / spectral clustering as brief mentions.
-     Each: intuition + one formula + where it still wins (EDA, compression). -->
 
-::: {.callout-note title="Coming soon" icon="false"}
-This supplementary context note is in progress.
+::: {.callout-tip title="TL;DR" icon="false"}
+Without labels, the goal shifts from prediction to **finding structure**.
+**k-means** [@macqueen1967kmeans] groups points into clusters by proximity;
+**PCA** [@pearson1901pca] finds the orthogonal directions of greatest variance
+for linear dimensionality reduction. Both are the classical ancestors of the
+learned [representations](../../01_rnn/00_embeddings.qmd) that neural networks
+discover automatically.
 :::
+
+## k-means — clustering by proximity
+
+Partition $n$ points into $k$ clusters, each represented by a centroid, by
+minimizing within-cluster squared distance:
+
+$$
+\min_{\{C_j\}}\ \sum_{j=1}^{k}\sum_{x\in C_j}\|x - \mu_j\|^2.
+$$
+
+**Lloyd's algorithm** alternates two cheap steps until stable: (1) assign each
+point to its nearest centroid; (2) recompute each centroid as its cluster's
+mean. It is fast and ubiquitous, but assumes roughly spherical, equal-size
+clusters and needs $k$ chosen in advance — and the result depends on
+initialization (k-means++ mitigates this).
+
+## PCA — variance-maximizing directions
+
+PCA finds an orthogonal basis ordered by how much variance each direction
+captures. The principal components are the top eigenvectors of the covariance
+matrix $\Sigma = \tfrac{1}{n}X^\top X$ (equivalently, the SVD of centered $X$):
+
+$$
+\Sigma v_i = \lambda_i v_i, \qquad \lambda_1 \ge \lambda_2 \ge \cdots
+$$
+
+Projecting onto the top few components compresses the data while keeping most
+of its variance — useful for visualization, denoising, and preprocessing. PCA
+is a **linear** bottleneck; the autoencoder generalizes it to a non-linear one,
+and the geometry it studies (directions in a vector space carrying meaning) is
+the same geometry that makes [word embeddings](../../01_rnn/00_embeddings.qmd)
+work.
+
+## Timeline context
+
+These methods are the conceptual bridge to representation learning. PCA's
+"meaningful directions in a learned space" became the distributed
+representations of [Hinton's work](../../00_foundations/00_historical.qmd) and
+then embeddings; clustering intuitions reappear in how trained embedding spaces
+organize semantically. Neural nets did not replace these — they *learn* the
+representation end-to-end rather than fixing it a priori, and k-means/PCA remain
+the go-to tools for exploratory analysis and compression.
+
+::: {.callout-note title="Key takeaway" icon="false"}
+Unsupervised classical methods extract structure without labels: k-means by
+grouping, PCA by variance-ranked directions. They are the linear, fixed-form
+ancestors of the non-linear, learned representations at the heart of the neural
+era — and still the first tools to reach for in exploratory analysis.
+:::
+
+← Back to: [Classical ML Overview](00_overview.qmd)
