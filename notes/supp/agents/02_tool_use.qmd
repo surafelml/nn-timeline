@@ -1,0 +1,37 @@
+---
+title: "Tool Use & Function Calling"
+format: html
+---
+
+<!-- Supp: Agents track. ReAct, function calling, code execution. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+**Tool use** extends a language model beyond text generation: the model emits structured calls
+to external functions (search, code interpreter, APIs), receives results, and continues reasoning.
+The backbone is any instruction-following model; the pattern is model-agnostic.
+:::
+
+**Depends on:** [Agent Architectures Overview](00_overview.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### ReAct: interleaving Thought, Action, Observation
+
+### Function calling: structured output as API contract
+
+### Code execution as a tool (code interpreter, sandbox)
+
+### Chain-of-thought and scratchpad reasoning
+
+## Application & impact
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+← Back to: [Agent Architectures Overview](00_overview.qmd)
+
+## References {.unnumbered}
+::: {#refs}
+:::

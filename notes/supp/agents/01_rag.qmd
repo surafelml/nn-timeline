@@ -1,0 +1,41 @@
+---
+title: "Retrieval-Augmented Generation (RAG)"
+format: html
+---
+
+<!-- Supp: Agents track. System-level pattern, not model-specific. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+**RAG** augments a generative model with a retrieval step: at inference time, relevant documents
+are fetched from an external store and prepended to the context. The model's weights remain fixed;
+knowledge lives in the retrieval index, not the parameters.
+:::
+
+**Depends on:** [Agent Architectures Overview](00_overview.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### Retrieval pipeline: embed → index → query → rerank
+
+### Fusion strategies: input-layer vs. attention-layer retrieval
+
+### Chunking, embedding models, and vector stores
+
+### Naive RAG vs. advanced RAG (query rewriting, HyDE, FLARE)
+
+## Application & impact
+
+### Where RAG wins over parametric memory
+
+### Limitations: retrieval latency, context length, faithfulness
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+← Back to: [Agent Architectures Overview](00_overview.qmd)
+
+## References {.unnumbered}
+::: {#refs}
+:::

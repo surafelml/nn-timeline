@@ -1,0 +1,37 @@
+---
+title: "Multi-Agent Systems"
+format: html
+---
+
+<!-- Supp: Agents track. Orchestration, debate, specialization. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+**Multi-agent systems** decompose a task across a network of specialized agents that communicate,
+delegate, and check each other's work. Individual agents may use any backbone; the architectural
+question is how they coordinate — message passing, shared memory, or hierarchical orchestration.
+:::
+
+**Depends on:** [Tool Use & Function Calling](02_tool_use.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### Orchestrator / subagent patterns
+
+### Agent communication: shared context vs. structured messages
+
+### Debate and self-consistency: agents as critics
+
+### Specialization: planner, coder, tester, reviewer roles
+
+## Application & impact
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+← Back to: [Agent Architectures Overview](00_overview.qmd)
+
+## References {.unnumbered}
+::: {#refs}
+:::

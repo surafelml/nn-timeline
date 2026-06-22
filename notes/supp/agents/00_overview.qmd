@@ -1,0 +1,37 @@
+---
+title: "Agent Architectures — Overview"
+format: html
+---
+
+<!-- Supp: Agents track. Architecture-agnostic framing. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+An **agent** is a system that perceives state, reasons about it, and selects actions to pursue a
+goal — iteratively, over multiple steps. The underlying model (transformer, SSM, or otherwise) is
+one component; the **architecture** is how perception, memory, reasoning, and action are composed.
+:::
+
+## Why this matters
+
+## The mechanism
+
+### The perceive-reason-act loop (model-agnostic)
+
+### Memory: in-context, retrieval, external state
+
+### Planning: chain-of-thought, tree search, reflection
+
+### The model's role: backbone vs. orchestrator
+
+## Landscape of agent architectures
+
+| System | Backbone | Key capability |
+|---|---|---|
+| ReAct | LLM | interleaved reasoning + tool calls |
+| AutoGPT / BabyAGI | LLM | autonomous task decomposition |
+| RT-2 / OpenVLA | VLA transformer | embodied physical action |
+| AlphaCode 2 | LLM | code agent with test execution |
+
+## References {.unnumbered}
+::: {#refs}
+:::
