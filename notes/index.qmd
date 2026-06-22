@@ -1,11 +1,14 @@
 ---
-title: "nn_timeline"
+title: "NN Timeline"
+number-sections: false
 format: html
 ---
 
-*Published May 14, 2026 (updated: June 14, 2026)*
-
-> **Status:** Foundations complete (7 chapters). RNN era complete (6 chapters: embeddings → BPTT → LSTM/GRU → Seq2Seq → ConvSeq2Seq → Attention). Transformer era in progress — chapters being added weekly.
+::: {.callout-note title="Update log" icon="false"}
+**2026-06-21** — Transformer era complete (12 chapters). Supplementary tracks added: modern activations, optimizers, KV-cache, classical ML.
+**2026-06-14** — RNN era complete (6 chapters).
+**2026-05-14** — Published; Foundations complete (7 chapters).
+:::
 
 # Neural network architectures through time
 
@@ -51,7 +54,7 @@ from the perceptron to the transformer. Each chapter pairs a **science note**
 
   <!-- era labels (below band, faint) -->
   <text class="era-label" x="270" y="220" text-anchor="middle">Foundations</text>
-  <text class="era-label" x="740" y="220" text-anchor="middle">RNN era</text>
+  <text class="era-label" x="740" y="220" text-anchor="middle">RNN &amp; CNN era</text>
   <text class="era-label" x="1070" y="220" text-anchor="middle">Transformer era</text>
 
   <!-- main axis -->
