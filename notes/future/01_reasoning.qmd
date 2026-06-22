@@ -1,0 +1,33 @@
+---
+title: "Reasoning & Test-Time Compute"
+format: html
+---
+
+<!-- Future Outlook. o1-style reasoning, deliberate/system-2. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+A shift from scaling *training* to scaling *inference*: models that "think
+longer" — generating extended reasoning chains and searching over them at
+test time (o1-style) — trade compute-per-query for accuracy on hard problems.
+:::
+
+**Depends on:** [Scaling Laws & Emergence](../02_transformer/06_scaling_laws.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### Chain-of-thought as test-time compute
+
+### Search and verification over reasoning traces
+
+### Training for reasoning (RL on outcomes)
+
+## Outlook
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+## References {.unnumbered}
+::: {#refs}
+:::

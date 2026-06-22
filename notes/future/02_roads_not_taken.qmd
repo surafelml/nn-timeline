@@ -1,0 +1,33 @@
+---
+title: "Roads Not Taken"
+format: html
+---
+
+<!-- Future Outlook. Historically interesting non-survivors. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Architectures that were influential but did not become the mainline — useful
+for understanding *why* the survivors won: **Capsule Networks** (Hinton 2017),
+**Neural Turing Machines** (Graves 2014), **Neural ODEs** (Chen 2018).
+:::
+
+**Depends on:** [The Transformer](../02_transformer/02_transformer.qmd)
+
+## Why these matter
+
+## The ideas
+
+### Capsule Networks — pose-aware routing
+
+### Neural Turing Machines — differentiable external memory
+
+### Neural ODEs — continuous-depth networks
+
+## Why they did not take over
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+## References {.unnumbered}
+::: {#refs}
+:::

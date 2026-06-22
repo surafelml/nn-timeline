@@ -1,0 +1,36 @@
+---
+title: "Efficient Attention — FlashAttention, Sparse, Linear"
+format: html
+---
+
+<!-- Supp: Transformer. Sits beside kv_cache. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Attention is $O(n^2)$ in sequence length. Two attack surfaces: **systems**
+(FlashAttention, Dao 2022 — IO-aware exact attention) and **algorithmic**
+(sparse: Longformer/BigBird; linear: Performer/Linformer — approximate the
+softmax to drop the quadratic term).
+:::
+
+**Depends on:** [Self-Attention & Multi-Head Attention](../02_transformer/01_self_attention.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### FlashAttention — IO-aware exact attention
+
+### Sparse attention — restrict the attention pattern (Longformer, BigBird)
+
+### Linear attention — approximate the softmax (Performer, Linformer)
+
+## Application & impact
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+← Back to: [KV-Cache](kv_cache.qmd)
+
+## References {.unnumbered}
+::: {#refs}
+:::

@@ -1,0 +1,38 @@
+---
+title: "World Models & JEPA"
+format: html
+---
+
+<!-- Future Outlook. Forward-looking paradigm, distinct from beyond_transformers. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+LeCun's thesis: autoregressive token prediction is a dead end for reasoning.
+**JEPA** (I-JEPA 2023, V-JEPA 2024) predicts in *abstract latent space* rather
+than pixel/token space, and **energy-based models** + **world models** aim to
+let agents plan by simulating futures instead of memorizing sequences.
+:::
+
+**Depends on:** [Self-Supervised & Contrastive Learning](../supp/self_supervised.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### Predicting representations, not pixels (JEPA)
+
+### Energy-based models
+
+### World models for planning
+
+### Why LeCun argues against pure autoregression
+
+## Outlook
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+← Back to: [Embodied AI & VLA](../02_transformer/13_embodied.qmd)
+
+## References {.unnumbered}
+::: {#refs}
+:::

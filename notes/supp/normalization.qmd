@@ -1,0 +1,37 @@
+---
+title: "Normalization — BatchNorm to RMSNorm"
+format: html
+---
+
+<!-- Supp: Training Techniques. The why-normalize story + the lineage. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Normalization rescales activations to keep them in a well-conditioned range,
+stabilizing and accelerating training: **BatchNorm** (Ioffe 2015) → **LayerNorm**
+(per-token, the Transformer default) → **RMSNorm** (LLaMA) → **GroupNorm**.
+:::
+
+**Depends on:** [Gradient Flow & Vanishing Gradients](../00_foundations/05_gradient_flow.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### BatchNorm — normalize across the batch
+
+### LayerNorm — normalize across features (per token)
+
+### RMSNorm — drop the mean, keep the scale
+
+### Where each is used and why
+
+## Application & impact
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+← Back to: [The Transformer](../02_transformer/02_transformer.qmd)
+
+## References {.unnumbered}
+::: {#refs}
+:::

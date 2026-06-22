@@ -1,0 +1,37 @@
+---
+title: "Deep Reinforcement Learning — DQN to PPO"
+format: html
+---
+
+<!-- Supp: RL & Agents. Prerequisite under RLHF (alignment) + embodied. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Deep RL learns control policies from reward rather than labels: **DQN** (2013,
+Q-learning + deep nets on Atari) → **AlphaGo/AlphaZero** (search + self-play) →
+**policy-gradient / PPO** (Schulman 2017) — the optimizer underneath RLHF.
+:::
+
+**Depends on:** [Optimization — GD, SGD, Momentum](../00_foundations/06_optimization.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### Value-based: Q-learning and DQN
+
+### Search + self-play: AlphaGo to AlphaZero
+
+### Policy gradients and PPO
+
+### From game scores to human preference (the RLHF bridge)
+
+## Application & impact
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+← Back to: [Alignment & Instruction Tuning](../02_transformer/07_alignment.qmd) · [Embodied AI & VLA](../02_transformer/13_embodied.qmd)
+
+## References {.unnumbered}
+::: {#refs}
+:::

@@ -3,7 +3,7 @@ project:
   output-dir: ../_site
 
 book:
-  title: "nn_timeline"
+  title: "NN Timeline"
   subtitle: "Neural network architectures through time"
   author: "Surafel M. Lakew"
   repo-url: https://github.com/surafelml/nn-timeline
@@ -18,7 +18,7 @@ book:
         - 00_foundations/04_mlp_backprop.qmd
         - 00_foundations/05_gradient_flow.qmd
         - 00_foundations/06_optimization.qmd
-    - part: "RNN Era"
+    - part: "RNN & CNN Era"
       chapters:
         - 01_rnn/00_embeddings.qmd
         - 01_rnn/01_rnn_bptt.qmd
@@ -40,17 +40,24 @@ book:
         - 02_transformer/09_moe.qmd
         - 02_transformer/10_beyond_transformers.qmd
         - 02_transformer/11_multimodal.qmd
+        - 02_transformer/12_diffusion.qmd
+        - 02_transformer/13_embodied.qmd
     - part: "Supplementary (Mathematical)"
       chapters:
         - supp/00_prerequisites.qmd
         - supp/01_artificial_neuron_numerical.qmd
         - supp/04_mlp_backprop_numerical.qmd
+    - part: "Supplementary (Training Techniques)"
+      chapters:
         - supp/modern_activations.qmd
         - supp/modern_optimizers.qmd
-    - part: "Supplementary (Transformer)"
+        - supp/normalization.qmd
+        - supp/regularization.qmd
+    - part: "Supplementary (Vision & Generative)"
       chapters:
-        - supp/kv_cache.qmd
-        - landscape/transformer_era.qmd
+        - supp/cnn_vision_lineage.qmd
+        - supp/self_supervised.qmd
+        - supp/generative_models.qmd
     - part: "Supplementary (Classical ML)"
       chapters:
         - supp/classical_ml/00_overview.qmd
@@ -58,6 +65,23 @@ book:
         - supp/classical_ml/02_svm_kernels.qmd
         - supp/classical_ml/03_trees_ensembles.qmd
         - supp/classical_ml/04_unsupervised.qmd
+    - part: "Supplementary (Transformer)"
+      chapters:
+        - supp/kv_cache.qmd
+        - supp/efficient_attention.qmd
+        - landscape/transformer_era.qmd
+    - part: "Supplementary (RL & Agents)"
+      chapters:
+        - supp/deep_rl.qmd
+        - supp/agents/00_overview.qmd
+        - supp/agents/01_rag.qmd
+        - supp/agents/02_tool_use.qmd
+        - supp/agents/03_multi_agent.qmd
+    - part: "Future Outlook"
+      chapters:
+        - future/00_world_models.qmd
+        - future/01_reasoning.qmd
+        - future/02_roads_not_taken.qmd
     - references.qmd
 
 bibliography: references.bib

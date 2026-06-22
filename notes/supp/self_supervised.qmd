@@ -1,0 +1,38 @@
+---
+title: "Self-Supervised & Contrastive Learning"
+format: html
+---
+
+<!-- Supp: Vision & Generative. Bridges word2vec (text SSL) ↔ CLIP (cross-modal). -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Self-supervised learning manufactures labels from the data itself, learning
+representations without annotation: **contrastive** methods (SimCLR, MoCo),
+**self-distillation** (DINO), and **masked reconstruction** (MAE, He 2022) —
+the vision analogue of BERT's masked-token objective.
+:::
+
+**Depends on:** [Word Embeddings](../01_rnn/00_embeddings.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### Contrastive learning — pull positives, push negatives (SimCLR, MoCo)
+
+### Self-distillation without negatives (BYOL, DINO)
+
+### Masked autoencoders — reconstruct hidden patches (MAE)
+
+### The link to word2vec and BERT
+
+## Application & impact
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+← Back to: [Multimodal](../02_transformer/11_multimodal.qmd)
+
+## References {.unnumbered}
+::: {#refs}
+:::

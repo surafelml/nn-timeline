@@ -1,0 +1,37 @@
+---
+title: "Regularization — Dropout, Weight Decay, Augmentation"
+format: html
+---
+
+<!-- Supp: Training Techniques. Generalization toolkit. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+Regularization fights overfitting — closing the gap between training and test
+error: **dropout** (Srivastava 2014, random unit masking), **weight decay** (L2
+penalty), **data augmentation**, and **early stopping**.
+:::
+
+**Depends on:** [Optimization — GD, SGD, Momentum](../00_foundations/06_optimization.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### Dropout — train an implicit ensemble
+
+### Weight decay — penalize large weights
+
+### Data augmentation — expand the training distribution
+
+### Early stopping — regularize via training time
+
+## Application & impact
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+← Back to: [MLP & Backpropagation](../00_foundations/04_mlp_backprop.qmd)
+
+## References {.unnumbered}
+::: {#refs}
+:::

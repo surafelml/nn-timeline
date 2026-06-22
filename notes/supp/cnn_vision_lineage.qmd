@@ -1,0 +1,38 @@
+---
+title: "CNN Vision Lineage — LeNet to ResNet"
+format: html
+---
+
+<!-- Supp: closes the vision-CNN gap. Linked from convseq2seq + transformer (ResNet residual). -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+The convolutional lineage that owned computer vision: **LeNet** (1998) → **AlexNet**
+(2012, the ImageNet inflection) → **VGG** (depth) → **ResNet** (2015, residual
+connections that made very deep nets trainable — the same shortcut the Transformer
+block reuses).
+:::
+
+**Depends on:** [MLP & Backpropagation](../00_foundations/04_mlp_backprop.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### Convolution and pooling: weight sharing + locality
+
+### AlexNet (2012) — the ImageNet inflection
+
+### VGG — depth via small filters
+
+### ResNet — residual connections unlock depth
+
+## Application & impact
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+← Back to: [Convolutional Seq2Seq](../01_rnn/04_convseq2seq.qmd) · Used in: [The Transformer](../02_transformer/02_transformer.qmd) (residual), [Multimodal](../02_transformer/11_multimodal.qmd) (ViT vs CNN)
+
+## References {.unnumbered}
+::: {#refs}
+:::

@@ -1,0 +1,40 @@
+---
+title: "Generative Models — Autoencoders to Diffusion"
+format: html
+---
+
+<!-- Supp: lineage feeding 12_diffusion. AE → VAE → GAN → flows → diffusion. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+The generative-model lineage that diffusion inherited: **autoencoder** → **VAE**
+(Kingma 2013, latent-variable + reparameterization) → **GAN** (Goodfellow 2014,
+adversarial training, dominant 2014–2021) → **normalizing flows** → **diffusion**,
+which won by trading one hard step for many easy denoising steps.
+:::
+
+**Depends on:** [Activations & Non-linearity](../00_foundations/03_activations.qmd)
+
+## Why this matters
+
+## The mechanism
+
+### Autoencoders — compress then reconstruct
+
+### VAE — a probabilistic latent space
+
+### GAN — generator vs. discriminator
+
+### Normalizing flows — exact likelihood via invertible maps
+
+### Why diffusion won
+
+## Application & impact
+
+::: {.callout-note title="Key takeaway" icon="false"}
+:::
+
+← Back to: [Diffusion Transformers](../02_transformer/12_diffusion.qmd)
+
+## References {.unnumbered}
+::: {#refs}
+:::
