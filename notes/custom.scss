@@ -24,13 +24,23 @@ h3 { margin-top: 1.3rem; }
   line-height: 1.35;
 }
 
-// Sidebar part headers: bold + uppercased, can wrap on two lines.
+// Sidebar part headers: bold + uppercased, underlined, with separation so
+// each era reads as a distinct group when scanning the sidebar.
 .sidebar-item-section > .sidebar-item-text {
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.78rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #718096;
+  color: #4a5568;
+  border-bottom: 1px solid #cbd5e0;
+  padding-bottom: 0.25rem;
+  margin-top: 0.6rem;
+  display: block;
+}
+
+.quarto-dark .sidebar-item-section > .sidebar-item-text {
+  color: #cbd5e0;
+  border-bottom-color: #4a5568;
 }
 
 // Right-side on-page TOC: smaller to reclaim content column width.
