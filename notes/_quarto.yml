@@ -45,6 +45,8 @@ book:
         - supp/00_prerequisites.qmd
         - supp/01_artificial_neuron_numerical.qmd
         - supp/04_mlp_backprop_numerical.qmd
+        - supp/modern_activations.qmd
+        - supp/modern_optimizers.qmd
     - part: "Supplementary (Transformer)"
       chapters:
         - supp/kv_cache.qmd

@@ -1,0 +1,110 @@
+---
+title: "Modern Activations — ReLU, GELU, SiLU, SwiGLU"
+format: html
+---
+
+← Back to: [Activations & Non-linearity](../00_foundations/03_activations.qmd)
+
+<!-- Code: none — bridges foundations → transformer FFN. -->
+<!-- Sidecar of: ../00_foundations/03_activations.qmd (forward) and ../02_transformer/02_transformer.qmd (FFN). -->
+<!-- Closes deferral: ReLU/GELU/SiLU from 03_activations. -->
+
+::: {.callout-tip title="TL;DR" icon="false"}
+The [foundations note](../00_foundations/03_activations.qmd) showed why
+sigmoid and tanh choke gradients in deep stacks. The fix was to stop
+saturating: **ReLU** $\max(0,x)$ passes the positive half unchanged, and its
+descendants — **GELU**, **SiLU/Swish**, and the gated **SwiGLU** — smooth the
+kink and become the default non-linearity inside every Transformer FFN.
+:::
+
+## From saturation to rectification
+
+Sigmoid/tanh saturate on both tails, so their derivative vanishes and deep
+gradients shrink geometrically. **ReLU** [@nair2010relu] removes the problem
+on the positive side outright:
+
+$$
+\mathrm{ReLU}(x) = \max(0, x), \qquad
+\mathrm{ReLU}'(x) = \begin{cases} 1 & x > 0 \\ 0 & x < 0 \end{cases}.
+$$
+
+For $x>0$ the gradient is exactly $1$ — no shrinkage, no matter the depth.
+This single property, paired with good initialization, is what made very deep
+networks (AlexNet onward) trainable. The cost is the **dead-ReLU** failure
+mode: a unit stuck at $x<0$ for all inputs receives zero gradient forever.
+
+## The smooth descendants
+
+ReLU's hard zero at the origin is non-differentiable and discards all
+negative information. Three smooth variants soften it, and these are what
+Transformers actually use:
+
+$$
+\mathrm{GELU}(x) = x\,\Phi(x), \qquad
+\mathrm{SiLU}(x) = x\,\sigma(x),
+$$
+
+where $\Phi$ is the standard-normal CDF and $\sigma$ the logistic sigmoid.
+Both gate the input by a smooth, input-dependent factor — small negatives
+leak through (non-zero gradient), large positives approach identity.
+
+- **GELU** [@hendrycks2016gelu] — weights the input by its probability under a
+  Gaussian; the default in BERT, GPT-2/3, and most encoder/decoder stacks.
+- **SiLU / Swish** [@ramachandran2017swish] — $x\,\sigma(x)$, found by
+  activation search; nearly identical in shape to GELU and cheaper to compute.
+
+```{=html}
+<svg viewBox="0 0 420 220" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:420px;display:block;margin:1.5rem auto">
+  <line x1="40" y1="160" x2="400" y2="160" stroke="#cbd5e1" stroke-width="1"/>
+  <line x1="220" y1="20" x2="220" y2="200" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="404" y="164" font-size="9" fill="#94a3b8">x</text>
+  <!-- ReLU: hard hinge -->
+  <polyline points="40,160 220,160 400,40" fill="none" stroke="#7c3aed" stroke-width="2"/>
+  <!-- GELU/SiLU: smooth, slight dip below zero left of origin -->
+  <path d="M40,161 C150,161 190,168 220,160 C260,150 330,95 400,42" fill="none" stroke="#059669" stroke-width="2"/>
+  <text x="300" y="70" font-size="10" fill="#7c3aed">ReLU</text>
+  <text x="250" y="185" font-size="10" fill="#059669">GELU / SiLU (smooth, small leak)</text>
+</svg>
+```
+
+## SwiGLU — the gated FFN variant
+
+Modern LLM feed-forward blocks rarely apply a bare activation. They use a
+**gated linear unit**: split the projection into two halves, pass one through
+an activation, and multiply [@shazeer2020glu]:
+
+$$
+\mathrm{SwiGLU}(x) = \big(\mathrm{SiLU}(xW_1)\big) \odot (xW_2),
+$$
+
+then project back with $W_3$. The multiplicative gate gives the FFN a
+data-dependent on/off control per channel — empirically a consistent quality
+gain, at the cost of a third weight matrix (hidden width is scaled down to
+keep parameters matched). This is the FFN used in LLaMA, Mistral, and PaLM —
+the "SwiGLU FFN" named in the
+[language-model convergent recipe](../02_transformer/08_language_models.qmd).
+
+```{python}
+import numpy as np
+def relu(x): return np.maximum(0, x)
+def gelu(x): return 0.5 * x * (1 + np.tanh(np.sqrt(2/np.pi) * (x + 0.044715*x**3)))
+def silu(x): return x / (1 + np.exp(-x))
+
+x = np.array([-3.0, -1.0, 0.0, 1.0, 3.0])
+print("ReLU:", relu(x))
+print("GELU:", np.round(gelu(x), 3))
+print("SiLU:", np.round(silu(x), 3))   # note the small negative leak at x=-1
+```
+
+::: {.callout-note title="Key takeaway" icon="false"}
+The activation story is one of *not saturating*: ReLU fixed the gradient by
+passing positives unchanged; GELU/SiLU smoothed its kink and let a little
+negative signal through; SwiGLU added a multiplicative gate. The
+foundational sigmoid/tanh survive only as gates (LSTM, attention) — the
+hidden-layer non-linearity of the deep-net and Transformer eras is this
+rectified lineage.
+:::
+
+← Back to: [Activations & Non-linearity](../00_foundations/03_activations.qmd) ·
+Used in: [The Transformer Architecture (FFN)](../02_transformer/02_transformer.qmd)

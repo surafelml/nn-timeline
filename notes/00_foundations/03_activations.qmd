@@ -119,7 +119,7 @@ out of saturation* is a recurring theme for the rest of the book.
 ## Application & impact
 
 Sigmoid and tanh are no longer the default hidden activation — modern nets
-use ReLU and its descendants (deferred to their timeline slots). But neither is legacy:
+use ReLU and its descendants ([Modern Activations](../supp/modern_activations.qmd)). But neither is legacy:
 both survive in specific, load-bearing roles.
 
 ### What survived, what changed
@@ -129,7 +129,7 @@ both survive in specific, load-bearing roles.
 | **sigmoid** | gating function (squash to $(0,1)$) | LSTM input/forget/output gates; GLU/attention gates |
 | **tanh** | bounded state activation | LSTM cell-state update |
 | sigmoid output | probability head | binary classification output (with BCE from ch 02) |
-| **saturation problem** | motivation for non-saturating activations | ReLU (2010), GELU (2016) — deferred |
+| **saturation problem** | motivation for non-saturating activations | [ReLU (2010), GELU (2016), SwiGLU](../supp/modern_activations.qmd) |
 | **non-linearity requirement** | universal approximation | every deep network; formalized with the MLP next chapter |
 
 ### Concretely, where the lineage lands
@@ -140,7 +140,8 @@ both survive in specific, load-bearing roles.
   cross-entropy of [chapter 02](02_information_theory.qmd) — i.e. logistic
   regression.
 - **Modern hidden layers** abandoned sigmoid/tanh precisely *because* of the
-  saturation shown above; that story is told where ReLU and GELU appear.
+  saturation shown above; that story is told in
+  [Modern Activations](../supp/modern_activations.qmd).
 
 ::: {.callout-note title="Key takeaway" icon="false"}
 Non-linearity is the ingredient that makes depth worth having. The

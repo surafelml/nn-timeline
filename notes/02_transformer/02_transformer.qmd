@@ -56,6 +56,8 @@ $$
   $$\text{FFN}(x) = \max(0,\, xW_1 + b_1)\,W_2 + b_2,$$
   typically expanding to an inner dimension $d_{\text{ff}} = 4\,d_{\text{model}}$
   then projecting back. This is where most of a Transformer's parameters live.
+  The original uses ReLU; modern stacks swap in GELU and the gated SwiGLU —
+  see [Modern Activations](../supp/modern_activations.qmd).
 - **Residual connection** — the $x +$ term gives gradients a direct path to
   every layer, the same identity-shortcut idea that let ResNets [@he2016resnet]
   go deep.
