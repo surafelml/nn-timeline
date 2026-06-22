@@ -132,7 +132,7 @@ trained by a descendant of SGD.
 | Perceptron update | Gradient descent on any loss | the foundation of all training |
 | Mini-batch SGD | The default training loop | every framework's optimizer step |
 | Momentum | SGD+momentum / Nesterov | still the workhorse for vision models |
-| Per-step velocity | **Adaptive optimizers** (Adam, AdamW) | trains essentially every transformer — deferred to Tier 4 / transformer era |
+| Per-step velocity | **Adaptive optimizers** ([Adam, AdamW](../supp/modern_optimizers.qmd)) | trains essentially every transformer |
 | Fixed $\eta$ | Learning-rate **schedules** (warmup, cosine, inverse-sqrt) | LLM training recipes (deferred) |
 
 ### Concretely, where the lineage lands
@@ -140,8 +140,8 @@ trained by a descendant of SGD.
 - **`optimizer.step()`** in PyTorch is this update; `SGD(momentum=0.9)` is
   literally the Polyak rule above.
 - **AdamW**, which trains most modern LLMs, is momentum plus a per-parameter
-  adaptive learning rate — a direct extension of what's here (deferred to a
-  later chapter).
+  adaptive learning rate — a direct extension of what's here, detailed in
+  [Adaptive Optimizers](../supp/modern_optimizers.qmd).
 - **The XOR demo** in [chapter 04](04_mlp_backprop.qmd) was already doing
   this — plain gradient descent on the cross-entropy loss.
 
