@@ -6,35 +6,178 @@ format: html
 <!-- Supp: lineage feeding 12_diffusion. AE → VAE → GAN → flows → diffusion. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-The generative-model lineage that diffusion inherited: **autoencoder** → **VAE**
-(Kingma 2013, latent-variable + reparameterization) → **GAN** (Goodfellow 2014,
-adversarial training, dominant 2014–2021) → **normalizing flows** → **diffusion**,
-which won by trading one hard step for many easy denoising steps.
+The generative-model lineage that diffusion inherited: **autoencoder**
+(compress, reconstruct) → **VAE** (Kingma 2013, a probabilistic latent
+space) → **GAN** (Goodfellow 2014, adversarial training, dominant
+2014–2021) → **normalizing flows** (exact likelihood) → **diffusion**.
+Diffusion won by trading one hard generative step for many easy denoising
+steps.
 :::
 
 **Depends on:** [Activations & Non-linearity](../00_foundations/03_activations.qmd)
 
 ## Why this matters
 
+Every model up to this point in the book is **discriminative** or
+**sequence-predictive**: given an input, predict a label or the next token.
+A **generative model** does something different. It learns the
+distribution $p(\mathbf{x})$ of the data itself, so it can sample *new*
+examples that look like the training set. This is the family diffusion
+belongs to, and diffusion did not appear from nowhere: it is the fourth
+serious attempt at this problem. Understanding why the first three
+(autoencoders, VAEs, GANs) fell short is what makes diffusion's design
+choices legible.
+
+Without this lineage, [Diffusion Transformers](../02_transformer/12_diffusion.qmd)
+has no contest to win. GANs, not diffusion, dominated image generation from
+2014 to roughly 2021.
+
 ## The mechanism
 
-### Autoencoders — compress then reconstruct
+### Autoencoders
 
-### VAE — a probabilistic latent space
+An autoencoder learns an encoder $f$ and decoder $g$ that compress an input
+to a low-dimensional code and reconstruct it:
 
-### GAN — generator vs. discriminator
+$$
+\mathbf{z} = f(\mathbf{x}), \qquad \hat{\mathbf{x}} = g(\mathbf{z}), \qquad
+\mathcal{L} = \lVert \mathbf{x} - \hat{\mathbf{x}} \rVert^2.
+$$
 
-### Normalizing flows — exact likelihood via invertible maps
+Trained this way, the latent space $\mathbf{z}$ has no guaranteed
+structure. Two nearby codes need not decode to similar-looking images, and
+there is no principled way to *sample* a new $\mathbf{z}$ and get a
+realistic $\hat{\mathbf{x}}$. An autoencoder compresses; it does not, on
+its own, generate.
+
+### Variational autoencoders (VAE)
+
+The VAE [@kingma2013vae] fixes exactly this. Instead of encoding to a
+point, encode to a *distribution*, typically a Gaussian with learned mean
+and variance, and regularize that distribution toward a standard normal
+prior:
+
+$$
+\mathcal{L}_{\text{VAE}} = \underbrace{\mathbb{E}_{q(\mathbf{z}|\mathbf{x})}\big[-\log p(\mathbf{x}|\mathbf{z})\big]}_{\text{reconstruction}}
+\; + \;
+\underbrace{D_{\text{KL}}\big(q(\mathbf{z}|\mathbf{x}) \,\|\, p(\mathbf{z})\big)}_{\text{regularize toward } \mathcal{N}(0, I)}.
+$$
+
+The KL term (recall [Information Theory](../00_foundations/02_information_theory.qmd))
+is what makes the latent space *usable* for generation. Because every
+encoded point is pulled toward $\mathcal{N}(0,I)$, sampling
+$\mathbf{z} \sim \mathcal{N}(0,I)$ directly and decoding produces plausible
+outputs. The tradeoff is quality: VAE samples are typically blurrier than
+GAN or diffusion samples, a direct consequence of optimizing a
+reconstruction loss under a Gaussian likelihood assumption.
+
+### Generative adversarial networks (GAN)
+
+The GAN [@goodfellow2014gan] reframes generation as a two-player game.
+
+- **The generator** $G$ maps noise to fake samples, trying to fool the
+  discriminator.
+- **The discriminator** $D$ tries to tell real samples from the
+  generator's fakes.
+
+The two train against each other:
+
+$$
+\min_G \max_D \; \mathbb{E}_{\mathbf{x}\sim p_{\text{data}}}[\log D(\mathbf{x})]
++ \mathbb{E}_{\mathbf{z}\sim p(\mathbf{z})}[\log(1 - D(G(\mathbf{z})))].
+$$
+
+No explicit likelihood, no reconstruction loss, just a discriminator that
+gets fooled less and less. GANs produced the sharpest images of any method
+through the late 2010s. The adversarial game is notoriously unstable to
+train (mode collapse, oscillating losses), and there is no direct way to
+evaluate how well the model covers the true data distribution.
+
+### Normalizing flows
+
+A normalizing flow [@rezende2015flows] builds the generator out of a chain
+of *invertible* transformations, so the exact data likelihood is computable
+via the change-of-variables formula, with no lower bound and no
+adversarial proxy. The catch is architectural: every layer must be
+invertible with a tractable Jacobian determinant, which constrains model
+capacity relative to VAEs and GANs. Flows never dominated image generation,
+but the exact-likelihood idea persists as a component in some modern
+generative pipelines.
 
 ### Why diffusion won
 
+Diffusion models [@ho2020ddpm] sidestep all three failure modes at once by
+changing what the model has to learn in a single step. Instead of mapping
+noise directly to an image (GAN) or through one encode/decode pass (VAE),
+diffusion defines a **forward process** that gradually adds Gaussian noise
+to data over $T$ steps until it is pure noise, then trains a network to
+**reverse** that process one small denoising step at a time:
+
+$$
+\mathbf{x}_t = \sqrt{\bar\alpha_t}\,\mathbf{x}_0 + \sqrt{1-\bar\alpha_t}\,\boldsymbol\epsilon,
+\qquad \boldsymbol\epsilon \sim \mathcal{N}(0, I),
+$$
+
+and the network learns to predict the noise $\boldsymbol\epsilon$ added at
+each step. Each individual denoising step is an *easy* prediction problem,
+much easier than generating a full image in one shot, and the training
+objective is a simple regression loss with none of the adversarial
+instability of GANs or the blur-inducing Gaussian likelihood of VAEs. The
+cost is inference speed: generating a sample means running many sequential
+denoising steps, not one forward pass.
+
+```{python}
+import numpy as np
+rng = np.random.default_rng(0)
+
+def forward_noise(x0, t, alpha_bar):
+    eps = rng.normal(size=x0.shape)
+    xt = np.sqrt(alpha_bar[t]) * x0 + np.sqrt(1 - alpha_bar[t]) * eps
+    return xt, eps
+
+T = 10
+alpha_bar = np.linspace(0.99, 0.05, T)   # toy noise schedule, decreasing signal
+x0 = np.array([1.0, -1.0, 0.5])
+for t in [0, 4, 9]:
+    xt, eps = forward_noise(x0, t, alpha_bar)
+    print(f"t={t}: signal retained={alpha_bar[t]:.2f}, xt={np.round(xt,2)}")
+```
+
+### What to observe
+
+- Each method changes what the network has to get right in one shot:
+  reconstruction (AE), a regularized reconstruction (VAE), fooling a
+  discriminator (GAN), or one small denoising step (diffusion).
+- Sample quality and training stability trade off against each other
+  across the lineage. Diffusion is the first to score well on both, at the
+  cost of slow, multi-step sampling.
+- The forward noising process needs no learned parameters. Only the
+  reverse (denoising) direction is learned; this asymmetry is what keeps
+  diffusion training stable.
+
+::: {.callout-warning title="Pitfall — diffusion trades training stability for inference cost" icon="false"}
+A diffusion model is cheap and stable to train (a simple regression loss,
+no adversarial game) but expensive to sample from (many sequential steps).
+Techniques to cut sampling steps (DDIM, distillation) are active
+engineering work precisely because this is diffusion's main practical
+weakness.
+:::
+
 ## Application & impact
 
+| Concept here | What it became | Where you see it today |
+|---|---|---|
+| VAE's probabilistic latent space | Latent-space diffusion (encode, diffuse in latent space) | Stable Diffusion's VAE encoder/decoder |
+| GAN's adversarial idea | Niche (style transfer, super-resolution) | Mostly displaced by diffusion for text-to-image |
+| Diffusion's denoising objective | The dominant image/video generation paradigm | Stable Diffusion, DALL-E 3, Sora |
+| U-Net denoiser backbone | Replaced by a Transformer backbone | [Diffusion Transformers (DiT)](../02_transformer/12_diffusion.qmd) |
+
 ::: {.callout-note title="Key takeaway" icon="false"}
+Diffusion did not win by being a new idea in isolation. It won by resolving
+the specific failure modes of the generative models that came before it:
+GAN instability and VAE blur. The single denoising-step objective is the
+key design choice, and it is exactly what a Transformer backbone (DiT)
+later scales up.
 :::
 
 ← Back to: [Diffusion Transformers](../02_transformer/12_diffusion.qmd)
-
-## References {.unnumbered}
-::: {#refs}
-:::
