@@ -7,30 +7,224 @@ format: html
 <!-- Timeline anchor: RT-2 (Brohan 2023), OpenVLA (Kim 2024). -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-**Vision-Language-Action (VLA) models** extend the multimodal transformer into physical control:
-the same architecture that reads text and images now outputs robot actions, grounding language
-instructions in perception and continuous motor commands.
+**Vision-Language-Action (VLA) models** extend the multimodal Transformer
+into physical control. The same architecture that reads text and images
+now outputs robot actions, by treating an action as just another token to
+predict, grounding language instructions in perception and continuous
+motor commands.
 :::
 
 **Depends on:** [Multimodal](11_multimodal.qmd) · [BERT & GPT](04_bert_gpt.qmd)
 
 ## Why this matters
 
+Every architecture in this book so far consumes and produces symbols: text
+tokens, image patches, denoised pixels. None of them *act* in a physical
+environment. A robot arm following the instruction "pick up the red block"
+must go from pixels and language to a sequence of motor torques or
+end-effector positions, a fundamentally different output space from
+anything covered so far.
+
+The VLA insight is that this does not require a new architecture family.
+If actions can be represented as tokens, the same Transformer that predicts
+the next word can predict the next action, reusing every mechanism this
+book has built (self-attention, autoregressive decoding, large-scale
+pretraining) for physical control.
+
 ## The mechanism
 
 ### The perceive-reason-act loop
 
-### Tokenizing actions: from language tokens to motor commands
+An embodied agent runs a repeating cycle:
 
-### RT-2 and OpenVLA: architecture and training
+1. **Perceive** the current state (camera images, sometimes proprioception).
+2. **Reason** about what to do given the instruction and history.
+3. **Act** by emitting a motor command.
+4. Perceive the new state and repeat.
+
+This loop is the physical-world analogue of an LLM's autoregressive
+generation loop ([Decoding](05_decoding.qmd)): each action, like each
+token, conditions on everything that came before.
+
+### Action tokenization
+
+The key architectural move is representing continuous robot actions as
+**discrete tokens** drawn from the same vocabulary space as language
+tokens. A typical action is 7-dimensional: a 3D position delta, a 3D
+rotation delta, and a gripper open/close state. Each dimension is
+uniformly binned (e.g. into 256 bins) and mapped to a token ID, often
+reusing the *least-used* tokens in an existing language tokenizer's
+vocabulary so no architecture change is needed at all, only a vocabulary
+reinterpretation:
+
+$$
+a \in \mathbb{R}^{7} \;\longrightarrow\; \text{discretize} \;\longrightarrow\;
+(a_1, \ldots, a_7) \in \{0, \ldots, 255\}^7 \;\longrightarrow\; \text{token IDs}.
+$$
+
+Once actions are token IDs, the model trains with the exact
+next-token-prediction objective from [BERT & GPT](04_bert_gpt.qmd). The
+loss function does not know or care whether a token represents a word
+piece or a robot joint delta.
+
+```{python}
+import numpy as np
+
+def discretize_action(a, n_bins=256, lo=-1.0, hi=1.0):
+    bins = np.linspace(lo, hi, n_bins)
+    return np.digitize(a, bins)
+
+action = np.array([0.42, -0.87, 0.05, 0.0, 0.0, 0.33, 1.0])  # 7-DoF continuous action
+tokens = discretize_action(action)
+print("continuous action:", action)
+print("discretized tokens:", tokens)
+```
+
+### The VLA architecture end to end
+
+```{=html}
+<svg viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:640px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="vla-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <!-- inputs -->
+  <rect x="20" y="20" width="140" height="36" rx="6" fill="#fef9c3" stroke="#eab308"/>
+  <text x="90" y="43" text-anchor="middle" font-size="10" fill="#854d0e">Camera image</text>
+
+  <rect x="20" y="66" width="140" height="36" rx="6" fill="#fef9c3" stroke="#eab308"/>
+  <text x="90" y="89" text-anchor="middle" font-size="10" fill="#854d0e">"pick up the red block"</text>
+
+  <rect x="180" y="20" width="140" height="36" rx="6" fill="#fde7f3" stroke="#ec4899"/>
+  <text x="250" y="43" text-anchor="middle" font-size="9" fill="#9d174d">Vision encoder (ViT)</text>
+  <line x1="160" y1="38" x2="178" y2="38" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#vla-ah)"/>
+
+  <rect x="180" y="66" width="140" height="36" rx="6" fill="#fde7f3" stroke="#ec4899"/>
+  <text x="250" y="89" text-anchor="middle" font-size="9" fill="#9d174d">Language tokenizer</text>
+  <line x1="160" y1="84" x2="178" y2="84" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#vla-ah)"/>
+
+  <!-- backbone -->
+  <rect x="360" y="20" width="180" height="120" rx="8" fill="#f5f3ff" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="450" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#5b21b6">VLA Transformer</text>
+  <text x="450" y="58" text-anchor="middle" font-size="8" fill="#5b21b6">(vision + language tokens</text>
+  <text x="450" y="70" text-anchor="middle" font-size="8" fill="#5b21b6">in one context, same as</text>
+  <text x="450" y="82" text-anchor="middle" font-size="8" fill="#5b21b6">a multimodal LLM)</text>
+  <line x1="322" y1="38" x2="358" y2="60" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#vla-ah)"/>
+  <line x1="322" y1="84" x2="358" y2="90" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#vla-ah)"/>
+
+  <!-- output tokens -->
+  <rect x="380" y="160" width="140" height="36" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="450" y="183" text-anchor="middle" font-size="9" fill="#1e40af">Predicted action tokens</text>
+  <line x1="450" y1="140" x2="450" y2="158" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#vla-ah)"/>
+
+  <rect x="380" y="212" width="140" height="36" rx="6" fill="#dcfce7" stroke="#22c55e"/>
+  <text x="450" y="235" text-anchor="middle" font-size="9" fill="#166534">Detokenize → continuous action</text>
+  <line x1="450" y1="196" x2="450" y2="210" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#vla-ah)"/>
+
+  <rect x="380" y="264" width="140" height="36" rx="6" fill="#fef3c7" stroke="#eab308"/>
+  <text x="450" y="287" text-anchor="middle" font-size="9" fill="#854d0e">Robot actuator</text>
+  <line x1="450" y1="248" x2="450" y2="262" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#vla-ah)"/>
+
+  <rect x="380" y="316" width="140" height="36" rx="6" fill="#f1f5f9" stroke="#64748b"/>
+  <text x="450" y="339" text-anchor="middle" font-size="9" fill="#334155">Environment changes</text>
+  <line x1="450" y1="300" x2="450" y2="314" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#vla-ah)"/>
+
+  <!-- loop back -->
+  <path d="M 380,332 L 90,332 L 90,104" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#vla-ah)"/>
+  <text x="180" y="325" text-anchor="middle" font-size="8" fill="#64748b">new camera frame closes the loop</text>
+</svg>
+```
+
+The loop shown above is the perceive-reason-act cycle made concrete: vision
+and language enter through the same kind of encoders as any multimodal LLM
+([Multimodal](11_multimodal.qmd)), the Transformer backbone processes them
+in one shared context, and the only genuinely new component is the last
+mile: detokenizing predicted action tokens into a continuous command the
+actuator executes, after which the changed environment produces a new
+camera frame and the cycle repeats.
+
+### RT-2 and OpenVLA
+
+**RT-2** [@brohan2023rt2] fine-tunes a pretrained vision-language model
+(the same ViT + LLM combination from [Multimodal](11_multimodal.qmd)) by
+adding action tokens to its output vocabulary and training on
+robot-demonstration data interleaved with the web-scale vision-language
+data the base model already saw. This **co-training** is the central
+finding: mixing in the original web data, not just robot data, lets the
+model transfer general visual and semantic knowledge (recognizing an
+object it never saw a robot manipulate, for example) into the control
+task, an emergent-generalization result analogous to
+[emergent abilities](06_scaling_laws.qmd) in language models.
+
+**OpenVLA** [@kim2024openvla] is an open-source replication of this recipe:
+a Llama-2 backbone with a vision encoder, fine-tuned on a large open
+cross-embodiment robot dataset. It demonstrates that the VLA recipe is
+reproducible outside closed labs and generalizes across different robot
+hardware ("embodiments") without redesigning the architecture per robot.
 
 ### Sim-to-real and data challenges
 
+Robot data is expensive to collect; there is no equivalent of "scrape the
+web" for real-world manipulation trajectories. Two mitigations dominate
+practice:
+
+- **Simulation**: train in a physics simulator, then transfer to real
+  hardware. The "sim-to-real gap" is the mismatch between simulated and
+  real dynamics or visuals that this transfer has to survive.
+- **Cross-embodiment datasets**: pool demonstrations across many robot
+  types so the model sees enough diversity to generalize, the strategy
+  behind OpenVLA's training data.
+
+### What to observe
+
+- Nothing here required a new attention mechanism, a new loss function, or
+  a new training procedure, only a reinterpretation of the output
+  vocabulary as including motor-command tokens.
+- Co-training on the original web-scale data (not just robot data) is what
+  transfers general knowledge into the control task, nearly identical in
+  spirit to how pretraining transfers into narrow fine-tuning tasks
+  throughout [BERT & GPT](04_bert_gpt.qmd).
+- Data scarcity, not architecture, is the binding constraint on embodied
+  AI today, the opposite bottleneck from language modeling.
+
+::: {.callout-warning title="Pitfall — action tokenization is lossy" icon="false"}
+Discretizing a continuous action into a fixed number of bins caps
+precision: fine motor control (threading a needle, for example) may need
+resolution finer than the token vocabulary allows. This is an active area
+of VLA research; some newer approaches predict continuous action chunks
+directly rather than discretizing.
+:::
+
 ## Application & impact
 
+| Component | Role | Lives on as |
+|---|---|---|
+| Vision-language backbone | Perception + instruction understanding | Reused unchanged from [Multimodal](11_multimodal.qmd) VLMs |
+| Discretized action tokens | Bridge continuous control into the token vocabulary | RT-2, OpenVLA, and most current VLA systems |
+| Autoregressive decoding | Action sequence generation | Same mechanism as [Decoding](05_decoding.qmd), applied to motor commands |
+| Web-scale co-training | Transfer general knowledge into control | The generalization story behind RT-2's headline results |
+
+- **The architecture question is settled, for now.** VLA work treats "what
+  network computes the policy" as solved (a Transformer) and focuses effort
+  on data, tokenization granularity, and co-training recipes instead.
+- **The frontier open question is what comes next.** Whether next-token
+  prediction over discretized actions is sufficient for long-horizon
+  physical reasoning, or whether a genuinely different objective, such as
+  predicting future *world states* rather than action tokens, is needed.
+  That debate is picked up directly in
+  [World Models & JEPA](../future/00_world_models.qmd).
+
 ::: {.callout-note title="Key takeaway" icon="false"}
+VLA models close the "text and image in, more text and images out" loop
+this book has followed since the Transformer, by re-treating physical
+actions as tokens in the same autoregressive framework. It is the same
+architecture, applied one level further out into the world, and it sets up
+the book's final, most open question: is next-token prediction the right
+objective for an agent that must plan and act, or does that require a
+different kind of model entirely?
 :::
 
-## References {.unnumbered}
-::: {#refs}
-:::
+→ Next: [Research Landscape — Transformer Era](../landscape/transformer_era.qmd)
