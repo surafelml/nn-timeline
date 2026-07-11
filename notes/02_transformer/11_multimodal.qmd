@@ -4,7 +4,7 @@ format: html
 ---
 
 <!-- Code: nn_timeline.archs.multimodal.VisionLanguageModel -->
-<!-- Next: ../landscape/transformer_era.qmd -->
+<!-- Next: 12_diffusion.qmd -->
 <!-- Timeline anchor: Dosovitskiy et al. 2021 (ViT); Radford et al. 2021 (CLIP); GPT-4V / Gemini 2023. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
@@ -180,9 +180,11 @@ print("zero-shot logits:", np.round(clip_score(img_emb, labels), 2))
 ::: {.callout-note title="Key takeaway" icon="false"}
 Multimodality is not a new architecture — it's the Transformer applied to
 non-text tokens. ViT tokenises images, CLIP aligns modalities in one space, and
-VLMs project everything into a single decoder's context. The era closes where it
-began: one block, attending over a sequence of tokens — only now the tokens can
-be anything.
+VLMs project everything into a single decoder's context: one block, attending
+over a sequence of tokens — only now the tokens can be anything. That same
+"tokenize anything" move is what lets the next two chapters push further —
+into generated pixels ([Diffusion](12_diffusion.qmd)) and into physical
+actions ([Embodied AI](13_embodied.qmd)).
 :::
 
-→ Next: [Research Landscape — Transformer Era](../landscape/transformer_era.qmd)
+→ Next: [Diffusion Transformers](12_diffusion.qmd)

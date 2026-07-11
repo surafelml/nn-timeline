@@ -4,33 +4,228 @@ format: html
 ---
 
 <!-- Next: 13_embodied.qmd -->
-<!-- Timeline anchor: DDPM (Ho 2020), DiT (Peebles 2022), SD3/FLUX (2024). -->
+<!-- Timeline anchor: DDPM (Ho 2020), DiT (Peebles 2022), SD3/FLUX/Sora (2024). -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-**Diffusion models** learn to reverse a noise process — iteratively denoising a signal toward data.
-Replacing the U-Net backbone with a **Transformer block (DiT)** unified the denoising architecture
-with the LLM stack, enabling image, video, and audio generation at scale.
+**Diffusion models** generate by learning to reverse a noising process:
+denoising step by step from pure noise back to data. The **Diffusion
+Transformer (DiT)** [@peebles2023dit] replaces the convolutional U-Net
+denoiser with a plain Transformer block operating on image patches,
+unifying the generative-image backbone with the same architecture that
+powers every LLM in this book.
 :::
 
-**Depends on:** [The Transformer](02_transformer.qmd) · [Multimodal](11_multimodal.qmd)
+**Depends on:** [The Transformer](02_transformer.qmd) · [Generative Models](../supp/generative_models.qmd)
 
 ## Why this matters
 
+[Generative Models](../supp/generative_models.qmd) traced why diffusion won
+the contest against VAEs and GANs: a simple, stable denoising objective at
+the cost of multi-step sampling. But the original diffusion models (DDPM
+[@ho2020ddpm]) used a convolutional U-Net as the denoising network, the
+same architecture family as [CNN Vision Lineage](../supp/cnn_vision_lineage.qmd).
+That leaves an obvious question: does the Transformer, which displaced
+recurrence for sequences, also displace convolution for image generation?
+
+**DiT** [@peebles2023dit] answers yes. Swapping the U-Net for a Transformer
+block operating on image patches scales the same way LLMs scale: more
+compute and more parameters reliably produce better samples. It also means
+one architecture, not two, underlies both text and image generation at the
+frontier.
+
 ## The mechanism
 
-### Score matching and the denoising objective
+### The forward process: adding noise
+
+[Generative Models](../supp/generative_models.qmd) introduced the forward
+noising step. To make this note self-contained: fix a total number of
+steps $T$ (e.g. $T=1000$) and a **noise schedule** $\beta_1, \dots, \beta_T$,
+a sequence of small numbers controlling how much noise is added at each
+step. Define $\alpha_t = 1-\beta_t$ and $\bar\alpha_t = \prod_{s=1}^t
+\alpha_s$ (the cumulative fraction of signal remaining after $t$ steps).
+The forward process lets you jump directly to step $t$ in one equation:
+
+$$
+\mathbf{x}_t = \sqrt{\bar\alpha_t}\,\mathbf{x}_0 + \sqrt{1-\bar\alpha_t}\,\boldsymbol\epsilon,
+\qquad \boldsymbol\epsilon \sim \mathcal{N}(0, I).
+$$
+
+As $t \to T$, $\bar\alpha_t \to 0$ and $\mathbf{x}_t$ becomes indistinguishable
+from pure Gaussian noise. This process is fixed (no learned parameters);
+it exists purely to generate training pairs $(\mathbf{x}_t, \boldsymbol\epsilon)$.
+
+### The network's job: predicting the noise
+
+The network $\epsilon_\theta(\mathbf{x}_t, t)$ takes the noisy image and the
+timestep and predicts the noise $\boldsymbol\epsilon$ that was added:
+
+$$
+\mathcal{L} = \mathbb{E}_{t, \mathbf{x}_0, \boldsymbol\epsilon}
+\big[\lVert \boldsymbol\epsilon - \epsilon_\theta(\mathbf{x}_t, t) \rVert^2 \big].
+$$
+
+This connects to **score matching**: the noise prediction
+$\epsilon_\theta(\mathbf{x}_t, t)$ is a rescaled estimate of the **score**,
+$\nabla_{\mathbf{x}_t} \log p(\mathbf{x}_t)$, the direction in which the
+data density increases fastest at that noise level. Predicting the noise
+and predicting the score are mathematically equivalent up to a known
+scaling factor; DDPM's contribution was showing the noise-prediction
+parameterization trains more stably in practice.
+
+### Generating: running the process backward
+
+Training only fits $\epsilon_\theta$; generation runs the chain in reverse.
+Start from pure noise $\mathbf{x}_T \sim \mathcal{N}(0, I)$ and, for
+$t = T, \dots, 1$, apply the learned denoising step:
+
+$$
+\mathbf{x}_{t-1} = \frac{1}{\sqrt{\alpha_t}}
+\left(\mathbf{x}_t - \frac{1-\alpha_t}{\sqrt{1-\bar\alpha_t}}\,\epsilon_\theta(\mathbf{x}_t, t)\right)
++ \sigma_t \mathbf{z}, \qquad \mathbf{z} \sim \mathcal{N}(0, I).
+$$
+
+Each step removes the amount of noise the network predicts was added at
+that timestep, plus a small amount of fresh noise $\sigma_t \mathbf{z}$ to
+keep the process stochastic (this is what makes repeated generations from
+the same starting noise still vary slightly). After $T$ such steps,
+$\mathbf{x}_0$ is a sample from the learned data distribution. This
+multi-step loop, not a single forward pass, is diffusion's main cost.
 
 ### The Diffusion Transformer block (DiT)
 
+Nothing above constrains $\epsilon_\theta$ to be a convolutional U-Net; it
+is any function mapping a noisy input and a timestep to a predicted noise
+map of the same shape. DiT's contribution is showing a Transformer does
+this job at least as well, and scales better. Concretely:
+
+1. **Patchify**: the (usually latent-space, VAE-encoded) noisy image is cut
+   into a grid of patches and flattened into a token sequence, exactly like
+   [ViT](11_multimodal.qmd).
+2. **N Transformer blocks**: standard self-attention + FFN, residual
+   connections, layer norm ([The Transformer](02_transformer.qmd)), process
+   the token sequence.
+3. **Conditioning via adaLN**: the timestep $t$ and a class/text condition
+   are each embedded, summed, and passed through a small MLP that outputs a
+   per-block **scale and shift**. Every block applies this scale/shift
+   after its layer norm, so the network is modulated by "how noisy" and
+   "what to generate" without adding extra tokens to the sequence.
+4. **Unpatchify**: a final linear layer maps each output token back to a
+   pixel patch, and the patches are reassembled into the predicted noise
+   map $\epsilon_\theta(\mathbf{x}_t, t)$.
+
+```{=html}
+<svg viewBox="0 0 620 380" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:620px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="dit-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <!-- input -->
+  <rect x="30" y="20" width="150" height="36" rx="6" fill="#fef9c3" stroke="#eab308"/>
+  <text x="105" y="43" text-anchor="middle" font-size="10" fill="#854d0e">Noisy latent image x_t</text>
+
+  <rect x="30" y="80" width="150" height="36" rx="6" fill="#fef3c7" stroke="#eab308"/>
+  <text x="105" y="103" text-anchor="middle" font-size="10" fill="#854d0e">Patchify → tokens</text>
+  <line x1="105" y1="56" x2="105" y2="78" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#dit-ah)"/>
+
+  <!-- DiT block stack -->
+  <rect x="30" y="150" width="220" height="150" rx="8" fill="#f5f3ff" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="140" y="140" text-anchor="middle" font-size="11" font-weight="700" fill="#5b21b6">DiT block × N</text>
+  <line x1="105" y1="116" x2="105" y2="148" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#dit-ah)"/>
+
+  <rect x="50" y="168" width="180" height="34" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.2"/>
+  <text x="140" y="189" text-anchor="middle" font-size="9" fill="#5b21b6">Self-attention (adaLN-modulated)</text>
+
+  <rect x="50" y="212" width="180" height="34" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.2"/>
+  <text x="140" y="233" text-anchor="middle" font-size="9" fill="#5b21b6">Feed-forward (adaLN-modulated)</text>
+
+  <text x="140" y="270" text-anchor="middle" font-size="8" fill="#6b7280">+ residual around each sublayer</text>
+  <text x="140" y="284" text-anchor="middle" font-size="8" fill="#6b7280">(same block as the LLM Transformer)</text>
+
+  <!-- conditioning inputs -->
+  <rect x="330" y="150" width="130" height="34" rx="5" fill="#dcfce7" stroke="#22c55e"/>
+  <text x="395" y="171" text-anchor="middle" font-size="9" fill="#166534">Timestep t</text>
+
+  <rect x="330" y="196" width="130" height="34" rx="5" fill="#dcfce7" stroke="#22c55e"/>
+  <text x="395" y="217" text-anchor="middle" font-size="9" fill="#166534">Class / text condition</text>
+
+  <rect x="330" y="242" width="130" height="34" rx="5" fill="#bbf7d0" stroke="#22c55e"/>
+  <text x="395" y="259" text-anchor="middle" font-size="8" fill="#166534">MLP → scale, shift</text>
+  <text x="395" y="271" text-anchor="middle" font-size="8" fill="#166534">(per block)</text>
+
+  <line x1="393" y1="184" x2="393" y2="240" stroke="#22c55e" stroke-width="1.2"/>
+  <line x1="328" y1="256" x2="252" y2="200" stroke="#22c55e" stroke-width="1.5" marker-end="url(#dit-ah)"/>
+  <text x="300" y="215" font-size="8" fill="#166534">modulates every block</text>
+
+  <!-- output -->
+  <rect x="30" y="330" width="150" height="36" rx="6" fill="#fef3c7" stroke="#eab308"/>
+  <text x="105" y="353" text-anchor="middle" font-size="10" fill="#854d0e">Unpatchify</text>
+  <line x1="140" y1="300" x2="105" y2="328" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#dit-ah)"/>
+
+  <text x="330" y="345" font-size="10" fill="#854d0e">→ Predicted noise ε_θ(x_t, t)</text>
+  <line x1="182" y1="348" x2="326" y2="348" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#dit-ah)"/>
+</svg>
+```
+
 ### From images to video: Sora and beyond
+
+Extending DiT from single images to **video** is architecturally almost
+free: patchify space *and* time into spatio-temporal tokens, and the same
+attention mechanism that mixes information across image patches now mixes
+across frames too. OpenAI's **Sora** [@brooks2024sora] applies exactly this
+recipe at scale, a diffusion Transformer over spacetime patches, to
+generate minutes-long coherent video, describing itself explicitly as a
+step toward "world simulators": models that must implicitly learn physics,
+object permanence, and camera geometry to denoise video convincingly.
+
+### What to observe
+
+- The denoising objective from
+  [Generative Models](../supp/generative_models.qmd) is unchanged; only the
+  network architecture computing $\epsilon_\theta$ changed from U-Net to
+  Transformer.
+- Generation is a loop of $T$ reverse steps, not one forward pass. This is
+  the direct source of diffusion's inference cost.
+- Conditioning (timestep, class/text) enters through **modulation**
+  (adaLN), not through the attention mechanism directly, a different
+  pattern from the encoder-decoder cross-attention in
+  [The Transformer](02_transformer.qmd).
+- Video is "just" more patches along a time axis; no new mechanism, only a
+  larger token sequence, which is why scaling laws transfer directly from
+  image to video generation.
+
+::: {.callout-tip title="Going deeper" icon="false"}
+- The lineage diffusion inherited from — [Generative Models: Autoencoders, VAEs, GANs, Flows](../supp/generative_models.qmd)
+- The convolutional backbone diffusion originally used, and why it needed replacing — [CNN Vision Lineage](../supp/cnn_vision_lineage.qmd)
+:::
 
 ## Application & impact
 
+| Component | Role | Lives on as |
+|---|---|---|
+| U-Net denoiser | Original DDPM backbone | Displaced by DiT in frontier models |
+| DiT block | Transformer as denoiser | Stable Diffusion 3, FLUX |
+| adaLN conditioning | Inject timestep + class/text | Standard conditioning method in diffusion Transformers |
+| Spatio-temporal patchify | Image → video, same mechanism | Sora and video-diffusion successors |
+
+- **One architecture, two modalities:** DiT means the same block
+  (attention + FFN + residual + norm) that reads and writes text is now
+  also the state-of-the-art image/video generator, the Transformer's
+  second independent proof of scaling, after language.
+- **Latent-space diffusion is standard practice:** production systems
+  diffuse in the VAE latent space (small, compressed), not raw pixels,
+  directly reusing the VAE from [Generative Models](../supp/generative_models.qmd)
+  as a compression front-end; DiT then operates on that compressed
+  representation.
+
 ::: {.callout-note title="Key takeaway" icon="false"}
+Diffusion Transformers are not a new generative idea. They are the DDPM
+denoising objective with its backbone swapped from convolution to the
+Transformer block already built in this book. The result is the same
+architecture generating text, images, and now video, scaling by the same
+recipe of more data and more compute.
 :::
 
 → Next: [Embodied AI & VLA](13_embodied.qmd)
-
-## References {.unnumbered}
-::: {#refs}
-:::
