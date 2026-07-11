@@ -6,33 +6,139 @@ format: html
 <!-- Supp: closes the vision-CNN gap. Linked from convseq2seq + transformer (ResNet residual). -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-The convolutional lineage that owned computer vision: **LeNet** (1998) → **AlexNet**
-(2012, the ImageNet inflection) → **VGG** (depth) → **ResNet** (2015, residual
-connections that made very deep nets trainable — the same shortcut the Transformer
-block reuses).
+The convolutional lineage that owned computer vision before the Transformer:
+**LeNet** (1998, the first trained conv net) → **AlexNet** (2012, the ImageNet
+inflection point) → **VGG** (depth via small filters) → **ResNet** (2015,
+residual connections that made very deep nets trainable). ResNet's shortcut
+is the same identity connection the Transformer block reuses.
 :::
 
 **Depends on:** [MLP & Backpropagation](../00_foundations/04_mlp_backprop.qmd)
 
 ## Why this matters
 
+A fully-connected layer treats its input as an unstructured vector; it has no
+notion that two pixels are neighbors. Images have structure instead: local
+patterns like edges and textures repeat at every position. **Convolution**
+builds that structure into the architecture, so a filter that learns to
+detect an edge in one corner detects it everywhere, for a fraction of the
+parameters a dense layer would need.
+
+This lineage matters here for two reasons beyond its own history.
+
+- **AlexNet (2012)** is the inflection point this book's classical-ML and
+  landscape notes already name as *the* moment deep learning overtook
+  classical methods. It is named repeatedly but never taught until now.
+- **ResNet's residual connection** is the direct ancestor of the
+  Transformer's residual stream ([The Transformer](../02_transformer/02_transformer.qmd)
+  cites it explicitly). The mechanism that makes 100+ layer networks
+  trainable at all belongs here, not left as a forward reference.
+
 ## The mechanism
 
-### Convolution and pooling: weight sharing + locality
+### Convolution and pooling
 
-### AlexNet (2012) — the ImageNet inflection
+- **Convolution** slides a small filter (e.g. $3\times3$) across the input
+  and computes a dot product at each position:
+  $$
+  (\mathbf{x} * \mathbf{w})_{i,j} = \sum_{u,v} x_{i+u,\, j+v}\, w_{u,v}.
+  $$
+  This gives two properties. **Weight sharing**: the same filter is reused
+  at every spatial position, so a $3\times3$ filter costs only 9 parameters
+  (plus bias) regardless of image size, versus a dense layer's one weight
+  per input pixel. **Locality**: each output depends only on a small
+  neighborhood, matching the assumption that meaningful patterns are local
+  before they compose into global structure.
+- **Pooling** (typically max-pooling) downsamples by taking the max over
+  small windows. This shrinks spatial resolution and buys a small amount of
+  translation invariance: a feature detected slightly off-position still
+  survives the pool.
 
-### VGG — depth via small filters
+```{python}
+import numpy as np
 
-### ResNet — residual connections unlock depth
+def conv2d(x, w):
+    kh, kw = w.shape
+    h, wd = x.shape[0] - kh + 1, x.shape[1] - kw + 1
+    out = np.zeros((h, wd))
+    for i in range(h):
+        for j in range(wd):
+            out[i, j] = np.sum(x[i:i+kh, j:j+kw] * w)
+    return out
+
+x = np.array([[0,0,0,0,0],[0,1,1,1,0],[0,1,1,1,0],[0,1,1,1,0],[0,0,0,0,0]], dtype=float)
+edge_filter = np.array([[-1,-1,-1],[0,0,0],[1,1,1]], dtype=float)  # horizontal-edge detector
+print(conv2d(x, edge_filter))
+```
+
+### AlexNet (2012)
+
+**AlexNet** [@krizhevsky2012alexnet] stacked five convolutional layers with
+ReLU (not sigmoid/tanh; see [Modern Activations](modern_activations.qmd) for
+why that choice mattered) and trained on two GPUs. It cut ImageNet top-5
+error from roughly 26% to roughly 15% in a single year, a larger jump than
+the previous several years combined. This is the moment referenced
+throughout this book as *the* deep-learning inflection: depth plus
+GPU-scale compute plus large labeled data (ImageNet) beat hand-engineered
+computer-vision features outright.
+
+### VGG
+
+**VGG** [@simonyan2014vgg] pushed the recipe further by replacing AlexNet's
+large filters with a deep stack of $3\times3$ convolutions. Two stacked
+$3\times3$ filters have the same receptive field as one $5\times5$ filter,
+with fewer parameters and an extra non-linearity between them. VGG showed
+that **depth**, not filter size, was the lever to pull, reaching 19 layers.
+
+### ResNet
+
+Beyond a certain depth, plain stacked convolutional networks got *worse*,
+not better. The cause was not overfitting but **optimization difficulty**:
+gradients struggle to propagate through very deep plain stacks, the same
+vanishing-gradient story as [Gradient Flow](../00_foundations/05_gradient_flow.qmd),
+now in a convolutional setting.
+
+**ResNet** [@he2016resnet] fixes this with a **residual (skip) connection**.
+Instead of learning a direct mapping $H(x)$, each block learns a residual
+$F(x)$ added back to its input:
+
+$$
+y = x + F(x).
+$$
+
+The addition gives gradients a direct, unimpeded path back through every
+block, so depth stopped being a liability. ResNet trained networks over 150
+layers deep and won ImageNet 2015. This is the *exact* identity-shortcut
+idea the Transformer block reuses around both its attention and FFN
+sublayers ([The Transformer](../02_transformer/02_transformer.qmd)):
+$x + \text{Sublayer}(x)$ is the ResNet equation with `Sublayer` in place of
+`F`.
+
+### What to observe
+
+- Weight sharing makes convolution parameter-efficient on images; locality
+  makes it a sensible prior.
+- AlexNet did not invent convolution. LeNet did, in 1998
+  [@lecun1998lenet]. AlexNet proved the *scale* recipe: depth, GPUs, and big
+  data.
+- The residual equation $y = x + F(x)$ is architecture-agnostic. It shows up
+  wherever very deep networks need to train, convolutional or not.
 
 ## Application & impact
 
+| Concept here | What it became | Where you see it today |
+|---|---|---|
+| Convolution + weight sharing | The dominant vision architecture, 2012–2020 | CNN backbones in detection, segmentation |
+| AlexNet's depth+scale recipe | "Bigger model, bigger data, more compute wins" | The same argument behind [scaling laws](../02_transformer/06_scaling_laws.qmd) for LLMs |
+| ResNet's residual connection | The Transformer's residual stream | Every sublayer in [The Transformer](../02_transformer/02_transformer.qmd) |
+| Convolutional inductive bias | Weakened deliberately | [ViT](../02_transformer/11_multimodal.qmd) replaces convolution with patches + attention, trading the locality prior for scale |
+
 ::: {.callout-note title="Key takeaway" icon="false"}
+CNNs proved that architectural priors (locality, weight sharing) plus scale
+beat hand-crafted features, and that residual connections are what let scale
+go arbitrarily deep. Both lessons outlived convolution itself: scale is the
+throughline to LLM scaling laws, and the residual equation is, almost
+unchanged, the backbone of every Transformer block.
 :::
 
 ← Back to: [Convolutional Seq2Seq](../01_rnn/04_convseq2seq.qmd) · Used in: [The Transformer](../02_transformer/02_transformer.qmd) (residual), [Multimodal](../02_transformer/11_multimodal.qmd) (ViT vs CNN)
-
-## References {.unnumbered}
-::: {#refs}
-:::
