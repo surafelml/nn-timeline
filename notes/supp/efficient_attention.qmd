@@ -1,36 +1,162 @@
 ---
-title: "Efficient Attention — FlashAttention, Sparse, Linear"
+title: "Efficient Attention: FlashAttention, Sparse, Linear"
 format: html
 ---
 
 <!-- Supp: Transformer. Sits beside kv_cache. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-Attention is $O(n^2)$ in sequence length. Two attack surfaces: **systems**
-(FlashAttention, Dao 2022 — IO-aware exact attention) and **algorithmic**
-(sparse: Longformer/BigBird; linear: Performer/Linformer — approximate the
-softmax to drop the quadratic term).
+Self-attention costs $O(n^2)$ in sequence length. Two attack surfaces:
+**systems** (FlashAttention, Dao 2022, an exact but IO-aware
+implementation) and **algorithmic** (sparse attention like Longformer, or
+linear attention like Performer, which approximate the softmax to remove
+the quadratic term entirely).
 :::
 
 **Depends on:** [Self-Attention & Multi-Head Attention](../02_transformer/01_self_attention.qmd)
 
 ## Why this matters
 
+[Self-Attention](../02_transformer/01_self_attention.qmd) computes a score
+between every pair of positions, an $n \times n$ matrix for a sequence of
+length $n$. That quadratic cost is affordable at the sequence lengths the
+original Transformer targeted, but it becomes the binding constraint as
+context windows grow into the tens or hundreds of thousands of tokens.
+[KV-Cache](kv_cache.qmd) addressed the *memory* cost of attention at
+inference; this note addresses the *compute* cost of attention itself, at
+both training and inference.
+
 ## The mechanism
 
-### FlashAttention — IO-aware exact attention
+The three approaches below attack the same $n \times n$ score matrix in
+three different ways: compute it faster without changing it, compute only
+part of it, or never form it explicitly at all.
 
-### Sparse attention — restrict the attention pattern (Longformer, BigBird)
+```{=html}
+<svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:560px;display:block;margin:1.5rem auto">
+  <text x="80"  y="18" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Exact (dense)</text>
+  <text x="280" y="18" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Sparse</text>
+  <text x="470" y="18" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Linear (factorized)</text>
 
-### Linear attention — approximate the softmax (Performer, Linformer)
+  <!-- dense grid: fully filled -->
+  <g>
+    <rect x="30" y="30" width="100" height="100" fill="#ede9fe" stroke="#7c3aed"/>
+    <text x="80" y="150" text-anchor="middle" font-size="8" fill="#6b7280">every pair attends</text>
+  </g>
+
+  <!-- sparse: local band + a couple global columns/rows -->
+  <g>
+    <rect x="230" y="30" width="100" height="100" fill="#f8fafc" stroke="#cbd5e1"/>
+    <rect x="230" y="30" width="100" height="14" fill="#ede9fe"/>
+    <rect x="230" y="30" width="14" height="100" fill="#ede9fe"/>
+    <path d="M235,35 L325,125 L325,105 L255,35 Z" fill="#ede9fe"/>
+    <path d="M235,35 L325,125 L305,125 L235,55 Z" fill="#ede9fe"/>
+    <rect x="230" y="30" width="100" height="100" fill="none" stroke="#7c3aed"/>
+    <text x="280" y="150" text-anchor="middle" font-size="8" fill="#6b7280">local window + global tokens</text>
+  </g>
+
+  <!-- linear: no explicit matrix, two thin factors -->
+  <g>
+    <rect x="420" y="30"  width="100" height="20" fill="#dcfce7" stroke="#22c55e"/>
+    <text x="470" y="44" text-anchor="middle" font-size="8" fill="#166534">φ(Q)</text>
+    <rect x="420" y="110" width="20" height="20" fill="#dcfce7" stroke="#22c55e"/>
+    <text x="430" y="124" text-anchor="middle" font-size="7" fill="#166534">φ(K)ᵀV</text>
+    <text x="470" y="150" text-anchor="middle" font-size="8" fill="#6b7280">no n×n matrix ever formed</text>
+  </g>
+</svg>
+```
+
+### FlashAttention: exact attention, rewritten for hardware
+
+**FlashAttention** [@dao2022flashattn] computes the *exact same* attention
+output as the standard formula,
+
+$$
+\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V,
+$$
+
+but never materializes the full $n \times n$ score matrix in slow GPU
+memory (HBM). It tiles the computation into blocks small enough to fit in
+fast on-chip memory (SRAM), computing the softmax incrementally across
+tiles. The result is a large wall-clock speedup and reduced memory use,
+with **zero change to the model's output**: it is a systems optimization,
+not an approximation. This is why FlashAttention was adopted almost
+universally with no accuracy tradeoff to weigh.
+
+### Sparse attention: restrict the pattern
+
+**Sparse attention** methods reduce the quadratic cost algorithmically,
+by having each position attend to only a subset of others rather than
+every other position:
+
+- **Local window**: each token attends only to a fixed number of nearby
+  tokens (the diagonal band in the sparse diagram above).
+- **Global tokens**: a small number of designated tokens (e.g. a
+  classification token) attend to, and are attended by, everything.
+
+**Longformer** [@beltagy2020longformer] combines both, giving near-linear
+cost at the price of missing a relevant long-range dependency that falls
+outside the fixed pattern.
+
+### Linear attention: approximate the softmax
+
+**Linear attention** methods (e.g. Performer [@choromanski2020performer])
+replace the softmax kernel with a decomposable approximation, so that
+
+$$
+\text{softmax}(QK^\top) \approx \phi(Q)\,\phi(K)^\top
+$$
+
+for some feature map $\phi$. Because $\phi(K)^\top V$ can be computed once
+and reused for every query, the whole attention operation drops from
+$O(n^2 d)$ to $O(n d^2)$, linear in sequence length, and the $n \times n$
+matrix is never formed at all. The tradeoff is quality: an approximated
+softmax is not the exact attention distribution, and linear attention has
+historically underperformed exact attention on tasks that need precise,
+sharp attention to a few specific tokens.
+
+```{python}
+import numpy as np
+
+def exact_attention_cost(n, d):
+    return n * n * d          # O(n^2 d): score matrix + weighted sum
+
+def linear_attention_cost(n, d):
+    return n * d * d          # O(n d^2): no n x n matrix ever formed
+
+for n in [512, 4096, 32768]:
+    d = 64
+    print(f"n={n}: exact={exact_attention_cost(n,d):,}  linear={linear_attention_cost(n,d):,}")
+```
+
+### What to observe
+
+- FlashAttention changes *how* attention is computed, not *what* it
+  computes; sparse and linear attention change the *mathematical
+  operation* itself, trading exactness for asymptotic cost.
+- The $O(n^2)$ vs $O(n)$ crossover only matters at long sequence lengths;
+  the cost comparison above shows the gap widening sharply as $n$ grows.
+- In practice, FlashAttention (a free, exact speedup) is adopted almost
+  everywhere by default, while sparse and linear attention are used
+  selectively, when context length demands it and the quality tradeoff is
+  acceptable.
 
 ## Application & impact
 
+| Concept here | What it became | Where you see it today |
+|---|---|---|
+| FlashAttention's IO-aware tiling | The default attention kernel | Nearly every production Transformer implementation |
+| Sparse attention patterns | Long-document and long-context models | Longformer-style local+global windows |
+| Linear attention | An alternative to softmax attention entirely | Overlaps conceptually with [SSM/Mamba](../02_transformer/10_beyond_transformers.qmd)'s linear-cost sequence mixing |
+
 ::: {.callout-note title="Key takeaway" icon="false"}
+Attention's quadratic cost has two independent fixes: make the exact
+computation faster (FlashAttention, adopted almost universally) or change
+the computation to be sub-quadratic (sparse or linear attention, adopted
+selectively where long context makes the tradeoff worthwhile). The two are
+not mutually exclusive; a sparse or linear attention variant can still be
+implemented with FlashAttention-style IO awareness.
 :::
 
 ← Back to: [KV-Cache](kv_cache.qmd)
-
-## References {.unnumbered}
-::: {#refs}
-:::
