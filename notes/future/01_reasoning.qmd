@@ -1,33 +1,118 @@
 ---
-title: "Reasoning & Test-Time Compute"
+title: "Reasoning and Test-Time Compute"
 format: html
 ---
 
 <!-- Future Outlook. o1-style reasoning, deliberate/system-2. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-A shift from scaling *training* to scaling *inference*: models that "think
-longer" — generating extended reasoning chains and searching over them at
-test time (o1-style) — trade compute-per-query for accuracy on hard problems.
+Test-time compute is a second scaling axis, independent of model and data
+size [@snell2024scaling]: chain-of-thought [@wei2022cot], self-consistency
+[@wang2022selfconsistency], and outcome-reward RL training [@jaech2024o1]
+all trade inference compute for accuracy on hard problems.
 :::
 
 **Depends on:** [Scaling Laws & Emergence](../02_transformer/06_scaling_laws.qmd)
 
 ## Why this matters
 
+[Scaling Laws](../02_transformer/06_scaling_laws.qmd) introduced
+chain-of-thought [@wei2022cot] as a side effect of scale: large models
+spontaneously produce better answers when allowed to write intermediate
+reasoning steps first. Reframed as a resource rather than a side effect,
+reasoning tokens are compute spent at inference time, a distinct lever
+from the parameter- and data-scaling this book has covered so far.
+
 ## The mechanism
 
-### Chain-of-thought as test-time compute
+### Chain-of-thought as spent compute
 
-### Search and verification over reasoning traces
+Each reasoning token generated before an answer is additional computation
+on that specific problem. A longer chain-of-thought trades latency and
+inference cost for a higher chance of a correct answer.
 
-### Training for reasoning (RL on outcomes)
+```{=html}
+<svg viewBox="0 0 480 200" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:460px;display:block;margin:1.5rem auto">
+  <text x="240" y="16" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Two independent scaling axes</text>
+  <line x1="50" y1="170" x2="440" y2="170" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="50" y1="170" x2="50" y2="30" stroke="#94a3b8" stroke-width="1"/>
+  <text x="245" y="190" text-anchor="middle" font-size="9" fill="#6b7280">compute spent</text>
+  <text x="20" y="100" text-anchor="middle" font-size="9" fill="#6b7280" transform="rotate(-90 20 100)">accuracy</text>
+
+  <path d="M 60,150 C 150,120 250,60 420,40" fill="none" stroke="#7c3aed" stroke-width="2"/>
+  <text x="330" y="55" font-size="9" fill="#7c3aed">train-time: bigger model</text>
+
+  <path d="M 60,150 C 130,140 260,100 420,70" fill="none" stroke="#22c55e" stroke-width="2"/>
+  <text x="260" y="118" font-size="9" fill="#166534">test-time: more reasoning tokens</text>
+</svg>
+```
+
+Snell et al. [@snell2024scaling] show that, for a fixed total compute
+budget, spending it at test time (more reasoning) can outperform spending
+it at train time (a bigger model) on some problems, establishing test-time
+compute as an independent lever rather than a byproduct of scale.
+
+### Spending test-time compute: two strategies
+
+| Strategy | Mechanism | Compute spent on |
+|---|---|---|
+| Self-consistency [@wang2022selfconsistency] | Sample several independent reasoning chains; take the majority-vote answer | Redundancy |
+| Tree search | Branch at intermediate steps, evaluate partial chains, prune the weaker branches | Exploration |
+
+Tree search over reasoning traces mirrors the explore-then-commit
+structure in [Agent Architectures](../supp/agents/00_overview.qmd)'
+planning mechanisms, applied to token sequences rather than external
+actions.
+
+```{python}
+import numpy as np
+rng = np.random.default_rng(0)
+
+def self_consistency_vote(answers):
+    values, counts = np.unique(answers, return_counts=True)
+    return values[np.argmax(counts)]
+
+chains = np.array([42, 42, 17, 42, 39])   # 5 independent reasoning chains
+print("chain answers:", chains)
+print("self-consistency vote:", self_consistency_vote(chains))
+```
+
+### Training for reasoning: outcome-reward RL
+
+**OpenAI o1** [@jaech2024o1] trains the reasoning process with
+reinforcement learning ([Deep RL](../supp/deep_rl.qmd)) rather than
+prompting for it as a fixed instruction.
+
+| Reward type | Supervises | Cost |
+|---|---|---|
+| Process reward | Each intermediate reasoning step | Requires step-by-step human-labeled traces |
+| Outcome reward (o1) | Only the final answer's correctness | Cheap to collect; sparser training signal |
+
+Outcome-reward training sidesteps collecting step-level labels, at the
+cost of a sparser signal: a wrong reasoning path can still land on a
+correct final answer, and the reward alone cannot distinguish sound
+reasoning from a lucky guess.
+
+### What to observe
+
+- Test-time and train-time compute are independent levers [@snell2024scaling].
+- Self-consistency spends compute on redundancy; tree search spends it on
+  exploration, paralleling the debate-versus-decomposition distinction in
+  [Multi-Agent Systems](../supp/agents/03_multi_agent.qmd).
+- Outcome-reward RL (o1) reuses the PPO-style machinery from
+  [Deep RL](../supp/deep_rl.qmd), with "was the final answer correct" as
+  the reward instead of a human-preference score (RLHF).
 
 ## Outlook
 
-::: {.callout-note title="Key takeaway" icon="false"}
-:::
+How far outcome-reward RL training generalizes beyond verifiable domains
+(math, code) to open-ended tasks without a clean correctness signal is an
+open question as of this writing.
 
-## References {.unnumbered}
-::: {#refs}
+::: {.callout-note title="Key takeaway" icon="false"}
+Chain-of-thought, reframed as spent compute, opens a second scaling axis
+alongside model and data size. Search and self-consistency spend that
+compute at inference; outcome-reward RL spends it during training, without
+ever labeling what correct reasoning looks like step by step.
 :::
