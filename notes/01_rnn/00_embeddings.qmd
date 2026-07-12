@@ -1,5 +1,5 @@
 ---
-title: "Word Embeddings — From One-Hot to Distributed Representations"
+title: "Word Embeddings: From One-Hot to Distributed Representations"
 format: html
 ---
 
@@ -57,7 +57,7 @@ generalises better than local representations. The embedding matrix $\mathbf{E}$
 is learned end-to-end alongside the rest of the network; no hand-crafted
 features are needed.
 
-### Word2Vec — learning from context
+### Word2Vec: learning from context
 
 **Mikolov et al.** [@mikolov2013] showed that a shallow network trained to
 predict context from a word (or vice versa) learns embeddings with striking
@@ -77,7 +77,7 @@ $$
 \mathbf{v}_{\text{king}} - \mathbf{v}_{\text{man}} + \mathbf{v}_{\text{woman}} \approx \mathbf{v}_{\text{queen}}.
 $$
 
-### GloVe — global co-occurrence
+### GloVe: global co-occurrence
 
 **Pennington et al.** [@pennington2014] replaced the local context window with
 a global co-occurrence matrix $X$, fitting embeddings so that:
@@ -108,7 +108,7 @@ def embed(token_id):
 print(embed(3))   # dense vector for token id 3
 ```
 
-::: {.callout-warning title="Pitfall — embedding dimensionality" icon="false"}
+::: {.callout-warning title="Pitfall: embedding dimensionality" icon="false"}
 $d$ is a hyperparameter: too small and the space is too compressed to encode
 vocabulary structure; too large and the model overfits or trains slowly.
 Common choices: 128–512 for task-specific models, 768–4096 for large LMs.

@@ -1,5 +1,5 @@
 ---
-title: "Optimization — GD, SGD, Momentum"
+title: "Optimization: GD, SGD, Momentum"
 format: html
 ---
 
@@ -68,7 +68,7 @@ $$
 \boldsymbol{\theta}_{t+1} = \boldsymbol{\theta}_t - \eta\,\mathbf{v}_{t+1}.
 $$
 
-### Minimal sketch — GD vs momentum
+### Minimal sketch: GD vs momentum
 
 On an ill-conditioned quadratic (steep in one axis, shallow in the other),
 watch momentum damp the oscillation and converge faster.
@@ -113,7 +113,7 @@ plt.tight_layout(); plt.show()
 - Neither changes the gradient itself; they change *how the gradient is
   used*. That is the whole job of an optimizer.
 
-::: {.callout-warning title="Pitfall — the learning rate dominates" icon="false"}
+::: {.callout-warning title="Pitfall: the learning rate dominates" icon="false"}
 Most training failures are learning-rate failures: too high → divergence or
 `NaN`; too low → apparent plateaus mistaken for convergence. Momentum adds a
 second knob ($\beta$) that can overshoot if set too high. Tune $\eta$ first;

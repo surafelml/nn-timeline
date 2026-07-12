@@ -74,7 +74,7 @@ $$
   positions (the attention weights).
 - The result is $n \times d_v$ — one context vector per position.
 
-::: {.callout-warning title="Pitfall — why divide by √d_k" icon="false"}
+::: {.callout-warning title="Pitfall: why divide by √d_k" icon="false"}
 For large $d_k$, the dot product $q \cdot k = \sum_{i=1}^{d_k} q_i k_i$ has
 variance proportional to $d_k$. Large-magnitude scores push the softmax into
 saturated regions where gradients vanish — the model stops learning. Dividing

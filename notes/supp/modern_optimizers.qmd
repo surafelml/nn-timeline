@@ -1,5 +1,5 @@
 ---
-title: "Adaptive Optimizers — Adam & AdamW"
+title: "Adaptive Optimizers: Adam & AdamW"
 format: html
 ---
 
@@ -28,7 +28,7 @@ of its own past gradients. Its flaw is that the accumulator only grows, so the
 effective rate decays to zero. RMSProp replaced the sum with an exponential
 moving average — and Adam combined that with momentum.
 
-## Adam — momentum on both moments
+## Adam: momentum on both moments
 
 Adam tracks two exponential moving averages of the gradient $g_t$: the first
 moment $m_t$ (mean, i.e. momentum) and the second moment $v_t$ (uncentered
@@ -50,7 +50,7 @@ noisy gradients take *smaller* steps; quiet parameters take larger ones. The
 initializing $m_0=v_0=0$. Defaults $\beta_1{=}0.9$, $\beta_2{=}0.999$ are
 near-universal.
 
-## AdamW — decoupled weight decay
+## AdamW: decoupled weight decay
 
 The original Adam folds L2 regularization into the gradient $g_t$, which then
 gets divided by $\sqrt{\hat v_t}$ — so parameters with large gradients are
@@ -82,7 +82,7 @@ for t in range(1, 4):
     print(f"step {t}: theta={theta[0]:.5f}")
 ```
 
-::: {.callout-warning title="Pitfall — Adam vs AdamW are not interchangeable" icon="false"}
+::: {.callout-warning title="Pitfall: Adam vs AdamW are not interchangeable" icon="false"}
 Calling `Adam(weight_decay=...)` in most frameworks applies *coupled* decay,
 not AdamW's decoupled form. For Transformers always use the dedicated
 `AdamW` optimizer — the difference shows up as worse generalization, not as

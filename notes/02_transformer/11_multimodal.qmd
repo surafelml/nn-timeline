@@ -33,7 +33,7 @@ video, and science.
 
 ## The mechanism
 
-### Vision Transformer (ViT) — images as tokens
+### Vision Transformer (ViT): Images as Tokens
 
 ViT [@dosovitskiy2021] showed convolutions aren't required for vision. Split an
 image into fixed patches (e.g. 16×16), flatten and linearly project each into a
@@ -41,7 +41,7 @@ token embedding, add positional encodings, and feed a **standard Transformer
 encoder**. A `[CLS]` token aggregates for classification. Given enough data, ViT
 matches or beats CNNs — the same "scale beats inductive bias" lesson as in NLP.
 
-### CLIP — aligning two modalities
+### CLIP: Aligning Two Modalities
 
 CLIP [@radford2021clip] learns a *shared* embedding space for images and text
 without per-image labels. Two encoders (an image encoder, a text encoder) are
@@ -97,7 +97,7 @@ front-end of many VLMs.
 </svg>
 ```
 
-### Vision-language models — one decoder, many modalities
+### Vision-Language Models: One Decoder, Many Modalities
 
 The dominant modern pattern keeps a pretrained LLM and **grafts vision onto it**:
 
@@ -114,7 +114,7 @@ other direction — text to image — runs through **diffusion**, increasingly w
 **Diffusion Transformers (DiT)** [@peebles2023dit] as the backbone, which powers
 image and video models like Sora.
 
-::: {.callout-warning title="Pitfall — fusion strategy is the real design choice" icon="false"}
+::: {.callout-warning title="Pitfall: fusion strategy is the real design choice" icon="false"}
 "Multimodal" hides a spectrum. **Early fusion** (tokenise everything into one
 stream, train jointly — Gemini) is most flexible but expensive. **Late fusion**
 (graft a vision encoder onto a frozen LLM via a projector — LLaVA) is cheap and

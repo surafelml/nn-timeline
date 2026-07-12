@@ -1,5 +1,5 @@
 ---
-title: "Generative Models — Autoencoders to Diffusion"
+title: "Generative Models: Autoencoders to Diffusion"
 format: html
 ---
 
@@ -155,7 +155,7 @@ for t in [0, 4, 9]:
   reverse (denoising) direction is learned; this asymmetry is what keeps
   diffusion training stable.
 
-::: {.callout-warning title="Pitfall — diffusion trades training stability for inference cost" icon="false"}
+::: {.callout-warning title="Pitfall: diffusion trades training stability for inference cost" icon="false"}
 A diffusion model is cheap and stable to train (a simple regression loss,
 no adversarial game) but expensive to sample from (many sequential steps).
 Techniques to cut sampling steps (DDIM, distillation) are active

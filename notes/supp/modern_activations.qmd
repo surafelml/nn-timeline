@@ -1,5 +1,5 @@
 ---
-title: "Modern Activations — ReLU, GELU, SiLU, SwiGLU"
+title: "Modern Activations: ReLU, GELU, SiLU, SwiGLU"
 format: html
 ---
 
@@ -68,7 +68,7 @@ leak through (non-zero gradient), large positives approach identity.
 </svg>
 ```
 
-## SwiGLU — the gated FFN variant
+## SwiGLU: the gated FFN variant
 
 Modern LLM feed-forward blocks rarely apply a bare activation. They use a
 **gated linear unit**: split the projection into two halves, pass one through

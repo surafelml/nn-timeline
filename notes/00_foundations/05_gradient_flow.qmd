@@ -59,7 +59,7 @@ The behavior is governed by whether the typical factor is below or above 1:
 - **Exploding**: factor $> 1$ (large weights) → growth like $r^{L}$, $r>1$,
   producing `NaN` losses [@pascanu2013].
 
-### Minimal sketch — gradient norm across depth
+### Minimal sketch: gradient norm across depth
 
 Propagate an error signal back through a 50-layer sigmoid stack and watch its
 norm on a log scale.
@@ -101,7 +101,7 @@ plt.legend(); plt.grid(alpha=0.3); plt.tight_layout(); plt.show()
   them is what good **initialization** targets — keeping the per-layer factor
   near 1 (Xavier/He; a look-ahead) [@glorot2010].
 
-::: {.callout-warning title="Pitfall — depth alone is not progress" icon="false"}
+::: {.callout-warning title="Pitfall: depth alone is not progress" icon="false"}
 Stacking more layers does **not** monotonically help if gradients vanish:
 the early layers stop receiving signal and the effective depth is far less
 than the nominal depth. Naively going deeper without addressing gradient

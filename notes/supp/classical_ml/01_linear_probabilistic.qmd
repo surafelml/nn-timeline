@@ -16,7 +16,7 @@ assumption. Both are the direct classical ancestors of the
 [cross-entropy objective](../../00_foundations/02_information_theory.qmd).
 :::
 
-## Logistic regression — the neuron, named earlier
+## Logistic regression: the neuron, named earlier
 
 A linear score passed through a sigmoid gives a class probability:
 
@@ -36,7 +36,7 @@ loss from the foundations — the neural net is logistic regression stacked and
 made non-linear. The decision boundary is a hyperplane; its power comes
 entirely from the features it is given.
 
-## Naive Bayes — generative, with an independence shortcut
+## Naive Bayes: generative, with an independence shortcut
 
 Rather than model $p(y\mid x)$ directly, naive Bayes models the joint via Bayes'
 rule and assumes features are conditionally independent given the class:
@@ -50,7 +50,7 @@ is fast, needs little data, and was the workhorse text-classifier (spam,
 sentiment) that statistical NLP relied on — the baseline that
 [Seq2Seq](../../01_rnn/03_seq2seq.qmd) and later LLMs displaced.
 
-## The unifying thread — maximum likelihood
+## The unifying thread: maximum likelihood
 
 Both models are fit by maximum likelihood, and minimizing negative
 log-likelihood **is** minimizing cross-entropy — the same principle that

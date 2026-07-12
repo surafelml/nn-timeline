@@ -1,5 +1,5 @@
 ---
-title: "KV-Cache — Autoregressive Inference Efficiency"
+title: "KV-Cache: Autoregressive Inference Efficiency"
 format: html
 ---
 
@@ -79,7 +79,7 @@ All three methods keep full query heads but share or compress K/V:
   compression of K and V into a small latent that is cached and re-expanded per
   head, cutting cache further while retaining multi-head expressivity.
 
-## Related inference trick — speculative decoding
+## Related inference trick: speculative decoding
 
 Orthogonal to cache size: **speculative decoding** [@chen2023speculative] uses
 a small draft model to propose several tokens, which the large model then

@@ -33,7 +33,7 @@ left (GPT, generation). That fork still organises the field.
 
 ## The mechanism
 
-### Tokenisation — the layer underneath everything
+### Tokenisation: the layer underneath everything
 
 Before any embedding, text must become a sequence of integer IDs. Word-level
 vocabularies explode and can't handle unseen words; character-level sequences
@@ -51,7 +51,7 @@ out-of-vocabulary.
   no pre-tokenisation (treats space as a symbol), so it is language-agnostic.
   Used by T5 and LLaMA.
 
-::: {.callout-warning title="Pitfall — tokenisation leaks into everything" icon="false"}
+::: {.callout-warning title="Pitfall: tokenisation leaks into everything" icon="false"}
 Token boundaries are not neutral. They explain why models miscount letters in a
 word, why arithmetic on long numbers is brittle, and why some languages cost
 several times more tokens (and money) per sentence than English. Context length,
@@ -59,7 +59,7 @@ pricing, and many "reasoning" failures are downstream of the tokenizer. It is a
 modelling choice, not a preprocessing detail.
 :::
 
-### BERT — bidirectional encoder
+### BERT: bidirectional encoder
 
 BERT [@devlin2019] is an encoder-only stack. Because it has no causal mask,
 every token attends to the **full** sentence — left and right context at once.
@@ -76,7 +76,7 @@ the next word":
 You then **fine-tune**: bolt a small head on top and train on a labelled task
 (classification, NER, QA). One pre-trained model, many fine-tuned descendants.
 
-### GPT — causal decoder
+### GPT: causal decoder
 
 GPT [@radford2018gpt] keeps the decoder half (minus cross-attention, since
 there's no encoder): a stack with a **causal mask** trained on plain next-token

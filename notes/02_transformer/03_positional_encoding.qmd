@@ -64,7 +64,7 @@ per position up to a maximum length. Simple and effective, but with a hard
 ceiling: there is no embedding for positions beyond the training length, so the
 model cannot run on longer sequences at all.
 
-::: {.callout-warning title="Pitfall — absolute encodings don't extrapolate" icon="false"}
+::: {.callout-warning title="Pitfall: absolute encodings don't extrapolate" icon="false"}
 Both sinusoidal and learned *absolute* schemes tie the signal to an absolute
 index. A model trained to position 2048 has never seen the position-4096 signal;
 attention degrades sharply past the training length. What attention actually
@@ -93,7 +93,7 @@ because rotations compose: $R_m^\top R_n = R_{n-m}$. Position is folded directly
 into the attention score rather than added to the embedding. RoPE is now the
 default in LLaMA, Mistral, DeepSeek, and most open LLMs.
 
-### ALiBi — bias instead of embedding
+### ALiBi: bias instead of embedding
 
 ALiBi [@press2022alibi] takes an even simpler route: add nothing to the
 embeddings, but subtract a linear penalty $-\lambda\,|m-n|$ from each attention

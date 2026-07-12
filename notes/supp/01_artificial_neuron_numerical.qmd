@@ -1,5 +1,5 @@
 ---
-title: "Numerical walkthrough — perceptron updates on AND and XOR"
+title: "Numerical walkthrough: perceptron updates on AND and XOR"
 format: html
 ---
 
@@ -29,7 +29,7 @@ $$
 \mathbf{w} \mathrel{+}= y_i \mathbf{x}_i,\quad b \mathrel{+}= y_i
 $$
 
-## AND — converges
+## AND: converges
 
 Labels $y = (-1, -1, -1, +1)$.
 
@@ -94,7 +94,7 @@ misclassified positive and *away* from misclassified negatives, until it
 lands on a side of the unit square that puts (1,1) alone above and the
 other three below.
 
-## XOR — never converges
+## XOR: never converges
 
 Same $X$, but labels $y = (-1, +1, +1, -1)$ — the diagonals are positive,
 the antidiagonals are negative.

@@ -1,5 +1,5 @@
 ---
-title: "Before the Perceptron — A Short Prehistory"
+title: "Before the Perceptron: A Short Prehistory"
 format: html
 ---
 
@@ -137,7 +137,7 @@ systematic computational *test* of a neural learning hypothesis. The gap
 between Hebb's prediction and what the simulation produced was itself a
 scientific result.
 
-::: {.callout-warning title="Pitfall — don't conflate the two tracks" icon="false"}
+::: {.callout-warning title="Pitfall: don't conflate the two tracks" icon="false"}
 The theoretical track gave us the *abstraction* (neuron, learning rule).
 The computational track proved it could *run*. Neither alone is a
 learning system — the perceptron is what you get when both arrive on the

@@ -1,5 +1,5 @@
 ---
-title: "Transformer Era — Research Landscape"
+title: "Transformer Era: Research Landscape"
 format:
   html:
     page-layout: full
@@ -503,7 +503,7 @@ parameters grow.
 MoE is the dominant architecture at frontier scale. GPT-4, Gemini 1.5, and
 almost every post-2023 flagship model is believed to use sparse MoE.
 
-### Methods — training, alignment, efficiency {.unnumbered}
+### Methods: training, alignment, efficiency {.unnumbered}
 
 Works that changed how models are trained, aligned, or deployed without
 introducing a new architecture family.
@@ -525,7 +525,7 @@ introducing a new architecture family.
 | QLoRA [@dettmers2023qlora] | 2023 | PEFT | 4-bit NF4 quantisation + LoRA adapters; single-GPU fine-tuning |
 | Speculative decoding [@chen2023speculative] | 2023 | Efficiency | Draft-verify pipeline; 2–3× throughput, exact distribution |
 
-### Alternative architectures — beyond quadratic attention {.unnumbered}
+### Alternative architectures: beyond quadratic attention {.unnumbered}
 
 The Transformer's $O(N^2)$ attention cost motivates research into sub-linear
 alternatives. None has displaced Transformers at scale, but Mamba and hybrids

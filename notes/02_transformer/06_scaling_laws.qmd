@@ -61,7 +61,7 @@ schedules matched to each run and reached the opposite conclusion: for a fixed
 compute budget $C \approx 6ND$, **parameters and tokens should scale in roughly
 equal proportion**.
 
-::: {.callout-warning title="Pitfall — GPT-3 was badly under-trained" icon="false"}
+::: {.callout-warning title="Pitfall: GPT-3 was badly under-trained" icon="false"}
 By the Chinchilla rule, GPT-3 (175B params, ~300B tokens) had far too few tokens
 for its size. **Chinchilla** (70B params, 1.4T tokens) — *smaller* but trained
 on ~20× more data per parameter — beat it across benchmarks at the *same*

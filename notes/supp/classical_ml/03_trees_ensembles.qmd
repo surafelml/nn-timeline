@@ -31,7 +31,7 @@ natively, and need no scaling. Their weakness is **variance**: a deep tree
 memorizes the training set and a small data change reshapes it entirely. The
 two ensemble families below both exist to tame that variance.
 
-## Random forests — bagging decorrelated trees
+## Random forests: bagging decorrelated trees
 
 Train many trees, each on a bootstrap sample of the rows and a random subset of
 features at each split, then average their predictions:
@@ -44,7 +44,7 @@ Bootstrapping + feature subsampling **decorrelates** the trees, so averaging
 collapses variance without inflating bias. Robust, hard to overfit, and almost
 parameter-free — a strong default.
 
-## Gradient boosting — sequential residual fitting
+## Gradient boosting: sequential residual fitting
 
 Boosting builds the ensemble **additively**: each new tree fits the gradient of
 the loss left over by the current model:

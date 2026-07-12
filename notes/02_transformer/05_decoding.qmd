@@ -123,7 +123,7 @@ probability) versus *stochastic* (sample for diversity).
   set of tokens whose cumulative probability exceeds $p$. Unlike top-k, the
   candidate set grows and shrinks with the model's confidence.
 
-::: {.callout-warning title="Pitfall — likelihood maximisation degenerates" icon="false"}
+::: {.callout-warning title="Pitfall: likelihood maximisation degenerates" icon="false"}
 The most striking result here: always picking high-probability tokens produces
 *worse* text. Holtzman et al. [@holtzman2020nucleus] showed that maximisation
 (greedy/beam) drives models into bland, repetitive loops — human text is

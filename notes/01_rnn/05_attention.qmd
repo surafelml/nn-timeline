@@ -57,7 +57,7 @@ where $e_{t,s}$ is an **alignment score** measuring how well the decoder
 state at step $t$ matches the encoder state at position $s$. The score
 function is where Bahdanau and Luong differ.
 
-### Additive attention — Bahdanau et al. [@bahdanau2015]
+### Additive attention: Bahdanau et al. [@bahdanau2015]
 
 **Bahdanau, Cho & Bengio** score alignment with a learned MLP:
 
@@ -83,7 +83,7 @@ h_t^{\text{dec}} = \text{LSTM}\!\bigl(
 \bigr).
 $$
 
-### Multiplicative attention — Luong et al. [@luong2015]
+### Multiplicative attention: Luong et al. [@luong2015]
 
 **Luong, Pham & Manning** replace the MLP with score functions that
 exploit the dot product directly. Three variants in the paper:
@@ -215,7 +215,7 @@ for t in range(T_y):
     print(f"  t={t+1}: α = {np.round(alpha, 2)}  ‖c_t‖ = {np.linalg.norm(ctx):.3f}")
 ```
 
-::: {.callout-tip title="Going deeper — the step to self-attention" icon="false"}
+::: {.callout-tip title="Going deeper: the step to self-attention" icon="false"}
 In encoder-decoder attention, the query comes from the **decoder** and the
 keys/values from the **encoder**. Self-attention asks: what if query, key,
 and value all come from the **same** sequence? That single change — covering

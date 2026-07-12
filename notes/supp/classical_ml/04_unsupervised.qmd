@@ -16,7 +16,7 @@ learned [representations](../../01_rnn/00_embeddings.qmd) that neural networks
 discover automatically.
 :::
 
-## k-means — clustering by proximity
+## k-means: clustering by proximity
 
 Partition $n$ points into $k$ clusters, each represented by a centroid, by
 minimizing within-cluster squared distance:
@@ -31,7 +31,7 @@ mean. It is fast and ubiquitous, but assumes roughly spherical, equal-size
 clusters and needs $k$ chosen in advance — and the result depends on
 initialization (k-means++ mitigates this).
 
-## PCA — variance-maximizing directions
+## PCA: variance-maximizing directions
 
 PCA finds an orthogonal basis ordered by how much variance each direction
 captures. The principal components are the top eigenvectors of the covariance

@@ -33,7 +33,7 @@ is now as central to building a usable model as pre-training itself.
 
 ## The mechanism
 
-### Stage 1 — Supervised fine-tuning (SFT)
+### Stage 1: Supervised fine-tuning (SFT)
 
 Collect a dataset of (instruction, ideal response) pairs written by humans and
 fine-tune the base model on them with ordinary next-token loss. This teaches the
@@ -41,7 +41,7 @@ fine-tune the base model on them with ordinary next-token loss. This teaches the
 SFT alone produces a usable instruction model — but it can only imitate
 demonstrations, and good demonstrations are expensive and inconsistent.
 
-### Stage 2 — Learning from preferences (RLHF)
+### Stage 2: Learning from preferences (RLHF)
 
 Humans find it far easier to *compare* two responses than to write the ideal
 one. **RLHF** [@ouyang2022] exploits this:
@@ -56,7 +56,7 @@ one. **RLHF** [@ouyang2022] exploits this:
 This is the recipe behind InstructGPT and ChatGPT. It works, but the pipeline is
 fragile: a separate reward model, an RL loop, and reward-hacking to fight.
 
-### Stage 3 — DPO: preferences without RL
+### Stage 3: DPO: preferences without RL
 
 Direct Preference Optimization [@rafailov2023] shows the RLHF objective has a
 **closed-form optimal policy**, which lets you skip the reward model and PPO
@@ -130,7 +130,7 @@ Why it's a paradigm shift, not a patch:
 - **Smaller models, current facts** — knowledge lives in the corpus, so the
   parameters can be spent on reasoning rather than memorisation.
 
-::: {.callout-warning title="Pitfall — RAG fails at retrieval, not generation" icon="false"}
+::: {.callout-warning title="Pitfall: RAG fails at retrieval, not generation" icon="false"}
 A RAG system is only as good as what it retrieves. If the retriever misses the
 relevant passage, the model confidently answers from parametric memory anyway —
 you've added latency without grounding. Most RAG failures are *retrieval*

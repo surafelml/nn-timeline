@@ -109,7 +109,7 @@ plt.tight_layout(); plt.show()
   networks were historically hard to train, and the direct setup for the
   next chapter.
 
-::: {.callout-warning title="Pitfall — saturation kills gradients" icon="false"}
+::: {.callout-warning title="Pitfall: saturation kills gradients" icon="false"}
 A neuron driven deep into saturation (large $|z|$) has a near-zero
 derivative, so almost no gradient flows back through it — it stops learning.
 Picking activations, initializations, and normalizations that *keep units

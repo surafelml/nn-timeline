@@ -1,5 +1,5 @@
 ---
-title: "Language Models — The Lineage"
+title: "Language Models: The Lineage"
 format: html
 ---
 
@@ -161,7 +161,7 @@ on next-token prediction — scaled in three landmark steps:
 </svg>
 ```
 
-### The branches — what each family added
+### The branches: what each family added
 
 The lineage is not a single line; each major family contributed a distinct idea
 (each detailed in its own chapter, catalogued in the landscape):
@@ -188,7 +188,7 @@ the strongest evidence that the era's chapters are the right decomposition:
 > Chinchilla-scaled data · (increasingly) MoE · SFT + preference alignment ·
 > nucleus decoding.
 
-::: {.callout-warning title="Pitfall — open vs closed splits the evidence" icon="false"}
+::: {.callout-warning title="Pitfall: open vs closed splits the evidence" icon="false"}
 Open-weight models (LLaMA, Mistral, DeepSeek, Qwen) publish architecture and
 often data; frontier closed models (GPT-4, Gemini, Claude) disclose little.
 Much of what's "known" about the largest models is inference, not fact. Treat

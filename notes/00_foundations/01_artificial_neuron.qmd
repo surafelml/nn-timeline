@@ -1,5 +1,5 @@
 ---
-title: "The Artificial Neuron — From McCulloch-Pitts to the Perceptron"
+title: "The Artificial Neuron: From McCulloch-Pitts to the Perceptron"
 format: html
 ---
 
@@ -44,7 +44,7 @@ means the predicted sign equals the label.
 
 ## The mechanism
 
-### Step 1 — McCulloch-Pitts neuron: structure, no learning
+### Step 1: McCulloch-Pitts neuron: structure, no learning
 
 A McCulloch-Pitts (MP) unit takes binary inputs $x_i \in \{0,1\}$, weights
 them (originally with $\pm 1$), sums, and thresholds:
@@ -57,14 +57,14 @@ The weights and threshold are **fixed by the designer**. Networks of such
 units can implement any propositional logic function — but there is no
 mechanism for the network to *change itself* from data.
 
-::: {.callout-warning title="Pitfall — MP is not a learning machine" icon="false"}
+::: {.callout-warning title="Pitfall: MP is not a learning machine" icon="false"}
 MP neurons are often described as "the first neural network", which is
 true structurally but misleading practically. They cannot learn; their
 weights are programmed, not trained. The leap to *learning* is exactly
 what the perceptron adds.
 :::
 
-### Step 2 — Perceptron: same structure + a learning rule
+### Step 2: Perceptron: same structure + a learning rule
 
 Rosenblatt's perceptron generalises MP to **real-valued** inputs and weights,
 swaps the indicator for a sign function, and crucially introduces an

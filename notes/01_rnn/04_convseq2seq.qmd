@@ -1,5 +1,5 @@
 ---
-title: "Convolutional Seq2Seq — CNNs for Sequence Modeling"
+title: "Convolutional Seq2Seq: CNNs for Sequence Modeling"
 format: html
 ---
 
@@ -164,7 +164,7 @@ print(f"input shape: {X.shape} → output shape: {Y.shape}")
 print(f"all positions computed simultaneously: T={T} steps → O(1) parallel depth")
 ```
 
-::: {.callout-warning title="Pitfall — fixed receptive field" icon="false"}
+::: {.callout-warning title="Pitfall: fixed receptive field" icon="false"}
 A stack of $N$ conv layers with kernel $k$ has a maximum receptive field
 of $k + (k-1)(N-1)$. Sentences longer than this window are invisible to
 the model across the full depth. Self-attention — which attends to all

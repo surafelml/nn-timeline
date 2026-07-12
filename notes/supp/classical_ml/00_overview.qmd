@@ -1,5 +1,5 @@
 ---
-title: "Classical ML — Context for the Neural Timeline"
+title: "Classical ML: Context for the Neural Timeline"
 format: html
 ---
 

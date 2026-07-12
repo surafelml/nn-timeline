@@ -122,7 +122,7 @@ gradient is preserved across many steps.
 </svg>
 ```
 
-### GRU — simplified gating
+### GRU: simplified gating
 
 **Cho et al.** [@cho2014] proposed the GRU in 2014 as a lighter alternative.
 Two gates replace three; the separate cell state is eliminated:
@@ -144,7 +144,7 @@ The update gate $z_t$ linearly interpolates between keeping the old hidden
 state and replacing it with the candidate — a clean analogue of the LSTM
 forget + input gates combined.
 
-::: {.callout-note title="LSTM vs GRU — which to use?" icon="false"}
+::: {.callout-note title="LSTM vs GRU: which to use?" icon="false"}
 Empirically, the two perform comparably on most tasks. GRU trains faster
 (fewer parameters), LSTM gives finer-grained control over memory.
 The Transformer later made the choice moot for most applications — but both
@@ -200,7 +200,7 @@ print("LSTM h_T norm:", np.linalg.norm(h_l).round(4))
 print("GRU  h_T norm:", np.linalg.norm(h_g).round(4))
 ```
 
-::: {.callout-note title="BiLSTM — reading in both directions" icon="false"}
+::: {.callout-note title="BiLSTM: reading in both directions" icon="false"}
 A **bidirectional LSTM** (BiLSTM) runs two LSTM cells over the sequence —
 one forward, one backward — and concatenates their hidden states:
 $h_t^{\text{bi}} = [\overrightarrow{h}_t; \overleftarrow{h}_t]$.

@@ -119,7 +119,7 @@ are reused at every step — unrolling creates a deep network with tied weights.
 </svg>
 ```
 
-### BPTT — backprop on the unrolled graph
+### BPTT: backprop on the unrolled graph
 
 The total loss $\mathcal{L} = \sum_t \mathcal{L}_t$ has gradients:
 
@@ -144,7 +144,7 @@ In practice, tanh saturates and the gradient signal from early positions
 reaches $\mathbf{W}_h$ as near-zero — the model cannot learn long-range
 dependencies.
 
-::: {.callout-warning title="Pitfall — gradient clipping is not a fix" icon="false"}
+::: {.callout-warning title="Pitfall: gradient clipping is not a fix" icon="false"}
 Clipping the gradient norm before each update (the standard mitigation for
 explosion) stabilises training but does not cure the vanishing direction.
 The network still cannot credit or blame weights for events many steps back.

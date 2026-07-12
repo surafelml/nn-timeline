@@ -131,7 +131,7 @@ plt.legend(); plt.grid(alpha=0.3); plt.tight_layout(); plt.show()
 - At $q = 0.5$ the loss is $\log 2 \approx 0.693$ — the "I don't know"
   baseline for one bit.
 
-::: {.callout-warning title="Pitfall — loss is not accuracy" icon="false"}
+::: {.callout-warning title="Pitfall: loss is not accuracy" icon="false"}
 Cross-entropy and accuracy measure different things. A model can improve its
 loss (becoming better-calibrated, less overconfident) while its accuracy is
 unchanged, and vice versa. Train on cross-entropy because it has useful

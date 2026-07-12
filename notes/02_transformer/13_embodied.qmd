@@ -190,7 +190,7 @@ practice:
 - Data scarcity, not architecture, is the binding constraint on embodied
   AI today, the opposite bottleneck from language modeling.
 
-::: {.callout-warning title="Pitfall — action tokenization is lossy" icon="false"}
+::: {.callout-warning title="Pitfall: action tokenization is lossy" icon="false"}
 Discretizing a continuous action into a fixed number of bins caps
 precision: fine motor control (threading a needle, for example) may need
 resolution finer than the token vocabulary allows. This is an active area

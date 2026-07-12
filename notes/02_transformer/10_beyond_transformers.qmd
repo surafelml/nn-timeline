@@ -1,5 +1,5 @@
 ---
-title: "Beyond Quadratic Attention — SSMs and Hybrids"
+title: "Beyond Quadratic Attention: SSMs and Hybrids"
 format: html
 ---
 
@@ -51,7 +51,7 @@ training runs in parallel (like a CNN/Transformer) while **inference** runs as a
 step-by-step recurrence in constant memory (like an RNN). You get both modes
 from one model.
 
-### Selectivity — Mamba's key idea
+### Selectivity: Mamba's key idea
 
 Classic SSMs have *fixed* $\bar{A}, \bar{B}, C$ — the same dynamics regardless of
 input — so they can't selectively remember or ignore tokens the way attention
@@ -105,7 +105,7 @@ hardware-aware **parallel scan** to keep training fast.
   few attention layers among many Mamba layers (e.g. Jamba, Zamba), getting
   linear scaling for most of the depth and exact recall where it matters.
 
-::: {.callout-warning title="Pitfall — a fixed state is a finite memory" icon="false"}
+::: {.callout-warning title="Pitfall: a fixed state is a finite memory" icon="false"}
 An SSM compresses the entire past into a constant-size state, so it cannot
 losslessly recall arbitrary earlier tokens the way attention reads its full KV-
 cache. On "needle-in-a-haystack" retrieval and exact copying, attention still

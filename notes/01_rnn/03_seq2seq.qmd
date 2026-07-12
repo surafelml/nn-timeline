@@ -171,7 +171,7 @@ training distribution (perfect prefix) and inference distribution
 accumulate: a wrong token at step 3 corrupts step 4's input, compounding
 throughout the sequence.
 
-::: {.callout-warning title="Pitfall — the fixed context bottleneck" icon="false"}
+::: {.callout-warning title="Pitfall: the fixed context bottleneck" icon="false"}
 $\mathbf{c} = h_{T_x}^{\text{enc}}$ must encode the entire source sentence
 in a vector of fixed size $d_h$. For short sentences this is fine; for long
 sentences, information is lost. Translation quality degrades sharply beyond

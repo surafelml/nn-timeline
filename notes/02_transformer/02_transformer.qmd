@@ -142,7 +142,7 @@ decoder side: shifted-right target embeddings → $N$ decoder blocks → a final
 linear projection to vocabulary logits → softmax. The output embedding matrix
 is often **tied** to the input embedding to save parameters.
 
-::: {.callout-warning title="Pitfall — the residual sets the width" icon="false"}
+::: {.callout-warning title="Pitfall: the residual sets the width" icon="false"}
 Every sublayer's input and output must share dimension $d_{\text{model}}$,
 because the residual adds them. This is why attention concatenates its heads
 back to $d_{\text{model}}$ and the FFN expands *then* contracts. The residual

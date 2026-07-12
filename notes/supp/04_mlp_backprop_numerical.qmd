@@ -1,5 +1,5 @@
 ---
-title: "Numerical walkthrough — backprop by hand on a 2-2-1 net"
+title: "Numerical walkthrough: backprop by hand on a 2-2-1 net"
 format: html
 ---
 

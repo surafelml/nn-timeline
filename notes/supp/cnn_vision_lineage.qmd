@@ -1,5 +1,5 @@
 ---
-title: "CNN Vision Lineage — LeNet to ResNet"
+title: "CNN Vision Lineage: LeNet to ResNet"
 format: html
 ---
 

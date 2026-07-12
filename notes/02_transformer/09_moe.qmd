@@ -97,14 +97,14 @@ $$
 </svg>
 ```
 
-### Load balancing — the central difficulty
+### Load balancing: the central difficulty
 
 Left alone, the router collapses: a few popular experts get all the tokens while
 the rest starve and never train. MoE training therefore adds an **auxiliary
 load-balancing loss** that penalises uneven expert usage, encouraging the router
 to spread tokens evenly across experts.
 
-::: {.callout-warning title="Pitfall — MoE saves compute, not memory" icon="false"}
+::: {.callout-warning title="Pitfall: MoE saves compute, not memory" icon="false"}
 A sparse model activates few parameters per token, but **all** experts must be
 resident in memory (any token might route to any of them). Mixtral 8×7B needs
 the VRAM of a ~47B model while computing like a ~13B one. MoE trades *memory*

@@ -17,11 +17,11 @@ for understanding *why* the survivors won: **Capsule Networks** (Hinton 2017),
 
 ## The ideas
 
-### Capsule Networks — pose-aware routing
+### Capsule Networks: Pose-Aware Routing
 
-### Neural Turing Machines — differentiable external memory
+### Neural Turing Machines: Differentiable External Memory
 
-### Neural ODEs — continuous-depth networks
+### Neural ODEs: Continuous-Depth Networks
 
 ## Why they did not take over
 

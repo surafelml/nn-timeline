@@ -80,7 +80,7 @@ once and feeds both this layer's weight gradient and the next layer back.
 That reuse — dynamic programming over the computational graph — is why
 backprop costs about the same as the forward pass.
 
-### Minimal sketch — an MLP solving XOR
+### Minimal sketch: an MLP solving XOR
 
 A 2-2-1 network with manual backprop. Watch it learn the function the
 perceptron couldn't.
@@ -122,7 +122,7 @@ clears the wall from [chapter 01](01_artificial_neuron.qmd).
 - [Numerical walkthrough — backprop by hand on a 2-2-1 net](../supp/04_mlp_backprop_numerical.qmd) — every partial derivative of one forward+backward pass, with explicit numbers.
 :::
 
-::: {.callout-warning title="Pitfall — backprop needs differentiable activations" icon="false"}
+::: {.callout-warning title="Pitfall: backprop needs differentiable activations" icon="false"}
 The backward recursion multiplies by $\phi'(\mathbf{z})$. A hard step/sign
 function (the original perceptron) has zero derivative almost everywhere, so
 no gradient flows — which is exactly why the move to smooth activations
@@ -160,7 +160,7 @@ sweep. Everything downstream — CNNs, RNNs, transformers — is this same
 forward/backward loop at larger scale.
 :::
 
-::: {.callout-note title="Parallel track — Convolutional Networks" icon="false"}
+::: {.callout-note title="Parallel track: Convolutional Networks" icon="false"}
 While MLP + backprop was being explored for sequences, LeCun et al. (1989)
 applied the same forward/backward loop to **convolutional layers** — weight
 sharing across spatial positions — producing **LeNet**, the first practical
