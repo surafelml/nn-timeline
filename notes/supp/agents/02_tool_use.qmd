@@ -6,32 +6,141 @@ format: html
 <!-- Supp: Agents track. ReAct, function calling, code execution. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-**Tool use** extends a language model beyond text generation: the model emits structured calls
-to external functions (search, code interpreter, APIs), receives results, and continues reasoning.
-The backbone is any instruction-following model; the pattern is model-agnostic.
+Tool use extends a language model beyond text generation: the model emits
+structured calls to external functions (search, code interpreter, APIs),
+receives the results, and continues reasoning. The backbone is any
+instruction-following model; the pattern is model-agnostic.
 :::
 
 **Depends on:** [Agent Architectures Overview](00_overview.qmd)
 
 ## Why this matters
 
+A pretrained language model's weights encode knowledge and reasoning
+ability, but not access to anything that changes after training: today's
+weather, a private database, or the exact result of a calculation. Tool
+use closes that gap without retraining: the model learns *when* and *how*
+to call an external function, and treats the function's return value as
+new information to reason over, the same "generate, then condition on new
+input" loop as
+[Alignment's RAG section](../../02_transformer/07_alignment.qmd), applied
+to arbitrary functions instead of only a document retriever.
+
 ## The mechanism
 
-### ReAct: interleaving Thought, Action, Observation
+### ReAct: interleaving reasoning and acting
 
-### Function calling: structured output as API contract
+**ReAct** [@yao2022react] structures generation as an explicit interleaving
+of three step types, repeated until the task is done.
 
-### Code execution as a tool (code interpreter, sandbox)
+```{=html}
+<svg viewBox="0 0 460 200" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:400px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="react-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#7c3aed"/>
+    </marker>
+  </defs>
+  <rect x="170" y="10" width="120" height="44" rx="6" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="230" y="36" text-anchor="middle" font-size="10" fill="#5b21b6">Thought</text>
 
-### Chain-of-thought and scratchpad reasoning
+  <rect x="310" y="90" width="120" height="44" rx="6" fill="#dcfce7" stroke="#22c55e"/>
+  <text x="370" y="116" text-anchor="middle" font-size="10" fill="#166534">Action</text>
+
+  <rect x="170" y="150" width="120" height="44" rx="6" fill="#fef9c3" stroke="#eab308"/>
+  <text x="230" y="176" text-anchor="middle" font-size="10" fill="#854d0e">Observation</text>
+
+  <rect x="30" y="90" width="120" height="44" rx="6" fill="#f1f5f9" stroke="#64748b"/>
+  <text x="90" y="108" text-anchor="middle" font-size="9" fill="#334155">Tool /</text>
+  <text x="90" y="122" text-anchor="middle" font-size="9" fill="#334155">environment</text>
+
+  <path d="M 285,45 C 330,60 360,70 375,88" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#react-ah)"/>
+  <path d="M 370,135 C 340,150 300,158 290,162" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#react-ah)"/>
+  <path d="M 168,168 C 130,155 100,145 92,136" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#react-ah)"/>
+  <path d="M 88,88 C 110,65 140,50 168,38" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#react-ah)"/>
+</svg>
+```
+
+- **Thought**: a reasoning step in natural language, deciding what to do
+  next.
+- **Action**: a call to a tool, formatted so it can be parsed and
+  executed, for example `search("current weather in Tokyo")`.
+- **Observation**: the tool's return value, inserted back into the
+  context for the next Thought.
+
+This is chain-of-thought reasoning ([Scaling Laws](../../02_transformer/06_scaling_laws.qmd))
+with the ability to pause and consult the outside world mid-reasoning,
+rather than reasoning purely from what the model already knows.
+
+### Function calling as a structured contract
+
+Modern instruction-tuned models support **function calling** directly: the
+model is given a schema describing available functions (name, arguments,
+types) and, instead of writing free-form text, emits a structured call
+matching that schema, which the calling application executes and returns
+the result of. This turns tool use from a prompting trick (ReAct's
+parsed-from-text actions) into a first-class, reliably-parseable output
+format.
+
+```{python}
+import json
+
+def call_model_with_tools(user_query, available_tools):
+    # A tool-calling model outputs a structured call instead of free text.
+    return {"tool": "search", "arguments": {"query": user_query}}
+
+tools = [{"name": "search", "parameters": {"query": "string"}}]
+call = call_model_with_tools("current weather in Tokyo", tools)
+print(json.dumps(call, indent=2))
+```
+
+### Code execution and self-taught tool use
+
+Two further points fill out how tool use is built and trained in practice.
+
+- **Code interpreter**: a code interpreter is a tool like any other,
+  except its "return value" is the result of running arbitrary code the
+  model wrote. This is particularly powerful for tasks with a verifiable,
+  computable answer (arithmetic, data analysis, plotting): the model does
+  not need to internally simulate execution, it writes code, runs it, and
+  reads back the real result.
+- **Toolformer** [@schick2023toolformer]: shows tool-calling ability can
+  be taught with self-supervision rather than hand-written examples. The
+  model generates candidate API calls at plausible points in a large text
+  corpus, keeps only the calls that measurably improve its ability to
+  predict the following text, and fine-tunes on the resulting
+  self-filtered examples.
+
+### What to observe
+
+- ReAct is a **prompting pattern** (structuring free-text output);
+  function calling is a **model capability** (a trained-in structured
+  output format). Modern systems mostly use the latter, with ReAct-style
+  reasoning interleaved around it.
+- A code interpreter is not a special case: it is a tool whose
+  "observation" happens to be a program's real output rather than a
+  search result.
+- Toolformer's filtering signal (does this call improve next-token
+  prediction?) is the same self-supervised principle behind
+  [Word Embeddings](../../01_rnn/00_embeddings.qmd) and every masked or
+  contrastive objective in this book: manufacture the training signal from
+  the data itself.
 
 ## Application & impact
 
+| Concept here | What it became | Where you see it today |
+|---|---|---|
+| ReAct's thought-action-observation loop | The template for agentic reasoning | Nearly every LLM agent framework |
+| Function calling | A trained model capability, not a prompt trick | Standard API feature of modern instruction-tuned LLMs |
+| Code interpreter | Verifiable computation as a tool | Data analysis and coding agents |
+| Toolformer's self-supervised filtering | Tool use learned without hand-labeled examples | A recurring idea in agent training research |
+
 ::: {.callout-note title="Key takeaway" icon="false"}
+Tool use turns a static, frozen-knowledge model into a system that can
+consult the outside world mid-reasoning. ReAct established the pattern as
+a prompting technique; function calling made it a trained-in capability;
+Toolformer showed the capability itself can be learned self-supervised,
+the same manufactured-label principle threaded through this entire book.
 :::
 
 ← Back to: [Agent Architectures Overview](00_overview.qmd)
-
-## References {.unnumbered}
-::: {#refs}
-:::

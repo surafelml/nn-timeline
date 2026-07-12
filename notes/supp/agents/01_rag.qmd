@@ -6,36 +6,132 @@ format: html
 <!-- Supp: Agents track. System-level pattern, not model-specific. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-**RAG** augments a generative model with a retrieval step: at inference time, relevant documents
-are fetched from an external store and prepended to the context. The model's weights remain fixed;
-knowledge lives in the retrieval index, not the parameters.
+**RAG** augments a generative model with a retrieval step: relevant
+documents are fetched from an external store at inference time and added
+to the context. The model's weights stay fixed; knowledge lives in the
+retrieval index, not the parameters.
 :::
 
-**Depends on:** [Agent Architectures Overview](00_overview.qmd)
+**Depends on:** [Agent Architectures Overview](00_overview.qmd) · [Alignment & Instruction Tuning](../../02_transformer/07_alignment.qmd) (RAG as a fix for stale, parametric knowledge)
 
 ## Why this matters
 
+[Alignment & Instruction Tuning](../../02_transformer/07_alignment.qmd)
+already introduced *why* RAG exists: a pretrained model's knowledge is
+frozen at training time and hallucinates confidently when asked about
+anything newer or more specific than its training data covered. This note
+goes one level deeper, into the retrieval **pipeline** itself: how a query
+actually becomes retrieved text, and the specific failure modes and fixes
+that pipeline has accumulated.
+
 ## The mechanism
 
-### Retrieval pipeline: embed → index → query → rerank
+A RAG system runs four stages before generation even starts, and the
+retrieved text is then just concatenated into the model's context
+alongside the query.
 
-### Fusion strategies: input-layer vs. attention-layer retrieval
+```{=html}
+<svg viewBox="0 0 620 140" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:600px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="rag-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#7c3aed"/>
+    </marker>
+  </defs>
+  <rect x="10"  y="45" width="90" height="50" rx="6" fill="#fef9c3" stroke="#eab308"/>
+  <text x="55" y="75" text-anchor="middle" font-size="10" fill="#854d0e">Query</text>
 
-### Chunking, embedding models, and vector stores
+  <rect x="130" y="45" width="90" height="50" rx="6" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="175" y="75" text-anchor="middle" font-size="10" fill="#5b21b6">Embed</text>
 
-### Naive RAG vs. advanced RAG (query rewriting, HyDE, FLARE)
+  <rect x="250" y="45" width="90" height="50" rx="6" fill="#dbeafe" stroke="#3b82f6"/>
+  <text x="295" y="70" text-anchor="middle" font-size="9" fill="#1e40af">Vector</text>
+  <text x="295" y="82" text-anchor="middle" font-size="9" fill="#1e40af">index</text>
+
+  <rect x="370" y="45" width="90" height="50" rx="6" fill="#dcfce7" stroke="#22c55e"/>
+  <text x="415" y="70" text-anchor="middle" font-size="9" fill="#166534">Top-k</text>
+  <text x="415" y="82" text-anchor="middle" font-size="9" fill="#166534">rerank</text>
+
+  <rect x="490" y="45" width="120" height="50" rx="6" fill="#fef3c7" stroke="#eab308"/>
+  <text x="550" y="70" text-anchor="middle" font-size="9" fill="#854d0e">Context + query</text>
+  <text x="550" y="82" text-anchor="middle" font-size="9" fill="#854d0e">→ generation</text>
+
+  <line x1="100" y1="70" x2="128" y2="70" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#rag-ah)"/>
+  <line x1="220" y1="70" x2="248" y2="70" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#rag-ah)"/>
+  <line x1="340" y1="70" x2="368" y2="70" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#rag-ah)"/>
+  <line x1="460" y1="70" x2="488" y2="70" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#rag-ah)"/>
+</svg>
+```
+
+- **Embed**: documents (and later, the query) are mapped to dense vectors
+  by an embedding model, the same idea as the contrastive encoders in
+  [Self-Supervised Learning](../self_supervised.qmd) or CLIP's text tower.
+- **Index**: document vectors are stored in a vector database that
+  supports fast nearest-neighbor search over millions of entries.
+- **Query**: the user's query is embedded with the same model, and the
+  index returns the $k$ nearest document vectors.
+- **Rerank**: a smaller, more expensive model re-scores the top-$k$
+  candidates for relevance, since fast approximate nearest-neighbor search
+  trades some precision for speed.
+
+### Chunking and embedding choices
+
+Documents are split into **chunks** before embedding, since a single
+vector cannot represent an entire long document precisely. Chunk size is a
+direct tradeoff: smaller chunks retrieve more precisely but lose
+surrounding context; larger chunks preserve context but dilute the
+embedding with irrelevant content. The embedding model itself is usually a
+contrastively-trained encoder, the same family as
+[SimCLR/MoCo](../self_supervised.qmd), applied to text instead of images.
+
+### Naive RAG vs. advanced RAG
+
+The pipeline above, embed the query once and retrieve once, is **naive
+RAG**, and it fails when the query itself is a poor search term for what's
+actually needed. Two refinements address this directly.
+
+- **HyDE** [@gao2023hyde]: instead of embedding the raw query, first ask
+  the language model to generate a *hypothetical answer*, then embed and
+  search with that hypothetical document. A generated answer is closer, in
+  embedding space, to the real answer documents than the original question
+  is.
+- **FLARE** [@jiang2023flare]: instead of retrieving once up front,
+  retrieve **actively**, mid-generation, whenever the model's own
+  confidence in its next tokens drops, triggering a fresh retrieval query
+  at exactly the point new information is needed.
+
+### What to observe
+
+- Every stage of the pipeline (embed, index, query, rerank) is a place
+  quality can be lost; RAG's overall quality is bounded by its weakest
+  stage, usually retrieval, not generation.
+- HyDE and FLARE both attack the same weakness, a naive query is often not
+  what should be searched for, from different angles: rewrite the query,
+  or retrieve at a better time.
+- RAG requires no change to the underlying model's weights, the direct
+  contrast to fine-tuning: knowledge is added by changing what's *in the
+  index*, not what's in the parameters.
+
+::: {.callout-warning title="Pitfall: RAG's latency is not free" icon="false"}
+Every retrieval step adds a round-trip to the vector index before
+generation can proceed; FLARE's repeated mid-generation retrieval trades
+that latency for freshness, and is only worth it when generation quality
+would otherwise suffer from stale context.
+:::
 
 ## Application & impact
 
-### Where RAG wins over parametric memory
-
-### Limitations: retrieval latency, context length, faithfulness
+| Concept here | What it became | Where you see it today |
+|---|---|---|
+| Embed → index → query → rerank | The standard RAG pipeline | Nearly every production LLM application with private or fresh data |
+| HyDE's query rewriting | Bridging the query-document embedding gap | Common preprocessing step in RAG pipelines |
+| FLARE's active retrieval | Retrieval as part of the agent loop, not a one-shot step | Agentic RAG systems |
 
 ::: {.callout-note title="Key takeaway" icon="false"}
+RAG decouples knowledge from weights by adding a retrieval pipeline in
+front of generation. The pipeline mechanics, chunking, embedding, and when
+to retrieve, are where most of RAG's practical quality is won or lost, not
+in the generation step itself.
 :::
 
 ← Back to: [Agent Architectures Overview](00_overview.qmd)
-
-## References {.unnumbered}
-::: {#refs}
-:::

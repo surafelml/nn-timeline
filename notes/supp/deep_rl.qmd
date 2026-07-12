@@ -1,37 +1,148 @@
 ---
-title: "Deep Reinforcement Learning — DQN to PPO"
+title: "Deep Reinforcement Learning: DQN to PPO"
 format: html
 ---
 
 <!-- Supp: RL & Agents. Prerequisite under RLHF (alignment) + embodied. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-Deep RL learns control policies from reward rather than labels: **DQN** (2013,
-Q-learning + deep nets on Atari) → **AlphaGo/AlphaZero** (search + self-play) →
-**policy-gradient / PPO** (Schulman 2017) — the optimizer underneath RLHF.
+Deep RL learns a control policy from reward rather than labels: **DQN**
+(2013, Q-learning with a deep network) → **AlphaGo/AlphaZero** (search
+plus self-play) → **policy gradients and PPO** (Schulman 2017), the
+optimizer underneath RLHF.
 :::
 
 **Depends on:** [Optimization — GD, SGD, Momentum](../00_foundations/06_optimization.qmd)
 
 ## Why this matters
 
+Every model so far in this book learns from a fixed dataset with a known
+correct answer per example: a label, the next token, a reconstruction
+target. Reinforcement learning (RL) removes that assumption.
+
+```{=html}
+<svg viewBox="0 0 460 160" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:420px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="rl-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#7c3aed"/>
+    </marker>
+  </defs>
+  <rect x="30" y="55" width="140" height="50" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="100" y="85" text-anchor="middle" font-size="11" fill="#5b21b6">Agent (policy)</text>
+
+  <rect x="290" y="55" width="140" height="50" rx="8" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+  <text x="360" y="85" text-anchor="middle" font-size="11" fill="#334155">Environment</text>
+
+  <path d="M 170,70 L 288,70" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#rl-ah)"/>
+  <text x="230" y="60" text-anchor="middle" font-size="9" fill="#5b21b6">action</text>
+
+  <path d="M 290,95 L 172,95" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#rl-ah)"/>
+  <text x="230" y="112" text-anchor="middle" font-size="9" fill="#166534">state + reward</text>
+</svg>
+```
+
+An **agent** takes actions in an **environment** and receives a **reward**
+signal that may be sparse, delayed, and never tells it directly what the
+"correct" action was, only how well things turned out. [Alignment](../02_transformer/07_alignment.qmd)
+already uses RL (RLHF) to fine-tune language models against a learned
+reward signal instead of a fixed label set, and
+[Embodied AI](../02_transformer/13_embodied.qmd) trains policies that act
+in the physical world; both inherit their optimization machinery from the
+deep RL lineage in this note.
+
 ## The mechanism
 
-### Value-based: Q-learning and DQN
+### Value-based learning: DQN
 
-### Search + self-play: AlphaGo to AlphaZero
+**Q-learning** estimates the *value* of taking action $a$ in state $s$:
+the expected future reward, written $Q(s,a)$. **DQN** [@mnih2013dqn]
+approximates $Q(s,a)$ with a deep network trained to minimize the Bellman
+error, the gap between the current estimate and a one-step-ahead target:
+
+$$
+\mathcal{L} = \mathbb{E}\Big[\big(\underbrace{r + \gamma \max_{a'} Q(s', a')}_{\text{target}} - Q(s,a)\big)^2\Big],
+$$
+
+where $r$ is the immediate reward, $\gamma \in (0,1)$ discounts future
+reward, and $s'$ is the state reached after taking action $a$. Once $Q$
+is learned, the policy is simply "take the action with the highest
+$Q(s,a)$." DQN's headline result was learning to play Atari games directly
+from raw pixels, with the same reward signal a human player sees (the
+game score), no hand-engineered features.
+
+### Search plus self-play: AlphaGo and AlphaZero
+
+**AlphaGo** [@silver2016alphago] combines two learned networks, a value
+network (how good is this board position) and a policy network (which
+moves look promising), with **Monte Carlo tree search**, using the
+networks to guide which branches of the game tree are worth exploring
+rather than searching exhaustively. Its successor AlphaZero removed all
+human game data, learning purely from self-play against earlier versions
+of itself, and matched or exceeded AlphaGo using the same architecture
+applied to chess and shogi as well as Go. Search plus self-play, rather
+than a fixed offline dataset, is what let AlphaZero generalize across
+games with the same recipe.
 
 ### Policy gradients and PPO
 
-### From game scores to human preference (the RLHF bridge)
+Rather than learning a value function and deriving a policy from it,
+**policy gradient** methods directly parameterize and optimize the policy
+$\pi_\theta(a|s)$ to maximize expected reward:
+
+$$
+\nabla_\theta J(\theta) = \mathbb{E}\big[\nabla_\theta \log \pi_\theta(a|s)\, A(s,a)\big],
+$$
+
+where $A(s,a)$ is the **advantage**: how much better this action was than
+the policy's average action in that state. Plain policy gradients can take
+a single bad step and destroy a good policy; **PPO** [@schulman2017ppo]
+guards against this by clipping how far one gradient step is allowed to
+move the policy away from its previous version. This training stability,
+more than raw sample efficiency, is why PPO became the default choice for
+RLHF: fine-tuning a large pretrained language model against a reward model
+tolerates very little instability before the model's fluency degrades.
+
+```{python}
+import numpy as np
+rng = np.random.default_rng(0)
+
+def clipped_objective(ratio, advantage, eps=0.2):
+    unclipped = ratio * advantage
+    clipped = np.clip(ratio, 1 - eps, 1 + eps) * advantage
+    return np.minimum(unclipped, clipped)   # PPO's pessimistic bound
+
+ratios = np.array([0.7, 1.0, 1.5, 2.0])   # new_policy_prob / old_policy_prob
+advantage = 1.0                            # this action was better than average
+print("PPO objective:", np.round(clipped_objective(ratios, advantage), 3))
+```
+
+### What to observe
+
+- DQN learns *values* and derives a policy from them; PPO learns the
+  *policy* directly. Both are valid ways to convert a reward signal into
+  behavior.
+- AlphaZero's self-play removes the need for any human-labeled dataset
+  entirely, generating its own curriculum by playing against itself.
+- PPO's clipping is a stability mechanism, not an accuracy improvement: it
+  trades some update speed for guaranteed-bounded policy changes, exactly
+  the property RLHF fine-tuning needs.
 
 ## Application & impact
 
+| Concept here | What it became | Where you see it today |
+|---|---|---|
+| DQN's value-based control | Deep RL from raw sensory input | Robotics and game-playing agents |
+| AlphaZero's self-play | Learning without human demonstration data | A recurring idea in agentic self-improvement research |
+| Policy gradients | Direct policy optimization | The basis for RLHF |
+| PPO's clipped update | Stable fine-tuning against a reward model | [Alignment & Instruction Tuning](../02_transformer/07_alignment.qmd)'s RLHF stage |
+
 ::: {.callout-note title="Key takeaway" icon="false"}
+Deep RL supplies the optimization machinery for learning from reward
+instead of labels, value-based (DQN), search-based (AlphaZero), or
+policy-based (PPO). PPO's contribution, a stable, bounded policy update,
+is precisely why it, rather than an older or more sample-efficient method,
+became the standard tool for RLHF and for embodied policy fine-tuning.
 :::
 
 ← Back to: [Alignment & Instruction Tuning](../02_transformer/07_alignment.qmd) · [Embodied AI & VLA](../02_transformer/13_embodied.qmd)
-
-## References {.unnumbered}
-::: {#refs}
-:::

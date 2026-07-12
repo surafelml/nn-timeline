@@ -1,37 +1,118 @@
 ---
-title: "Agent Architectures — Overview"
+title: "Agent Architectures Overview"
 format: html
 ---
 
 <!-- Supp: Agents track. Architecture-agnostic framing. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-An **agent** is a system that perceives state, reasons about it, and selects actions to pursue a
-goal — iteratively, over multiple steps. The underlying model (transformer, SSM, or otherwise) is
-one component; the **architecture** is how perception, memory, reasoning, and action are composed.
+An **agent** perceives state, reasons about it, and selects actions to
+pursue a goal, iteratively, over multiple steps. The underlying model
+(Transformer, SSM, or otherwise) is one component; the **architecture** is
+how perception, memory, reasoning, and action are composed around it.
 :::
 
 ## Why this matters
 
+Every model covered so far in this book answers a single query: predict
+the next token, classify an image, denoise a patch. An agent is different
+in kind, not just in scale. It runs a **loop**: observe, decide, act, and
+observe the result of that action, repeating until a goal is reached or a
+budget is exhausted. This loop is what [Embodied AI](../../02_transformer/13_embodied.qmd)
+runs physically and what a coding assistant or research agent runs
+virtually; the pattern is the same regardless of whether the "action" is a
+motor command or a function call.
+
 ## The mechanism
 
-### The perceive-reason-act loop (model-agnostic)
+### The perceive-reason-act loop
 
-### Memory: in-context, retrieval, external state
+```{=html}
+<svg viewBox="0 0 480 300" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:420px;display:block;margin:1.5rem auto">
+  <defs>
+    <marker id="agent-ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#7c3aed"/>
+    </marker>
+  </defs>
+  <circle cx="240" cy="150" r="110" fill="none" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3"/>
 
-### Planning: chain-of-thought, tree search, reflection
+  <rect x="180" y="20" width="120" height="40" rx="6" fill="#fef9c3" stroke="#eab308"/>
+  <text x="240" y="44" text-anchor="middle" font-size="10" fill="#854d0e">Perceive</text>
 
-### The model's role: backbone vs. orchestrator
+  <rect x="340" y="130" width="120" height="40" rx="6" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="400" y="154" text-anchor="middle" font-size="10" fill="#5b21b6">Reason</text>
+
+  <rect x="180" y="240" width="120" height="40" rx="6" fill="#dcfce7" stroke="#22c55e"/>
+  <text x="240" y="264" text-anchor="middle" font-size="10" fill="#166534">Act</text>
+
+  <rect x="20" y="130" width="120" height="40" rx="6" fill="#f1f5f9" stroke="#64748b"/>
+  <text x="80" y="154" text-anchor="middle" font-size="10" fill="#334155">Environment</text>
+
+  <path d="M 290,45 A 110,110 0 0,1 395,135" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#agent-ah)"/>
+  <path d="M 400,175 A 110,110 0 0,1 295,255" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#agent-ah)"/>
+  <path d="M 195,260 A 110,110 0 0,1 85,175" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#agent-ah)"/>
+  <path d="M 80,125 A 110,110 0 0,1 185,40" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#agent-ah)"/>
+</svg>
+```
+
+Every agent runs this cycle, model-agnostic: **perceive** the current state
+(text, images, sensor data), **reason** about what to do given the goal and
+history, **act** on the environment, then perceive the new state and
+repeat. This is the physical-world loop from
+[Embodied AI](../../02_transformer/13_embodied.qmd), generalized: the
+environment can be a robot's surroundings, a filesystem, a web browser, or
+another agent.
+
+### Memory
+
+An agent's memory of past steps can live in three places, each with a
+different cost and capacity tradeoff.
+
+- **In-context**: prior steps stay in the model's context window
+  directly. Simple, but bounded by context length and expensive to attend
+  over as it grows (see [Efficient Attention](../efficient_attention.qmd)
+  and [KV-Cache](../kv_cache.qmd)).
+- **Retrieval**: prior steps or external knowledge are stored in an index
+  and fetched on demand. Unbounded capacity, at the cost of retrieval
+  latency and imperfect recall; the full mechanism is covered in
+  [RAG](01_rag.qmd).
+- **External state**: an explicit scratchpad, file, or database the agent
+  reads and writes directly, outside the model's context entirely.
+
+### Planning
+
+**Chain-of-thought** ([Scaling Laws](../../02_transformer/06_scaling_laws.qmd))
+is the simplest planning mechanism: reasoning tokens generated before the
+final action. More elaborate agents add **tree search** (explore multiple
+candidate action sequences before committing) or **reflection** (critique
+and revise a plan after seeing its outcome), trading extra inference-time
+compute for a better chance of reaching the goal.
+
+### Backbone vs. orchestrator
+
+A single model can play two different roles in an agent system. As a
+**backbone**, it is the perceive-reason-act loop's reasoning engine
+directly. As an **orchestrator**, it coordinates other components,
+calling tools ([Tool Use](02_tool_use.qmd)), delegating to other agents
+([Multi-Agent Systems](03_multi_agent.qmd)), or querying a retrieval index
+([RAG](01_rag.qmd)), without doing all the reasoning itself in one forward
+pass.
 
 ## Landscape of agent architectures
 
 | System | Backbone | Key capability |
 |---|---|---|
-| ReAct | LLM | interleaved reasoning + tool calls |
-| AutoGPT / BabyAGI | LLM | autonomous task decomposition |
-| RT-2 / OpenVLA | VLA transformer | embodied physical action |
-| AlphaCode 2 | LLM | code agent with test execution |
+| ReAct [@yao2022react] | LLM | Interleaved reasoning and tool calls |
+| Toolformer [@schick2023toolformer] | LLM | Self-taught tool use via fine-tuning |
+| AutoGen [@wu2023autogen] | LLM | Multi-agent conversation and orchestration |
+| Generative Agents [@park2023generative] | LLM | Simulated agents with memory and social behavior |
+| RT-2 / OpenVLA | VLA Transformer | Embodied physical action |
 
-## References {.unnumbered}
-::: {#refs}
+::: {.callout-note title="Key takeaway" icon="false"}
+An agent is a loop, not a model. The perceive-reason-act cycle, a memory
+strategy, and a planning mechanism are the architectural choices that turn
+a single-query model into a system that pursues a goal over many steps; the
+next three notes cover the three concrete patterns (retrieval, tool use,
+multi-agent coordination) that fill in this loop in practice.
 :::
