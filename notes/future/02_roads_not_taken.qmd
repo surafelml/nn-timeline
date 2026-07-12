@@ -6,28 +6,95 @@ format: html
 <!-- Future Outlook. Historically interesting non-survivors. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-Architectures that were influential but did not become the mainline — useful
-for understanding *why* the survivors won: **Capsule Networks** (Hinton 2017),
-**Neural Turing Machines** (Graves 2014), **Neural ODEs** (Chen 2018).
+Three architectures that targeted real limitations of their era's mainline
+but did not become dominant: **Capsule Networks** [@sabour2017capsule],
+**Neural Turing Machines** [@graves2014ntm], and **Neural ODEs**
+[@chen2018neuralode].
 :::
 
 **Depends on:** [The Transformer](../02_transformer/02_transformer.qmd)
 
 ## Why these matter
 
+Each idea below solved a specific, real limitation of its era's mainline
+architecture and was not displaced because the problem was fake; it was
+displaced by a simpler alternative that scaled better.
+
 ## The ideas
+
+```{=html}
+<svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:540px;display:block;margin:1.5rem auto">
+  <line x1="20" y1="100" x2="540" y2="100" stroke="#7c3aed" stroke-width="2"/>
+  <text x="530" y="90" font-size="9" fill="#5b21b6">mainline (survivors)</text>
+
+  <path d="M 150,100 C 200,60 280,40 350,35" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <circle cx="350" cy="35" r="5" fill="#fee2e2" stroke="#ef4444"/>
+  <text x="350" y="22" text-anchor="middle" font-size="8" fill="#b91c1c">Capsule Networks</text>
+
+  <path d="M 250,100 C 300,140 380,155 440,158" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <circle cx="440" cy="158" r="5" fill="#fee2e2" stroke="#ef4444"/>
+  <text x="440" y="175" text-anchor="middle" font-size="8" fill="#b91c1c">Neural Turing Machines</text>
+
+  <path d="M 350,100 C 380,65 420,50 460,48" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <circle cx="460" cy="48" r="5" fill="#fee2e2" stroke="#ef4444"/>
+  <text x="460" y="35" text-anchor="middle" font-size="8" fill="#b91c1c">Neural ODEs</text>
+</svg>
+```
+
+| Architecture | Problem targeted | Core mechanism |
+|---|---|---|
+| Capsule Networks [@sabour2017capsule] | Max-pooling discards spatial pose (position, orientation, scale) | Vectors ("capsules") encode presence and pose; **routing-by-agreement** replaces pooling |
+| Neural Turing Machines [@graves2014ntm] | A fixed-size RNN hidden state bottlenecks algorithmic generalization (copy, sort) | A differentiable **external memory matrix** with content- and location-based read/write heads |
+| Neural ODEs [@chen2018neuralode] | Depth is a fixed, discrete architectural choice | A ResNet block $y = x + F(x)$ reinterpreted as one Euler step of $\frac{dz}{dt} = f(z(t), t)$, solved by an ODE solver |
 
 ### Capsule Networks: Pose-Aware Routing
 
+Capsule length encodes the probability a feature is present; orientation
+encodes its pose. **Routing-by-agreement** replaces pooling: a lower-level
+capsule sends its output to whichever higher-level capsule's prediction it
+agrees with most, so a face capsule activates only when its eye, nose, and
+mouth capsules agree on a consistent pose, not merely on presence.
+
 ### Neural Turing Machines: Differentiable External Memory
+
+A controller network reads and writes an external memory matrix through
+differentiable heads, addressing memory by content (find the slot most
+similar to a query) or by location (move to a nearby slot). Controller and
+memory access train end to end with backpropagation, the same mechanism
+every other architecture in this book uses.
 
 ### Neural ODEs: Continuous-Depth Networks
 
+Stacking $N$ discrete ResNet blocks approximates a continuous
+transformation via the Euler method. Replacing the discrete stack with an
+ODE solver makes depth an emergent property of how many solver steps a
+given input needs, rather than a fixed architectural choice, an adaptive,
+per-input compute budget.
+
+### What to observe
+
+- Each targets a specific, real weakness of its era's mainline: pooling's
+  spatial information loss, RNN hidden-state capacity, fixed discrete
+  depth.
+- Each introduces a genuinely new computational primitive (routing-by-
+  agreement, differentiable memory addressing, an ODE solver) rather than
+  recomposing existing primitives, which is precisely what made each
+  expensive to scale.
+- All three remain trainable end to end with backpropagation.
+
 ## Why they did not take over
 
-::: {.callout-note title="Key takeaway" icon="false"}
-:::
+| Architecture | Why it lost |
+|---|---|
+| Capsule Networks | Routing-by-agreement is iterative and expensive per capsule; did not scale to the depth and data volume that made CNNs, then attention, effective through scale alone |
+| Neural Turing Machines | Differentiable memory addressing was unstable to train at scale; a Transformer's long context window is itself an attended-to memory, delivering most of the benefit without a separate module |
+| Neural ODEs | Numerical ODE solvers are slower in practice than a fixed discrete stack for comparable accuracy; few tasks need adaptive per-input depth badly enough to justify the cost |
 
-## References {.unnumbered}
-::: {#refs}
+::: {.callout-note title="Key takeaway" icon="false"}
+Each architecture here lost to a simpler alternative that scaled better,
+not to a better argument against it. The pattern, an elegant special-
+purpose mechanism displaced by a simpler primitive trained at greater
+scale, recurs throughout this book: attention over recurrence, next-token
+prediction over explicit world models.
 :::
