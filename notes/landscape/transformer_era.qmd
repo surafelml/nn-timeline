@@ -540,6 +540,15 @@ are serious contenders for 2025–2026.
 
 The most likely outcome is **hybrid architectures** that mix attention layers (for long-range global context) with SSM or linear recurrence layers (for local computation efficiency).
 
+::: {.callout-note title="Out of scope: Graph Neural Networks" icon="false"}
+**Graph Neural Networks** (GCN, GAT, and successors) address a different
+input structure, arbitrary graphs rather than sequences or grids, and are
+deliberately out of scope for this timeline. They are omitted by design,
+not by oversight: this book traces the sequence-and-grid lineage (RNN → CNN
+→ Transformer) rather than the parallel graph-representation-learning
+lineage.
+:::
+
 ---
 
 ## By application area
