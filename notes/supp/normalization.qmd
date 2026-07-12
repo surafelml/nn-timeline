@@ -1,37 +1,183 @@
 ---
-title: "Normalization — BatchNorm to RMSNorm"
+title: "Normalization: BatchNorm to RMSNorm"
 format: html
 ---
 
 <!-- Supp: Training Techniques. The why-normalize story + the lineage. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-Normalization rescales activations to keep them in a well-conditioned range,
-stabilizing and accelerating training: **BatchNorm** (Ioffe 2015) → **LayerNorm**
-(per-token, the Transformer default) → **RMSNorm** (LLaMA) → **GroupNorm**.
+Normalization rescales activations to keep them in a well-conditioned range
+at every layer: **BatchNorm** (Ioffe & Szegedy 2015) → **LayerNorm** (Ba
+2016, the Transformer default) → **RMSNorm** (Zhang 2019, LLaMA's choice)
+→ **GroupNorm** (vision models with small batches). All four solve the
+same problem; they differ only in *which axis* they average over.
 :::
 
 **Depends on:** [Gradient Flow & Vanishing Gradients](../00_foundations/05_gradient_flow.qmd)
 
 ## Why this matters
 
+[Gradient Flow](../00_foundations/05_gradient_flow.qmd) and
+[Optimization](../00_foundations/06_optimization.qmd) both showed that
+training is sensitive to *scale*: an ill-conditioned loss surface makes
+gradient descent zig-zag, and saturated activations kill gradients
+outright. Normalization attacks this from a different angle. Rather than
+relying only on careful initialization and a well-tuned learning rate,
+rescale the activations themselves, at every layer, so they land in a
+stable range no matter how deep the stack.
+
 ## The mechanism
 
-### BatchNorm — normalize across the batch
+Every method below computes the same two numbers, a mean $\mu$ and a
+variance $\sigma^2$, and applies the same rescaling,
 
-### LayerNorm — normalize across features (per token)
+$$
+\hat{x} = \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}}, \qquad y = \gamma\,\hat{x} + \beta,
+$$
 
-### RMSNorm — drop the mean, keep the scale
+with $\gamma, \beta$ learned so the network can undo the normalization if
+that helps. What changes across methods is only **which values get
+averaged together** to compute $\mu$ and $\sigma^2$.
 
-### Where each is used and why
+```{=html}
+<svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:560px;display:block;margin:1.5rem auto">
+  <text x="130" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">BatchNorm</text>
+  <text x="130" y="32" text-anchor="middle" font-size="9" fill="#6b7280">averages down each column</text>
+  <g>
+    <!-- 4 examples (rows) x 4 features (cols), highlight one column -->
+    <rect x="70" y="45" width="30" height="120" fill="#ede9fe" opacity="0.6"/>
+    <g font-size="9">
+      <!-- grid lines -->
+      <rect x="40" y="45" width="120" height="120" fill="none" stroke="#cbd5e1"/>
+      <line x1="70" y1="45" x2="70" y2="165" stroke="#cbd5e1"/>
+      <line x1="100" y1="45" x2="100" y2="165" stroke="#cbd5e1"/>
+      <line x1="130" y1="45" x2="130" y2="165" stroke="#cbd5e1"/>
+      <line x1="40" y1="75" x2="160" y2="75" stroke="#cbd5e1"/>
+      <line x1="40" y1="105" x2="160" y2="105" stroke="#cbd5e1"/>
+      <line x1="40" y1="135" x2="160" y2="135" stroke="#cbd5e1"/>
+    </g>
+  </g>
+  <text x="100" y="185" text-anchor="middle" font-size="8" fill="#7c3aed">↕ one feature, across the batch</text>
+  <text x="10" y="105" font-size="8" fill="#94a3b8" transform="rotate(-90 10 105)">batch (examples)</text>
+
+  <line x1="280" y1="100" x2="280" y2="100" stroke="none"/>
+
+  <text x="430" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">LayerNorm / RMSNorm</text>
+  <text x="430" y="32" text-anchor="middle" font-size="9" fill="#6b7280">averages across each row</text>
+  <g>
+    <rect x="340" y="75" width="120" height="30" fill="#dcfce7" opacity="0.7"/>
+    <rect x="340" y="45" width="120" height="120" fill="none" stroke="#cbd5e1"/>
+    <line x1="370" y1="45" x2="370" y2="165" stroke="#cbd5e1"/>
+    <line x1="400" y1="45" x2="400" y2="165" stroke="#cbd5e1"/>
+    <line x1="430" y1="45" x2="430" y2="165" stroke="#cbd5e1"/>
+    <line x1="340" y1="75" x2="460" y2="75" stroke="#cbd5e1"/>
+    <line x1="340" y1="105" x2="460" y2="105" stroke="#cbd5e1"/>
+    <line x1="340" y1="135" x2="460" y2="135" stroke="#cbd5e1"/>
+  </g>
+  <text x="400" y="185" text-anchor="middle" font-size="8" fill="#16a34a">↔ all features, one example</text>
+</svg>
+```
+
+### BatchNorm: average across the batch
+
+**BatchNorm** [@ioffe2015batchnorm] computes $\mu_B, \sigma_B^2$ for one
+feature by averaging over every example currently in the mini-batch (the
+highlighted column above). Two consequences follow directly from that
+choice:
+
+- **A train/test mismatch.** At test time there may be no batch at all
+  (e.g. one example at a time), so BatchNorm keeps a running average of
+  $\mu_B, \sigma_B^2$ collected during training and uses that instead.
+- **A batch-size dependence.** With a very small batch, $\mu_B,\sigma_B^2$
+  are noisy estimates, and BatchNorm's benefit degrades. This, plus the
+  train/test mismatch, motivated every variant below.
+
+### LayerNorm: average across features, per example
+
+**LayerNorm** [@ba2016layernorm] computes $\mu_L, \sigma_L^2$ for one
+example by averaging over that example's own features instead (the
+highlighted row above). Because the statistics come from a single
+example, LayerNorm has no train/test mismatch and no batch-size
+dependence. This is exactly what a Transformer needs: variable batch
+sizes, variable sequence lengths, and autoregressive decoding one token at
+a time, where a "batch" of one token has no useful batch statistics at
+all. This is the LayerNorm used throughout
+[The Transformer](../02_transformer/02_transformer.qmd).
+
+### RMSNorm: drop the mean, keep the scale
+
+**RMSNorm** [@zhang2019rmsnorm] observes that LayerNorm's re-centering
+(subtracting $\mu_L$) contributes little of its benefit; most of the
+stabilization comes from rescaling by magnitude alone. It normalizes with
+only the root-mean-square, no mean subtraction and no separate shift
+parameter:
+
+$$
+\hat{x}_i = \frac{x_i}{\sqrt{\frac{1}{n}\sum_j x_j^2 + \epsilon}}, \qquad
+y_i = \gamma\,\hat{x}_i.
+$$
+
+Cheaper to compute and empirically just as effective, RMSNorm is the
+normalization used in LLaMA and most modern open LLMs.
+
+### GroupNorm: average within channel groups
+
+**GroupNorm** [@wu2018groupnorm] splits channels into groups and
+normalizes within each group across the spatial dimensions, independent
+of batch size entirely. It targets vision architectures (detection,
+segmentation) where memory constraints force small batches, exactly the
+regime where BatchNorm's batch-statistics estimate becomes unreliable.
+
+```{python}
+import numpy as np
+
+def batchnorm(x, eps=1e-5):        # average down the batch axis (axis 0)
+    mu, var = x.mean(0), x.var(0)
+    return (x - mu) / np.sqrt(var + eps)
+
+def layernorm(x, eps=1e-5):        # average across features (axis -1), per example
+    mu, var = x.mean(-1, keepdims=True), x.var(-1, keepdims=True)
+    return (x - mu) / np.sqrt(var + eps)
+
+def rmsnorm(x, eps=1e-5):          # rescale only, no re-centering
+    rms = np.sqrt((x**2).mean(-1, keepdims=True) + eps)
+    return x / rms
+
+x = np.array([[1.0, 5.0, 3.0], [2.0, 2.0, 8.0]])
+print("BatchNorm:\n", np.round(batchnorm(x), 2))
+print("LayerNorm:\n", np.round(layernorm(x), 2))
+print("RMSNorm:\n",  np.round(rmsnorm(x), 2))
+```
+
+### What to observe
+
+- All four methods share one formula; only the averaging axis changes.
+  BatchNorm averages **down the batch**, LayerNorm and RMSNorm average
+  **across features within one example**, GroupNorm averages **within a
+  channel group**.
+- RMSNorm's simplification (drop re-centering) is a deliberate finding,
+  not an oversight: the mean turned out not to matter much.
+- Every variant keeps a learned scale ($\gamma$, and sometimes $\beta$) so
+  the network can recover the original distribution if normalization is
+  not helpful at some layer.
 
 ## Application & impact
 
+| Concept here | What it became | Where you see it today |
+|---|---|---|
+| BatchNorm | The default for CNNs, 2015–2020 | Vision backbones with large batch training |
+| LayerNorm | The Transformer default | Every sublayer in [The Transformer](../02_transformer/02_transformer.qmd) |
+| RMSNorm | The efficient LLM default | LLaMA, Mistral, and most modern open LLMs |
+| GroupNorm | Small-batch vision alternative | Detection and segmentation backbones |
+
 ::: {.callout-note title="Key takeaway" icon="false"}
+Normalization is a second lever on training stability, alongside careful
+initialization and optimizer choice: rescale activations at every layer so
+depth does not compound scale problems. The lineage is one of
+simplification, not reinvention. BatchNorm's per-batch statistics became
+LayerNorm's per-example statistics, and RMSNorm dropped the one part
+(re-centering) that turned out not to matter much.
 :::
 
 ← Back to: [The Transformer](../02_transformer/02_transformer.qmd)
-
-## References {.unnumbered}
-::: {#refs}
-:::

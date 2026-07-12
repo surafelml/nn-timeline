@@ -1,37 +1,173 @@
 ---
-title: "Regularization — Dropout, Weight Decay, Augmentation"
+title: "Regularization: Dropout, Weight Decay, Augmentation"
 format: html
 ---
 
 <!-- Supp: Training Techniques. Generalization toolkit. -->
 
 ::: {.callout-tip title="TL;DR" icon="false"}
-Regularization fights overfitting — closing the gap between training and test
-error: **dropout** (Srivastava 2014, random unit masking), **weight decay** (L2
-penalty), **data augmentation**, and **early stopping**.
+Regularization closes the gap between training and test error: **dropout**
+(Srivastava 2014, random unit masking), **weight decay** (an L2 penalty on
+the parameters), **data augmentation** (expand the training distribution),
+and **early stopping** (regularize via training time itself).
 :::
 
 **Depends on:** [Optimization — GD, SGD, Momentum](../00_foundations/06_optimization.qmd)
 
 ## Why this matters
 
+A network with enough parameters can memorize its training set perfectly
+and still fail on new data. That gap between training loss and test loss
+is **overfitting**. The four techniques here fight it by four different
+mechanisms: inject noise into training (dropout), penalize large weights
+directly (weight decay), enlarge the effective training set
+(augmentation), or simply stop before the model has memorized too much
+(early stopping).
+
 ## The mechanism
 
-### Dropout — train an implicit ensemble
+### Dropout: train with random units missing
 
-### Weight decay — penalize large weights
+**Dropout** [@srivastava2014dropout] randomly zeroes each hidden unit with
+probability $p$ during training, then rescales the survivors so the
+expected activation magnitude stays unchanged:
 
-### Data augmentation — expand the training distribution
+$$
+\tilde{h}_i = \frac{m_i}{1-p}\, h_i, \qquad m_i \sim \text{Bernoulli}(1-p).
+$$
 
-### Early stopping — regularize via training time
+```{=html}
+<svg viewBox="0 0 460 200" xmlns="http://www.w3.org/2000/svg"
+     style="font-family:system-ui,sans-serif;max-width:460px;display:block;margin:1.5rem auto">
+  <text x="110" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">Training (dropout on)</text>
+  <text x="350" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">Inference (dropout off)</text>
+
+  <!-- left: training, some units dropped -->
+  <g>
+    <circle cx="40"  cy="60"  r="14" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+    <circle cx="40"  cy="100" r="14" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="40" y="104" text-anchor="middle" font-size="9" fill="#94a3b8">×</text>
+    <circle cx="40"  cy="140" r="14" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+    <circle cx="180" cy="80"  r="14" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+    <circle cx="180" cy="120" r="14" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="180" y="124" text-anchor="middle" font-size="9" fill="#94a3b8">×</text>
+    <line x1="53" y1="60"  x2="167" y2="80"  stroke="#22c55e" stroke-width="1"/>
+    <line x1="53" y1="140" x2="167" y2="80"  stroke="#22c55e" stroke-width="1"/>
+    <line x1="53" y1="60"  x2="167" y2="120" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2"/>
+    <line x1="53" y1="140" x2="167" y2="120" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2"/>
+  </g>
+
+  <!-- right: inference, all units active -->
+  <g>
+    <circle cx="280" cy="60"  r="14" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+    <circle cx="280" cy="100" r="14" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+    <circle cx="280" cy="140" r="14" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+    <circle cx="420" cy="80"  r="14" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+    <circle cx="420" cy="120" r="14" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5"/>
+    <line x1="293" y1="60"  x2="407" y2="80"  stroke="#22c55e" stroke-width="1"/>
+    <line x1="293" y1="100" x2="407" y2="80"  stroke="#22c55e" stroke-width="1"/>
+    <line x1="293" y1="140" x2="407" y2="80"  stroke="#22c55e" stroke-width="1"/>
+    <line x1="293" y1="60"  x2="407" y2="120" stroke="#22c55e" stroke-width="1"/>
+    <line x1="293" y1="100" x2="407" y2="120" stroke="#22c55e" stroke-width="1"/>
+    <line x1="293" y1="140" x2="407" y2="120" stroke="#22c55e" stroke-width="1"/>
+  </g>
+  <text x="110" y="180" text-anchor="middle" font-size="8" fill="#6b7280">a different random subnetwork every step</text>
+  <text x="350" y="180" text-anchor="middle" font-size="8" fill="#6b7280">the full network, no masking or rescaling</text>
+</svg>
+```
+
+The $\frac{1}{1-p}$ rescaling is why dropout needs no adjustment at
+inference: it is simply turned off, and the full network is used as-is.
+The effect on training is that no single unit can rely on any other
+specific unit being present, so every unit learns features useful in
+combination with many different random subsets of the rest of the
+network. This is what gives dropout its informal description as training
+an implicit ensemble of subnetworks that share weights.
+
+### Weight decay: penalize large weights directly
+
+**Weight decay** adds a penalty on the squared magnitude of the weights to
+the loss:
+
+$$
+\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{data}} + \lambda \lVert \boldsymbol{\theta} \rVert_2^2, \qquad
+\lambda \text{ controls how strongly large weights are punished.}
+$$
+
+Smaller weights correspond to a simpler function, one less sensitive to
+any single input feature, so penalizing weight magnitude biases the
+optimizer toward simpler solutions. This is the same $\lambda\theta$ term
+[AdamW](modern_optimizers.qmd) decouples from the adaptive gradient
+scaling; the *idea* of weight decay predates that correction and is
+simpler than it.
+
+### Data augmentation and early stopping
+
+Two lighter-weight regularizers round out the toolbox.
+
+- **Data augmentation** applies label-preserving transformations to
+  training examples (crop, flip, or rotate an image; back-translate or
+  synonym-swap a sentence) to synthesize more variety without collecting
+  more data. It regularizes by forcing invariance: a network shown the
+  same image cropped ten different ways learns features that don't depend
+  on the exact crop.
+- **Early stopping** monitors validation loss during training and halts
+  once it stops improving, even as training loss keeps falling. It is the
+  cheapest regularizer available, no extra computation, no architecture
+  change, because it is really just running gradient descent for exactly
+  as long as it helps and no longer.
+
+```{python}
+import numpy as np
+rng = np.random.default_rng(0)
+
+def dropout(h, p, training=True):
+    if not training:
+        return h
+    mask = rng.binomial(1, 1 - p, size=h.shape)
+    return mask * h / (1 - p)
+
+h = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+print("train (p=0.5):", np.round(dropout(h, 0.5), 2))
+print("eval:          ", dropout(h, 0.5, training=False))
+```
+
+### What to observe
+
+- Dropout and augmentation regularize by adding **randomness** to
+  training; weight decay and early stopping regularize by constraining
+  the **optimization** itself (the loss landscape or the training
+  duration).
+- Dropout is turned off at inference, with the $\frac{1}{1-p}$ rescale
+  already baked into training, the same train/inference asymmetry
+  BatchNorm has in [Normalization](normalization.qmd), for a different
+  reason.
+- None of these techniques change what the network is *capable* of
+  representing; they change what it is *encouraged* to converge to
+  during training.
+
+::: {.callout-warning title="Pitfall: dropout and normalization can conflict" icon="false"}
+Dropout's random masking and BatchNorm's batch statistics can interact
+badly: dropping units changes the effective batch statistics BatchNorm
+relies on. Modern architectures normalize with LayerNorm/RMSNorm precisely
+in the layers that avoid heavy dropout use, side-stepping the interaction
+rather than resolving it.
+:::
 
 ## Application & impact
 
+| Concept here | What it became | Where you see it today |
+|---|---|---|
+| Dropout | Standard regularizer for dense/RNN layers | Less common in modern Transformers at scale (data volume regularizes instead) |
+| Weight decay | The $\lambda\theta$ term in every modern optimizer | [AdamW](modern_optimizers.qmd), used to train nearly every LLM |
+| Data augmentation | Vision and NLP training-set expansion | Standard in vision pipelines; back-translation in NLP |
+| Early stopping | Universal, free regularizer | Every training loop with a validation split |
+
 ::: {.callout-note title="Key takeaway" icon="false"}
+Regularization is a toolbox, not one technique: each member fights
+overfitting by a different mechanism (noise, penalty, or restraint).
+Weight decay is the one that survived essentially unchanged into the LLM
+era, now living inside the optimizer itself as AdamW's decoupled term.
 :::
 
 ← Back to: [MLP & Backpropagation](../00_foundations/04_mlp_backprop.qmd)
-
-## References {.unnumbered}
-::: {#refs}
-:::
