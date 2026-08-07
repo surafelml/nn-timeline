@@ -19,6 +19,12 @@ guide or as a lookup when a chapter references a work without full derivation.
 
 Years reflect first public availability (arXiv or blog post). Citation links
 point to the peer-reviewed venue, which may differ by up to one year.
+
+Entries close to the present move faster than any static page can verify:
+recent frontier releases (2025 onward) are described at the same "architecture
+undisclosed" level of detail already used for GPT-4 and ChatGPT above, rather
+than with invented technical specifics. Verify anything from the last few
+months against a primary source before citing it elsewhere.
 :::
 
 ---
@@ -28,7 +34,7 @@ point to the peer-reviewed venue, which may differ by up to one year.
 ```{=html}
 <style>
 .ls-wrap { overflow-x:auto; }
-.ls-t { width:100%; border-collapse:collapse; font-size:0.83rem; }
+.ls-t { width:100%; table-layout:fixed; border-collapse:collapse; font-size:0.83rem; }
 .ls-t th { background:#f8fafc; font-weight:700; text-align:left;
   padding:7px 10px; border-bottom:2px solid #e2e8f0; white-space:nowrap; }
 .ls-t td { padding:6px 10px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
@@ -45,6 +51,29 @@ point to the peer-reviewed venue, which may differ by up to one year.
 .t-inf { background:#fef9c3; color:#713f12; }
 .t-aln { background:#fce7f3; color:#831843; }
 .t-alt { background:#fff7ed; color:#9a3412; }
+
+/* Chronological timeline: Year | Work | Family | Notes */
+.ls-t th:nth-child(1), .ls-t td:nth-child(1) { width:4%; }
+.ls-t th:nth-child(2), .ls-t td:nth-child(2) { width:16%; }
+.ls-t th:nth-child(3), .ls-t td:nth-child(3) { width:5%; }
+.ls-t th:nth-child(4), .ls-t td:nth-child(4) { width:75%; }
+
+/* Family tables (Work | Year | [Type] | description), 3- or 4-column */
+table.ls-fam3, table.ls-fam4 { table-layout:fixed; width:100%; }
+table.ls-fam3 th:nth-child(1), table.ls-fam3 td:nth-child(1) { width:20%; }
+table.ls-fam3 th:nth-child(2), table.ls-fam3 td:nth-child(2) { width:9%; }
+table.ls-fam3 th:nth-child(3), table.ls-fam3 td:nth-child(3) { width:71%; }
+table.ls-fam4 th:nth-child(1), table.ls-fam4 td:nth-child(1) { width:17%; }
+table.ls-fam4 th:nth-child(2), table.ls-fam4 td:nth-child(2) { width:7%; }
+table.ls-fam4 th:nth-child(3), table.ls-fam4 td:nth-child(3) { width:15%; }
+table.ls-fam4 th:nth-child(4), table.ls-fam4 td:nth-child(4) { width:61%; }
+
+/* By application area: Domain | Landmark work | Available | Current state */
+table.ls-app { table-layout:fixed; width:100%; }
+table.ls-app th:nth-child(1), table.ls-app td:nth-child(1) { width:15%; }
+table.ls-app th:nth-child(2), table.ls-app td:nth-child(2) { width:22%; }
+table.ls-app th:nth-child(3), table.ls-app td:nth-child(3) { width:8%; }
+table.ls-app th:nth-child(4), table.ls-app td:nth-child(4) { width:55%; }
 </style>
 
 <div class="ls-wrap">
@@ -56,7 +85,7 @@ point to the peer-reviewed venue, which may differ by up to one year.
 
 <tr>
   <td>2017</td>
-  <td><strong>Sparse MoE</strong><br/><small>Shazeer et al.</small></td>
+  <td><strong>Sparse MoE</strong> [@shazeer2017moe]<br/><small>Shazeer et al.</small></td>
   <td><span class="tag t-inf">Arch</span></td>
   <td><ul>
     <li>Token-level routing: each token activates top-<em>k</em> of <em>N</em> expert FFNs; rest are skipped</li>
@@ -330,7 +359,7 @@ point to the peer-reviewed venue, which may differ by up to one year.
 
 <tr>
   <td>2023</td>
-  <td><strong>GPT-4</strong><br/><small>OpenAI</small></td>
+  <td><strong>GPT-4</strong> [@openai2023gpt4]<br/><small>OpenAI</small></td>
   <td><span class="tag t-do">Dec-only</span></td>
   <td><ul>
     <li>Multimodal (image + text input); large-scale RLHF; architecture undisclosed but widely assumed MoE</li>
@@ -384,7 +413,7 @@ point to the peer-reviewed venue, which may differ by up to one year.
 
 <tr>
   <td>2024</td>
-  <td><strong>o1</strong><br/><small>OpenAI</small></td>
+  <td><strong>o1</strong> [@jaech2024o1]<br/><small>OpenAI</small></td>
   <td><span class="tag t-do">Dec-only</span></td>
   <td><ul>
     <li>Test-time compute scaling: extended chain-of-thought as inference, not training</li>
@@ -395,7 +424,7 @@ point to the peer-reviewed venue, which may differ by up to one year.
 
 <tr>
   <td>2024</td>
-  <td><strong>Sora</strong><br/><small>OpenAI</small></td>
+  <td><strong>Sora</strong> [@brooks2024sora]<br/><small>OpenAI</small></td>
   <td><span class="tag t-mm">Video</span></td>
   <td><ul>
     <li>Diffusion Transformer (DiT): patches spacetime video into tokens; Transformer denoising backbone replaces UNet</li>
@@ -417,12 +446,53 @@ point to the peer-reviewed venue, which may differ by up to one year.
 
 <tr>
   <td>2025</td>
-  <td><strong>DeepSeek-R1</strong><br/><small>DeepSeek AI</small></td>
+  <td><strong>DeepSeek-R1</strong> [@deepseekr1team2025]<br/><small>DeepSeek AI</small></td>
   <td><span class="tag t-do">Dec-only</span></td>
   <td><ul>
     <li>Open reasoning model trained with RL only (GRPO — no value model); 671B sparse MoE</li>
     <li>GRPO: group relative policy optimisation using outcome rewards only</li>
-    <li>o1-level reasoning at ~1/30 cost; largest open-weights frontier model as of early 2026</li>
+    <li>o1-level reasoning at ~1/30 cost; among the largest open-weights frontier models at release</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2025</td>
+  <td><strong>Llama 4</strong><br/><small>Meta</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>First Llama generation to go sparse MoE; natively multimodal (text, image) from pretraining</li>
+    <li>Scout and Maverick variants; very long context windows claimed for the smaller variant</li>
+    <li>Brought MoE and native multimodality into the open-weights mainstream</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2025</td>
+  <td><strong>Claude 4</strong><br/><small>Anthropic</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>Extended/hybrid thinking mode: same model serves fast and deliberate-reasoning responses</li>
+    <li>Architecture undisclosed; state of the art on agentic coding benchmarks at release</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2025</td>
+  <td><strong>GPT-5</strong><br/><small>OpenAI</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>Unifies fast and reasoning ("o-series") behavior behind one router rather than separate model lines</li>
+    <li>Architecture undisclosed; continues the test-time-compute paradigm o1 opened</li>
+  </ul></td>
+</tr>
+
+<tr>
+  <td>2026</td>
+  <td><strong>Claude 5 family</strong><br/><small>Anthropic</small></td>
+  <td><span class="tag t-do">Dec-only</span></td>
+  <td><ul>
+    <li>Current Anthropic generation (Opus 5, Sonnet 5, Fable 5), alongside Haiku 4.5 in the prior generation</li>
+    <li>Architecture undisclosed; entry included for currency rather than a specific documented advance</li>
   </ul></td>
 </tr>
 
@@ -450,6 +520,8 @@ The original Transformer family, and still dominant for structured generation
 | Whisper [@radford2022whisper] | 2022 | Multilingual speech; weak-supervision at scale |
 | mT5 (Xue et al., 2021) | 2021 | Multilingual T5 across 101 languages |
 
+: {.ls-fam3}
+
 Encoder-decoder peaked around 2020–2022. Decoder-only models at sufficient
 scale can perform the same tasks, reducing incentive to maintain the split.
 
@@ -466,6 +538,8 @@ extraction, and retrieval; cannot generate fluently.
 | ViT [@dosovitskiy2021] | 2020 | Patch classification | Transformers for vision |
 | CLIP [@radford2021clip] | 2021 | Contrastive image-text | Universal multimodal backbone |
 | DeBERTa (He et al., 2021) | 2021 | MLM + disentangled attn | Disentangled position representations |
+
+: {.ls-fam4}
 
 Now used primarily for embeddings, retrieval (dense passage retrieval,
 bi-encoders), and cross-modal alignment rather than generation.
@@ -485,7 +559,12 @@ By 2022 this family dominates every benchmark and every major product.
 | LLaMA [@touvron2023llama] | 2023 | 7–65B | Open weights; modern SLM architecture stack |
 | GPT-4 | 2023 | undisclosed | Multimodal; SOTA across all benchmarks |
 | o1 | 2024 | undisclosed | Test-time compute scaling |
-| DeepSeek-R1 | 2025 | 671B (MoE) | Open frontier reasoning model |
+| DeepSeek-R1 [@deepseekr1team2025] | 2025 | 671B (MoE) | Open frontier reasoning model |
+| Llama 4 | 2025 | undisclosed (MoE) | Native multimodality; open-weights MoE at frontier scale |
+| Claude 4 | 2025 | undisclosed | Extended/hybrid thinking; agentic coding SOTA |
+| GPT-5 | 2025 | undisclosed | Unifies fast and reasoning modes behind one router |
+
+: {.ls-fam4}
 
 ### Mixture of Experts (MoE) {.unnumbered}
 
@@ -499,6 +578,9 @@ parameters grow.
 | Switch Transformer [@fedus2021switch] | 2021 | Top-1 hard | Trillion-param training |
 | Mixtral 8×7B (Jiang et al., 2024) | 2024 | Top-2 of 8 | First competitive open MoE |
 | DeepSeek-V3 (2024) | 2024 | Top-2 of 256 | 671B sparse; frontier quality at open cost |
+| Llama 4 (Meta, 2025) | 2025 | Top-1/2, undisclosed | First Llama generation to go sparse MoE |
+
+: {.ls-fam4}
 
 MoE is the dominant architecture at frontier scale. GPT-4, Gemini 1.5, and
 almost every post-2023 flagship model is believed to use sparse MoE.
@@ -524,6 +606,9 @@ introducing a new architecture family.
 | MLA [@deepseekv2team2024] | 2024 | Efficiency | Low-rank KV compression; up to 93% KV cache reduction |
 | QLoRA [@dettmers2023qlora] | 2023 | PEFT | 4-bit NF4 quantisation + LoRA adapters; single-GPU fine-tuning |
 | Speculative decoding [@chen2023speculative] | 2023 | Efficiency | Draft-verify pipeline; 2–3× throughput, exact distribution |
+| GRPO (DeepSeek, 2025) | 2025 | Training | Group-relative policy optimisation; RL without a value model |
+
+: {.ls-fam4}
 
 ### Alternative architectures: beyond quadratic attention {.unnumbered}
 
@@ -537,6 +622,8 @@ are serious contenders for 2025–2026.
 | RWKV (Peng et al., 2023) | 2023 | Linear attention via token-shift recurrence | LLM-scale open model (14B); constant inference memory |
 | RetNet (Sun et al., 2023) | 2023 | Retention: parallel train, sequential infer | "Training Parallelism + Inference Efficiency + Performance" triangle |
 | Griffin (DeepMind, 2024) | 2024 | Gated linear recurrence + local attention hybrid | Matches Llama at 14B; inference-efficient |
+
+: {.ls-fam4}
 
 The most likely outcome is **hybrid architectures** that mix attention layers (for long-range global context) with SSM or linear recurrence layers (for local computation efficiency).
 
@@ -557,17 +644,19 @@ lineage.
 |---|---|---|---|
 | Machine translation | Transformer 2017 | 2017 | Transformer MT is the industry standard |
 | NLU / QA / classification | BERT 2018 | 2019 | Fine-tuned encoders or few-shot LLMs |
-| Text generation | GPT-2 2019 | 2019 | GPT-4o, Claude 4, Gemini 2.x, LLaMA 3 |
-| Code generation | Codex 2021 | 2022 (Copilot) | Claude, DeepSeek-Coder, GPT-4o |
+| Text generation | GPT-2 2019 | 2019 | GPT-5, Claude 5, Gemini 2.x, LLaMA 4 |
+| Code generation | Codex 2021 | 2022 (Copilot) | Claude 5, DeepSeek-Coder, GPT-5 |
 | Image classification | ViT 2020 | 2021 | ViT, DeiT, Swin, DINO v2 |
 | Image generation | CLIP + diffusion 2021 | 2022 | Stable Diffusion, DALL-E 3, Flux, Midjourney |
 | Video generation | Sora (DiT) 2024 | 2024 | Sora 2, Veo 2, Kling, Wan |
 | Speech recognition | Whisper 2022 | 2022 | Whisper v3, Distil-Whisper |
 | Protein structure | AlphaFold 2 [@jumper2021] 2021 | 2021 | AlphaFold 3, ESMFold, ESM3 |
-| Reasoning | CoT [@wei2022cot] + o1 2024 | 2024 | o3, DeepSeek-R1, Gemini Thinking |
+| Reasoning | CoT [@wei2022cot] + o1 2024 | 2024 | GPT-5 (reasoning mode), o3, DeepSeek-R1, Gemini Thinking |
 | Agents and tool use | GPT-4 function calls 2023 | 2023 | Multi-agent frameworks, Claude tool use |
 | Long-context understanding | Flash Attn + LLaMA 2023 | 2023 | 1M+ context windows (Gemini 1.5 Pro) |
 | Efficient fine-tuning | LoRA 2022 | 2022 | QLoRA, DoRA, widely used open-source |
+
+: {.ls-app}
 
 ---
 
